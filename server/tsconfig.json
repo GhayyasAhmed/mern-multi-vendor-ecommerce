@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    
+    /* Strict Typechecking & Quality Checks */
+    "strict": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    
+    /* Crucial Fix: Turn this off or remove it for legacy CommonJS interop */
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src"]
+}
