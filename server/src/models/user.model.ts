@@ -29,8 +29,8 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordTime?: Date;
   comparePassword: (password: string) => Promise<boolean>;
-//   signAccessToken: () => string;
-//   signRefreshToken: () => string;
+  signAccessToken: () => string;
+  signRefreshToken: () => string;
 }
 
 // 2. Instantiate Schema using new Schema (Mongoose automatically infers IUser schema types)
@@ -92,7 +92,13 @@ userSchema.pre<IUser>("save", async function () {
   if (!this.isModified("password")) {
     return;
   }
-  this.password = await bcrypt.hash(this.password, 10);
+
+  // Regex to check if the password is already a bcrypt hash
+  const isBcryptHash = /^\$2[ayb]\$.{56}$/.test(this.password);
+
+  if (!isBcryptHash) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
 });
 
 userSchema.methods.getJwtToken = function (): string {
@@ -105,18 +111,18 @@ userSchema.methods.getJwtToken = function (): string {
 };
 
 // Sign access token
-// userSchema.methods.signAccessToken = function (): string {
-//   return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
-//     expiresIn: "2h",
-//   });
-// };
+userSchema.methods.signAccessToken = function (): string {
+  return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
+    expiresIn: "2h",
+  });
+};
 
-// // Sign refresh token
-// userSchema.methods.signRefreshToken = function (): string {
-//   return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "", {
-//     expiresIn: "24h",
-//   });
-// };
+// Sign refresh token
+userSchema.methods.signRefreshToken = function (): string {
+  return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "", {
+    expiresIn: "24h",
+  });
+};
 
 // Compare password
 userSchema.methods.comparePassword = async function (
