@@ -1,15 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { Secret } from "jsonwebtoken";
-import { v2 as cloudinary } from "cloudinary";
-import User, { IUser } from "../models/user.model.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import catchAsyncErrors from "../middlewares/catchAsyncError.js";
-import { sendToken } from "../utils/jwt.js";
-import sendEmail from "../utils/sendEmail.js"
-import type { StringValue } from "ms";
-import crypto from "crypto";
-import { redis } from "../config/redis.js";
 import bcrypt from "bcryptjs";
+import { v2 as cloudinary } from "cloudinary";
+import crypto from "crypto";
+import { NextFunction, Request, Response } from "express";
+import { redis } from "../config/redis.js";
+import catchAsyncErrors from "../middlewares/catchAsyncError.js";
+import User from "../models/user.model.js";
+import ErrorHandler from "../utils/errorhandler.js";
+import { sendToken } from "../utils/jwt.js";
+import sendEmail from "../utils/sendEmail.js";
 
 export interface IRegistrationBody {
   name: string;

@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.js";
 import userRouter from "./routes/user.routes.js";
+import shopRouter from "./routes/shop.routes.js";
 import connectCloudinary from "./config/cloudinary.js";
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(cookieParser());
 
 // API Routes
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/shop", shopRouter);
 
 app.get("/test", (req, res) => {
   res.status(200).json({

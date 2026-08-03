@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Response } from "express";
 import { IUser } from "../models/user.model.js";
+import { IShop } from "../models/shop.model.js";
 import { redis } from "../config/redis.js";
-
 
 interface ITokenOptions {
     expires: Date;
@@ -33,19 +33,19 @@ export const refreshTokenOptions: ITokenOptions = {
     secure: true
 };
 
-export const sendToken = async (user: IUser, statusCode: number, res: Response, message: string) => {
-    const accessToken = user.signAccessToken()
-    const refreshToken = user.signRefreshToken()
+export const sendToken = async (user: IUser | IShop, statusCode: number, res: Response, message: string) => {
+    const accessToken = user.signAccessToken();
+    const refreshToken = user.signRefreshToken();
 
-    // upload session to redis
-    await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)
+    // Upload session to Redis
+    await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000);
 
-
-    res.status(statusCode).cookie("accessToken", accessToken, accessTokenOptions)
+    res.status(statusCode)
+        .cookie("accessToken", accessToken, accessTokenOptions)
         .cookie("refreshToken", refreshToken, refreshTokenOptions)
         .json({
             success: true,
             message,
             user
-        })
-}
+        });
+};

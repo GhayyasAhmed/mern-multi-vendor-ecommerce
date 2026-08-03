@@ -31,7 +31,7 @@ userRouter.put("/update-user-password", isAuthenticated, updateUserPassword);
 userRouter.get("/user-info/:id", getUserInfo);
 
 // Admin Routes
-userRouter.get("/admin-all-users", isAuthenticated, authorizeRoles("Admin"), getAllUsersAdmin);
-userRouter.delete("/delete-user/:id", isAuthenticated, authorizeRoles("Admin"), deleteUserAdmin);
+userRouter.get("/admin-all-users", isAuthenticated, authorizeRoles("admin"), getAllUsersAdmin);
+userRouter.delete("/delete-user/:id", isAuthenticated, authorizeRoles("admin"), deleteUserAdmin);
 
 export default userRouter;
