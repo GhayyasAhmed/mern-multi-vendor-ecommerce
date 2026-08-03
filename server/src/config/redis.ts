@@ -10,3 +10,8 @@ const redisClient = () => {
 }
 
 export const redis = new Redis(redisClient())
+
+// Without this handler, ioredis emits unhandled 'error' events which crash the process
+redis.on("error", (err) => {
+    console.error("Redis client error:", err)
+})
