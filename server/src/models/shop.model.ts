@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Document, Schema, model } from 'mongoose';
+import { env } from '../config/env.js';
 
 export interface IWithdrawMethod {
     withdrawMethodName: string;
@@ -152,28 +153,25 @@ shopSchema.pre<IShop>('save', async function () {
 });
 
 shopSchema.methods.signAccessToken = function (): string {
-    const secret = (process.env.ACCESS_TOKEN || "default_access_secret") as jwt.Secret;
     const expiresIn = process.env.ACCESS_TOKEN_EXPIRE || "5m";
 
-    return jwt.sign({ id: this._id, role: this.role }, secret, {
+    return jwt.sign({ id: this._id, role: this.role }, env.accessTokenSecret, {
         expiresIn: expiresIn as any,
     });
 };
 
 shopSchema.methods.signRefreshToken = function (): string {
-    const secret = (process.env.REFRESH_TOKEN || "default_refresh_secret") as jwt.Secret;
     const expiresIn = process.env.REFRESH_TOKEN_EXPIRE || "3d";
 
-    return jwt.sign({ id: this._id }, secret, {
+    return jwt.sign({ id: this._id }, env.refreshTokenSecret, {
         expiresIn: expiresIn as any,
     });
 };
 
 shopSchema.methods.getJwtToken = function (): string {
-    const secret = (process.env.JWT_SECRET_KEY || "default_secret") as jwt.Secret;
     const expiresIn = process.env.JWT_EXPIRES || "7d";
 
-    return jwt.sign({ id: this._id }, secret, {
+    return jwt.sign({ id: this._id }, env.jwtSecretKey, {
         expiresIn: expiresIn as any,
     });
 };

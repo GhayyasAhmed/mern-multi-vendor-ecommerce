@@ -17,6 +17,17 @@ function readOrigins(value: string | undefined): string[] {
 }
 
 const nodeEnv = process.env.NODE_ENV || "development";
+
+function readSecret(value: string | undefined, name: string, devFallback: string): string {
+  if (value) {
+    return value;
+  }
+  if (nodeEnv !== "development") {
+    throw new Error(`${name} is required outside development.`);
+  }
+  return devFallback;
+}
+
 const mongoUri = process.env.MONGO_URI;
 
 if (nodeEnv !== "development" && !mongoUri) {
@@ -24,8 +35,11 @@ if (nodeEnv !== "development" && !mongoUri) {
 }
 
 export const env = {
-  nodeEnv: process.env.NODE_ENV || "development",
+  nodeEnv,
   port: readNumber(process.env.PORT, 3001),
   mongoUri: mongoUri || "mongodb://127.0.0.1:27017/multi-vendor-ecommerce",
   allowedOrigins: readOrigins(process.env.FRONTEND_URLS),
+  accessTokenSecret: readSecret(process.env.ACCESS_TOKEN, "ACCESS_TOKEN", "dev_access_secret"),
+  refreshTokenSecret: readSecret(process.env.REFRESH_TOKEN, "REFRESH_TOKEN", "dev_refresh_secret"),
+  jwtSecretKey: readSecret(process.env.JWT_SECRET_KEY, "JWT_SECRET_KEY", "dev_jwt_secret"),
 };

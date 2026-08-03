@@ -2,6 +2,7 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -102,7 +103,7 @@ userSchema.pre<IUser>("save", async function () {
 });
 
 userSchema.methods.getJwtToken = function (): string {
-  const secret = (process.env.JWT_SECRET_KEY || "default_secret") as jwt.Secret;
+  const secret = env.jwtSecretKey as jwt.Secret;
   const expiresIn = process.env.JWT_EXPIRES || "7d";
 
   return jwt.sign({ id: this._id }, secret, {
@@ -112,14 +113,14 @@ userSchema.methods.getJwtToken = function (): string {
 
 // Sign access token
 userSchema.methods.signAccessToken = function (): string {
-  return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
+  return jwt.sign({ id: this._id }, env.accessTokenSecret, {
     expiresIn: "2h",
   });
 };
 
 // Sign refresh token
 userSchema.methods.signRefreshToken = function (): string {
-  return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "", {
+  return jwt.sign({ id: this._id }, env.refreshTokenSecret, {
     expiresIn: "24h",
   });
 };

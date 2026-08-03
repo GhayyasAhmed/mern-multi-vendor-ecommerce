@@ -6,7 +6,7 @@ import { redis } from "../config/redis.js";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import Shop from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import { sendToken } from "../utils/jwt.js";
+import sendShopToken from "../utils/shopToken.js";
 import sendEmail from "../utils/sendEmail.js";
 
 export interface IShopActivationToken {
@@ -141,7 +141,7 @@ export const activateShop = catchAsyncErrors(
 
       await redis.del(`activation:${activation_token}`);
 
-      sendToken(seller, 201, res, "Shop activated successfully!");
+      await sendShopToken(seller, 201, res, "Shop activated successfully!");
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -170,7 +170,7 @@ export const loginShop = catchAsyncErrors(
         return next(new ErrorHandler("Please provide the correct credentials", 400));
       }
 
-      sendToken(shop, 201, res, "Login successful");
+    await sendShopToken(shop, 201, res, "Login successful");
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }

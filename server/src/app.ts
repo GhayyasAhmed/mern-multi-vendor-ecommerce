@@ -1,16 +1,24 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.js";
 import userRouter from "./routes/user.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import connectCloudinary from "./config/cloudinary.js";
+import { env } from "./config/env.js";
 
 const app = express();
 
 connectCloudinary();
 
-app.use(cors());
+app.use(helmet());
+app.use(
+  cors({
+    origin: env.allowedOrigins,
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 // app.use("/", express.static("uploads"))
