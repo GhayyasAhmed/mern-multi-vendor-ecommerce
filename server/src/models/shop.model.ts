@@ -28,18 +28,20 @@ export interface IShop extends Document {
     zipCode: number;
     withdrawMethod?: IWithdrawMethod;
     availableBalance: number;
-    transection?: Array<{
+    transaction?: Array<{
         amount: number;
         status: string;
         createdAt?: Date;
         updatedAt?: Date;
     }>;
+    resetPasswordToken?: string;
+    resetPasswordTime?: Date;
     createdAt: Date;
     updatedAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
     getJwtToken: () => string;
-    signAccessToken: () => string;  // Add this
-  signRefreshToken: () => string; // Add this
+    signAccessToken: () => string;
+    signRefreshToken: () => string;
 }
 
 export interface IShopActivationTokenPayload {
@@ -67,6 +69,13 @@ const withdrawMethodSchema = new Schema(
     },
     { _id: false }
 );
+
+const transformShop = (_doc: any, ret: any) => {
+    delete ret.password;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordTime;
+    return ret;
+};
 
 const shopSchema = new Schema<IShop>(
     {
@@ -124,7 +133,7 @@ const shopSchema = new Schema<IShop>(
             type: Number,
             default: 0,
         },
-        transection: [
+        transaction: [
             {
                 amount: { type: Number, required: true },
                 status: { type: String, default: 'Processing' },
@@ -132,19 +141,27 @@ const shopSchema = new Schema<IShop>(
                 updatedAt: { type: Date },
             },
         ],
+        resetPasswordToken: {
+            type: String,
+            select: false,
+        },
+        resetPasswordTime: {
+            type: Date,
+            select: false,
+        },
     },
     {
         timestamps: true,
+        toJSON: { transform: transformShop },
+        toObject: { transform: transformShop },
     }
 );
 
 shopSchema.pre<IShop>('save', async function () {
-    // If password isn't provided or wasn't modified, do nothing
     if (!this.password || !this.isModified("password")) {
         return;
     }
 
-    // Regex to check if the password is already a bcrypt hash
     const isBcryptHash = /^\$2[ayb]\$.{56}$/.test(this.password);
 
     if (!isBcryptHash) {

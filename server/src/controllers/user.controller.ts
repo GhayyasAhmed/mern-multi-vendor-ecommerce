@@ -421,7 +421,7 @@ export const updateUserPassword = catchAsyncErrors(
 export const getUserInfo = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const user = await User.findById(req.params.id);
+            const user = await User.findById(req.params.id).select("name avatar");
 
             if (!user) {
                 return next(new ErrorHandler("User not found", 404));

@@ -201,7 +201,10 @@ export const getSellerDetails = catchAsyncErrors(
 export const getShopInfo = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const shop = await Shop.findById(req.params.id);
+
+      const shop = await Shop.findById(req.params.id).select(
+        "name description avatar address"
+      );
 
       if (!shop) {
         return next(new ErrorHandler("Shop not found", 404));

@@ -6,7 +6,6 @@ import { env } from "../config/env.js";
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// 1. Updated interface to match all schema fields
 export interface IAddress {
   country?: string;
   city?: string;
@@ -34,7 +33,13 @@ export interface IUser extends Document {
   signRefreshToken: () => string;
 }
 
-// 2. Instantiate Schema using new Schema (Mongoose automatically infers IUser schema types)
+const transformUser = (_doc: any, ret: any) => {
+  delete ret.password;
+  delete ret.resetPasswordToken;
+  delete ret.resetPasswordTime;
+  return ret;
+};
+
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -82,10 +87,20 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: "user",
     },
-    resetPasswordToken: String,
-    resetPasswordTime: Date,
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordTime: {
+      type: Date,
+      select: false,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { transform: transformUser },
+    toObject: { transform: transformUser },
+  }
 );
 
 // Hash password before saving
@@ -94,7 +109,6 @@ userSchema.pre<IUser>("save", async function () {
     return;
   }
 
-  // Regex to check if the password is already a bcrypt hash
   const isBcryptHash = /^\$2[ayb]\$.{56}$/.test(this.password);
 
   if (!isBcryptHash) {

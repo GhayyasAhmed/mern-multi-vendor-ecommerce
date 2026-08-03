@@ -17,10 +17,13 @@ const sendShopToken = async (
     secure: true,
   };
 
+  // Sanitize document explicitly before Redis cache and HTTP response payload
+  const sanitizedUser = typeof user.toJSON === "function" ? user.toJSON() : user;
+
   // Persist the seller session in Redis so isSeller middleware can validate it
   await redis.set(
     `seller_${user._id.toString()}`,
-    JSON.stringify(user),
+    JSON.stringify(sanitizedUser),
     "EX",
     90 * 24 * 60 * 60
   );
@@ -28,7 +31,7 @@ const sendShopToken = async (
   res.status(statusCode).cookie("seller_token", token, options).json({
     success: true,
     message,
-    user,
+    user: sanitizedUser,
     token,
   });
 };
