@@ -22,7 +22,7 @@ userRouter.post("/create-user", createUser);
 userRouter.post("/activation", activateUser);
 userRouter.post("/login-user", loginUser);
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
-userRouter.get("/logout", logoutUser);
+userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.put("/update-user-info", isAuthenticated, updateUserInfo);
 userRouter.put("/update-avatar", isAuthenticated, updateUserAvatar);
 userRouter.put("/update-user-addresses", isAuthenticated, updateUserAddresses);

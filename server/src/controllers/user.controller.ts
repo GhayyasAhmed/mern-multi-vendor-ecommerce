@@ -214,12 +214,24 @@ export const getUserDetails = catchAsyncErrors(
 export const logoutUser = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            res.cookie("token", null, {
+            const userId = (req as any).user?._id;
+
+            res.cookie("accessToken", "", {
                 expires: new Date(Date.now()),
                 httpOnly: true,
                 sameSite: "none",
                 secure: true,
             });
+            res.cookie("refreshToken", "", {
+                expires: new Date(Date.now()),
+                httpOnly: true,
+                sameSite: "none",
+                secure: true,
+            });
+
+            if (userId) {
+                await redis.del(userId.toString());
+            }
 
             res.status(201).json({
                 success: true,

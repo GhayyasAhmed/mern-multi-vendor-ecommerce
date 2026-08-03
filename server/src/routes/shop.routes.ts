@@ -20,7 +20,7 @@ router.post("/create-shop", createShop);
 router.post("/activation", activateShop);
 router.post("/login-shop", loginShop);
 router.get("/getSeller", isSeller, getSellerDetails);
-router.get("/logout", logoutShop);
+router.get("/logout", isSeller, logoutShop);
 router.get("/get-shop-info/:id", getShopInfo);
 router.put("/update-shop-avatar", isSeller, updateShopAvatar);
 router.put("/update-seller-info", isSeller, updateSellerInfo);

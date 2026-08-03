@@ -170,7 +170,7 @@ export const loginShop = catchAsyncErrors(
         return next(new ErrorHandler("Please provide the correct credentials", 400));
       }
 
-    await sendShopToken(shop, 201, res, "Login successful");
+      await sendShopToken(shop, 201, res, "Login successful");
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -221,12 +221,18 @@ export const getShopInfo = catchAsyncErrors(
 export const logoutShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      res.cookie("token", null, {
+      const sellerId = (req as any).seller?._id;
+
+      res.cookie("seller_token", "", {
         expires: new Date(Date.now()),
         httpOnly: true,
         sameSite: "none",
         secure: true,
       });
+
+      if (sellerId) {
+        await redis.del(`seller_${sellerId.toString()}`);
+      }
 
       res.status(201).json({
         success: true,
