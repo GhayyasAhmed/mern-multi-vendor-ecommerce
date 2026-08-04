@@ -104,6 +104,19 @@ export const updateOrderStatus = catchAsyncErrors(
         return next(new ErrorHandler("Order not found with this id", 400));
       }
 
+      const sellerId = req.seller?._id;
+      const cartItems = order.cart as ICartItem[];
+      const belongsToSeller =
+        !!sellerId &&
+        cartItems.length > 0 &&
+        cartItems.every((item) => String(item.shopId) === String(sellerId));
+
+      if (!belongsToSeller) {
+        return next(
+          new ErrorHandler("You are not authorized to update this order", 403)
+        );
+      }
+
       const updateOrder = async (id: string, qty: number): Promise<void> => {
         const product = await ProductModel.findById(id);
         if (product) {
