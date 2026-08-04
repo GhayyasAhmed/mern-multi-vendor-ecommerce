@@ -38,7 +38,7 @@ export const env = {
   nodeEnv,
   port: readNumber(process.env.PORT, 3001),
   mongoUri: mongoUri || "mongodb://127.0.0.1:27017/multi-vendor-ecommerce",
-  allowedOrigins: readOrigins(process.env.FRONTEND_URLS),
+  allowedOrigins: readOrigins(process.env.FRONTEND_URL),
   accessTokenSecret: readSecret(process.env.ACCESS_TOKEN, "ACCESS_TOKEN", "dev_access_secret"),
   refreshTokenSecret: readSecret(process.env.REFRESH_TOKEN, "REFRESH_TOKEN", "dev_refresh_secret"),
   jwtSecretKey: readSecret(process.env.JWT_SECRET_KEY, "JWT_SECRET_KEY", "dev_jwt_secret"),

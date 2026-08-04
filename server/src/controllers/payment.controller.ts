@@ -38,8 +38,8 @@ export const processPayment = catchAsyncErrors(
       }
 
       const paymentCurrency =
-        currency || process.env.STRIPE_CURRENCY || "inr";
-      const companyName = process.env.COMPANY_NAME || "Becodemy";
+        currency || process.env.STRIPE_CURRENCY || "usd";
+      const companyName = process.env.COMPANY_NAME || "mern-multi-vendor-ecommerce";
 
       const myPayment = await stripe.paymentIntents.create({
         amount: Math.round(amount), // Ensure amount is an integer representing smallest currency unit

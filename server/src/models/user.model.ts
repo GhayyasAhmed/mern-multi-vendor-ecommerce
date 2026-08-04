@@ -118,10 +118,10 @@ userSchema.pre<IUser>("save", async function () {
 
 userSchema.methods.getJwtToken = function (): string {
   const secret = env.jwtSecretKey as jwt.Secret;
-  const expiresIn = process.env.JWT_EXPIRES || "7d";
+  const expiresIn = process.env.JWT_EXPIRES || "5";
 
   return jwt.sign({ id: this._id }, secret, {
-    expiresIn: expiresIn as any,
+    expiresIn: (expiresIn + "m")as any,
   });
 };
 

@@ -170,26 +170,26 @@ shopSchema.pre<IShop>('save', async function () {
 });
 
 shopSchema.methods.signAccessToken = function (): string {
-    const expiresIn = process.env.ACCESS_TOKEN_EXPIRE || "5m";
+    const expiresIn = process.env.ACCESS_TOKEN_EXPIRE || "2";
 
     return jwt.sign({ id: this._id, role: this.role }, env.accessTokenSecret, {
-        expiresIn: expiresIn as any,
+        expiresIn: (expiresIn + "h") as any,
     });
 };
 
 shopSchema.methods.signRefreshToken = function (): string {
-    const expiresIn = process.env.REFRESH_TOKEN_EXPIRE || "3d";
+    const expiresIn = process.env.REFRESH_TOKEN_EXPIRE || "24";
 
     return jwt.sign({ id: this._id }, env.refreshTokenSecret, {
-        expiresIn: expiresIn as any,
+        expiresIn: (expiresIn + "h") as any,
     });
 };
 
 shopSchema.methods.getJwtToken = function (): string {
-    const expiresIn = process.env.JWT_EXPIRES || "7d";
+    const expiresIn = process.env.JWT_EXPIRES || "5";
 
     return jwt.sign({ id: this._id }, env.jwtSecretKey, {
-        expiresIn: expiresIn as any,
+        expiresIn: (expiresIn + "m") as any,
     });
 };
 
