@@ -13,6 +13,7 @@ import {
   getUserInfo,
   getAllUsersAdmin,
   deleteUserAdmin,
+  refreshAccessToken
 } from "../controllers/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -26,6 +27,7 @@ userRouter.post("/activation", authLimiter, validate(activationSchema), activate
 userRouter.post("/login-user", authLimiter, validate(UserValidations.loginUserSchema), loginUser);
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
 userRouter.get("/logout", isAuthenticated, logoutUser);
+userRouter.post("/refresh-token", refreshAccessToken);
 userRouter.put("/update-user-info", isAuthenticated, validate(UserValidations.updateUserInfoSchema), updateUserInfo);
 userRouter.put("/update-avatar", isAuthenticated, validate(UserValidations.updateUserAvatarSchema), updateUserAvatar);
 userRouter.put("/update-user-addresses", isAuthenticated, validate(UserValidations.updateUserAddressesSchema), updateUserAddresses);
