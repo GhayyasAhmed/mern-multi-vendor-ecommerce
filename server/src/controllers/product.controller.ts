@@ -104,12 +104,12 @@ export const deleteProduct = catchAsyncErrors(
       }
 
       const images = product.images || [];
-      for (let i = 0; i < images.length; i++) {
-        const publicId = images[i]?.public_id;
-        if (publicId) {
-          await deleteFromCloudinary(publicId);
-        }
-      }
+      const deletePromises = images
+        .map((img) => img?.public_id)
+        .filter((publicId): publicId is string => Boolean(publicId))
+        .map((publicId) => deleteFromCloudinary(publicId));
+
+      await Promise.all(deletePromises);
 
       await ProductModel.findByIdAndDelete(req.params.id);
 

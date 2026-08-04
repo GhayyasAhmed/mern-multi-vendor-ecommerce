@@ -119,12 +119,12 @@ export const deleteShopEvent = catchAsyncErrors(
       }
 
       const images = event.images || [];
-      for (let i = 0; i < images.length; i++) {
-        const publicId = images[i]?.public_id;
-        if (publicId) {
-          await deleteFromCloudinary(publicId);
-        }
-      }
+      const deletePromises = images
+        .map((img) => img?.public_id)
+        .filter((publicId): publicId is string => Boolean(publicId))
+        .map((publicId) => deleteFromCloudinary(publicId));
+
+      await Promise.all(deletePromises);
 
       await EventModel.findByIdAndDelete(req.params.id);
 
