@@ -15,12 +15,13 @@ import {
 import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
 import { ShopValidations, activationSchema } from "../utils/validators.js";
+import { authLimiter } from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/create-shop", validate(ShopValidations.createShopSchema), createShop);
-router.post("/activation", validate(activationSchema), activateShop);
-router.post("/login-shop", validate(ShopValidations.loginShopSchema), loginShop);
+router.post("/create-shop",authLimiter, validate(ShopValidations.createShopSchema), createShop);
+router.post("/activation",authLimiter, validate(activationSchema), activateShop);
+router.post("/login-shop",authLimiter, validate(ShopValidations.loginShopSchema), loginShop);
 router.get("/getSeller", isSeller, getSellerDetails);
 router.get("/logout", isSeller, logoutShop);
 router.get("/get-shop-info/:id", getShopInfo);
