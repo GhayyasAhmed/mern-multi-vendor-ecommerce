@@ -16,7 +16,11 @@ interface ICartItem {
 export const createOrder = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { cart, shippingAddress, user, totalPrice, paymentInfo } = req.body;
+      const { cart, shippingAddress, paymentInfo } = req.body;
+
+      if (!req.user) {
+        return next(new ErrorHandler("Please login to place an order", 401));
+      }
 
       // group cart items by shopId
       const shopItemsMap = new Map<string, ICartItem[]>();
@@ -33,10 +37,23 @@ export const createOrder = catchAsyncErrors(
       const orders = [];
 
       for (const [, items] of shopItemsMap) {
+        // Derive totalPrice server-side from trusted product prices instead
+        // of trusting the client-supplied amount.
+        let totalPrice = 0;
+        for (const item of items) {
+          const product = await ProductModel.findById(item._id);
+          if (!product) {
+            return next(
+              new ErrorHandler(`Product not found with this id: ${item._id}`, 400)
+            );
+          }
+          totalPrice += product.discountPrice * item.qty;
+        }
+
         const order = await OrderModel.create({
           cart: items,
           shippingAddress,
-          user,
+          user: req.user,
           totalPrice,
           paymentInfo,
         });
@@ -53,7 +70,6 @@ export const createOrder = catchAsyncErrors(
     }
   }
 );
-
 // get all orders of user
 export const getAllOrdersUser = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
