@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import connectCloudinary from "./config/cloudinary.js";
+import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 import { redis } from "./config/redis.js";
 import errorMiddleware from "./middlewares/error.js";
@@ -13,12 +14,11 @@ import couponCodeRouter from "./routes/couponCode.routes.js";
 import eventRouter from "./routes/event.routes.js";
 import messageRouter from "./routes/message.routes.js";
 import orderRouter from "./routes/order.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
 import productRouter from "./routes/product.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import userRouter from "./routes/user.routes.js";
 import withdrawRouter from "./routes/withdraw.routes.js";
-import paymentRouter from "./routes/payment.routes.js";
-
 
 const app = express();
 
@@ -27,6 +27,20 @@ if (env.nodeEnv === "production") {
 }
 
 connectCloudinary();
+
+// Serverless Middleware: Ensures MongoDB connection is established for Vercel functions
+app.use(async (req, res, next) => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (error) {
+    console.error("Database connection middleware error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
 
 app.use((helmet as any)());
 app.use(
@@ -38,7 +52,6 @@ app.use(
 app.use(apiLimiter);
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
-
 
 // Lightweight CSRF mitigation: auth cookies use sameSite:"none" to support
 // a separate frontend origin, so state-changing requests must be verified

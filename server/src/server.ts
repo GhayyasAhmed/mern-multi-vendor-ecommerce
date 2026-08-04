@@ -23,21 +23,6 @@ process.on("uncaughtException", (error: Error) => {
   process.exit(1);
 });
 
-
-function shutdown(signal: string) {
-  console.log(`${signal} received. Shutting down gracefully.`);
-  server.close(() => {
-    console.log("Server closed.");
-    process.exit(0);
-  });
-}
-
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
-
-
-// let server: http.Server | undefined;
-
 async function startServer() {
   try {
     await connectDatabase();
@@ -65,7 +50,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
   try {
     if (server) {
       await new Promise<void>((resolve, reject) => {
-        server!.close((err) => (err ? reject(err) : resolve()));
+        server.close((err) => (err ? reject(err) : resolve()));
       });
       console.log("HTTP server closed. No longer accepting new requests.");
     }
@@ -92,6 +77,5 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   void gracefulShutdown("SIGINT");
 });
-
 
 void startServer();
