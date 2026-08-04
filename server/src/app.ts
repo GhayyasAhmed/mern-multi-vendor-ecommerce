@@ -19,7 +19,6 @@ import userRouter from "./routes/user.routes.js";
 import withdrawRouter from "./routes/withdraw.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 
-type HelmetType = typeof helmet;
 
 const app = express();
 
@@ -29,7 +28,7 @@ if (env.nodeEnv === "production") {
 
 connectCloudinary();
 
-app.use((helmet as unknown as typeof import("helmet").default)());
+app.use((helmet as any)());
 app.use(
   cors({
     origin: env.allowedOrigins,
