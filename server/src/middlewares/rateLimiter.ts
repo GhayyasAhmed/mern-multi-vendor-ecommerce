@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 
 // General API limiter — applied globally to mitigate abuse/DoS.
 export const apiLimiter = rateLimit({
