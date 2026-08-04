@@ -28,6 +28,8 @@ const conversationSchema: Schema<IConversation> = new mongoose.Schema(
   { timestamps: true }
 );
 
+conversationSchema.index({ members: 1 });
+
 const ConversationModel = mongoose.model<IConversation>(
   "Conversation",
   conversationSchema

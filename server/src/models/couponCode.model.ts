@@ -39,6 +39,8 @@ const couponCodeSchema: Schema<ICouponCode> = new mongoose.Schema({
   },
 });
 
+couponCodeSchema.index({ shopId: 1 });
+
 const CouponCodeModel = mongoose.model<ICouponCode>(
   "CouponCode",
   couponCodeSchema

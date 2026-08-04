@@ -92,6 +92,8 @@ const eventSchema: Schema<IEvent> = new mongoose.Schema({
   },
 });
 
+eventSchema.index({ shopId: 1 });
+
 const EventModel = mongoose.model<IEvent>("Event", eventSchema);
 
 export default EventModel;
