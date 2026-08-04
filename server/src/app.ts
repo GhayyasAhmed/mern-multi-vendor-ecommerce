@@ -19,6 +19,10 @@ import paymentRouter from "./routes/payment.routes.js";
 
 const app = express();
 
+if (env.nodeEnv === "production") {
+  app.set("trust proxy", 1);
+}
+
 connectCloudinary();
 
 app.use(helmet());
