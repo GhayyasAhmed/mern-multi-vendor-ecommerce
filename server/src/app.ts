@@ -2,8 +2,10 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import connectCloudinary from "./config/cloudinary.js";
 import { env } from "./config/env.js";
+import { redis } from "./config/redis.js";
 import errorMiddleware from "./middlewares/error.js";
 import { apiLimiter } from "./middlewares/rateLimiter.js";
 import conversationRouter from "./routes/conversation.routes.js";
@@ -69,10 +71,20 @@ app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/withdraw", withdrawRouter);
 app.use("/api/v1/payment", paymentRouter);
 
-app.get("/test", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Backend is running",
+app.get("/api/v1/health-check", (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const isRedisReady = redis.status === "ready";
+  const isHealthy = isDbConnected && isRedisReady;
+
+  res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    status: isHealthy ? "ok" : "unavailable",
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    services: {
+      db: isDbConnected ? "connected" : "disconnected",
+      redis: isRedisReady ? "connected" : "disconnected",
+    },
   });
 });
 
