@@ -8,6 +8,7 @@ import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.j
 // create event
 export const createEvent = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const imagesLinks: Array<{ public_id: string; url: string }> = [];
     try {
       const shopId = req.body.shopId;
       const shop = await ShopModel.findById(shopId);
@@ -24,18 +25,32 @@ export const createEvent = catchAsyncErrors(
         images = req.body.images;
       }
 
-      const imagesLinks: Array<{ public_id: string; url: string }> = [];
+      const validImages = images.filter((img): img is string => Boolean(img));
 
-      for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        if (!image) continue;
+      const uploadResults = await Promise.allSettled(
+        validImages.map((image) => uploadToCloudinary(image, "products"))
+      );
 
-        const result = await uploadToCloudinary(image, "products");
+      const failedUpload = uploadResults.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected"
+      );
 
-        imagesLinks.push({
-          public_id: result.public_id,
-          url: result.secure_url,
-        });
+      if (failedUpload) {
+        const uploaded = uploadResults.filter(
+          (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof uploadToCloudinary>>> =>
+            result.status === "fulfilled"
+        );
+        await Promise.all(uploaded.map((res) => deleteFromCloudinary(res.value.public_id)));
+        throw failedUpload.reason;
+      }
+
+      for (const result of uploadResults) {
+        if (result.status === "fulfilled") {
+          imagesLinks.push({
+            public_id: result.value.public_id,
+            url: result.value.secure_url,
+          });
+        }
       }
 
       const productData = req.body;
@@ -49,6 +64,11 @@ export const createEvent = catchAsyncErrors(
         event,
       });
     } catch (error: unknown) {
+      if (imagesLinks.length > 0) {
+        await Promise.all(
+          imagesLinks.map((img) => deleteFromCloudinary(img.public_id))
+        );
+      }
       const message = error instanceof Error ? error.message : String(error);
       return next(new ErrorHandler(message, 400));
     }
