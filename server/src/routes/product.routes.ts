@@ -11,7 +11,7 @@ import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.j
 
 const productRouter = express.Router();
 
-productRouter.post("/create-product", createProduct);
+productRouter.post("/create-product", isSeller, createProduct);
 productRouter.get("/get-all-products-shop/:id", getAllProductsShop);
 productRouter.delete("/delete-shop-product/:id", isSeller, deleteProduct);
 productRouter.get("/get-all-products", getAllProducts);

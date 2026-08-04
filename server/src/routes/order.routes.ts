@@ -12,11 +12,11 @@ import { isAuthenticated, isSeller, authorizeRoles } from "../middlewares/auth.j
 
 const orderRouter = express.Router();
 
-orderRouter.post("/create-order", createOrder);
-orderRouter.get("/get-all-orders/:userId", getAllOrdersUser);
-orderRouter.get("/get-seller-all-orders/:shopId", getSellerAllOrders);
+orderRouter.post("/create-order", isAuthenticated, createOrder);
+orderRouter.get("/get-all-orders/:userId", isAuthenticated, getAllOrdersUser);
+orderRouter.get("/get-seller-all-orders/:shopId", isSeller, getSellerAllOrders);
 orderRouter.put("/update-order-status/:id", isSeller, updateOrderStatus);
-orderRouter.put("/order-refund/:id", orderRefund);
+orderRouter.put("/order-refund/:id", isAuthenticated, orderRefund);
 orderRouter.put("/order-refund-success/:id", isSeller, orderRefundSuccess);
 orderRouter.get(
   "/admin-all-orders",

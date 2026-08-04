@@ -6,14 +6,14 @@ import {
   deleteShopEvent,
   getAdminAllEvents,
 } from "../controllers/event.controller.js";
-import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
+import { isAuthenticated, authorizeRoles, isSeller } from "../middlewares/auth.js";
 
 const eventRouter = express.Router();
 
-eventRouter.post("/create-event", createEvent);
+eventRouter.post("/create-event", isSeller, createEvent);
 eventRouter.get("/get-all-events", getAllEvents);
 eventRouter.get("/get-all-events/:id", getShopAllEvents);
-eventRouter.delete("/delete-shop-event/:id", deleteShopEvent);
+eventRouter.delete("/delete-shop-event/:id", isSeller, deleteShopEvent);
 eventRouter.get(
   "/admin-all-events",
   isAuthenticated,
