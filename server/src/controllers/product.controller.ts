@@ -25,19 +25,31 @@ export const createProduct = catchAsyncErrors(
         images = req.body.images;
       }
 
-      const imagesLinks: Array<{ public_id: string; url: string }> = [];
+      // const imagesLinks: Array<{ public_id: string; url: string }> = [];
 
-      for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        if (!image) continue;
+      // for (let i = 0; i < images.length; i++) {
+      //   const image = images[i];
+      //   if (!image) continue;
 
-        const result = await uploadToCloudinary(image, "products");
+      //   const result = await uploadToCloudinary(image, "products");
 
-        imagesLinks.push({
-          public_id: result.public_id,
-          url: result.secure_url,
-        });
-      }
+      //   imagesLinks.push({
+      //     public_id: result.public_id,
+      //     url: result.secure_url,
+      //   });
+      // }
+
+      const imagesLinks = await Promise.all(
+        images
+          .filter((img): img is string => Boolean(img))
+          .map(async (image) => {
+            const result = await uploadToCloudinary(image, "products");
+            return {
+              public_id: result.public_id,
+              url: result.secure_url,
+            };
+          })
+      );
 
       const productData = req.body;
       productData.images = imagesLinks;
