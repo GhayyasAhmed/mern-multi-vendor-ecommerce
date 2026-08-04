@@ -14,7 +14,8 @@ import orderRouter from "./routes/order.routes.js";
 import productRouter from "./routes/product.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import userRouter from "./routes/user.routes.js";
-
+import withdrawRouter from "./routes/withdraw.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
 
 const app = express();
 
@@ -61,6 +62,8 @@ app.use("/api/v1/event", eventRouter);
 app.use("/api/v1/conversation", conversationRouter);
 app.use("/api/v1/coupon-code", couponCodeRouter);
 app.use("/api/v1/message", messageRouter);
+app.use("/api/v1/withdraw", withdrawRouter);
+app.use("/api/v1/payment", paymentRouter);
 
 app.get("/test", (req, res) => {
   res.status(200).json({
