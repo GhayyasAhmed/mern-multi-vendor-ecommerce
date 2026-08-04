@@ -1,13 +1,20 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import errorMiddleware from "./middlewares/error.js";
-import userRouter from "./routes/user.routes.js";
-import shopRouter from "./routes/shop.routes.js";
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
 import connectCloudinary from "./config/cloudinary.js";
 import { env } from "./config/env.js";
+import errorMiddleware from "./middlewares/error.js";
 import { apiLimiter } from "./middlewares/rateLimiter.js";
+import conversationRouter from "./routes/conversation.routes.js";
+import couponCodeRouter from "./routes/couponCode.routes.js";
+import eventRouter from "./routes/event.routes.js";
+import messageRouter from "./routes/message.routes.js";
+import orderRouter from "./routes/order.routes.js";
+import productRouter from "./routes/product.routes.js";
+import shopRouter from "./routes/shop.routes.js";
+import userRouter from "./routes/user.routes.js";
+
 
 const app = express();
 
@@ -48,6 +55,12 @@ app.use((req, res, next) => {
 // API Routes
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/shop", shopRouter);
+app.use("/api/v1/product", productRouter);
+app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/event", eventRouter);
+app.use("/api/v1/conversation", conversationRouter);
+app.use("/api/v1/coupon-code", couponCodeRouter);
+app.use("/api/v1/message", messageRouter);
 
 app.get("/test", (req, res) => {
   res.status(200).json({
