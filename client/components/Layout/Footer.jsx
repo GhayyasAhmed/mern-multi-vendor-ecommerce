@@ -1,3 +1,4 @@
+// client/components/Layout/Footer.jsx
 import {
   footerCompanyLinks,
   footerProductLinks,
@@ -11,6 +12,7 @@ import {
   AiFillYoutube,
   AiOutlineTwitter,
 } from "react-icons/ai";
+import { SiVisa, SiMastercard, SiPaypal, SiStripe } from "react-icons/si";
 
 const Footer = () => {
   return (
@@ -108,16 +110,33 @@ const Footer = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 text-center pt-2 text-gray-400 text-sm pb-8 items-center px-4">
         <span>© {new Date().getFullYear()} Shopo. All rights reserved.</span>
         <span>Terms · Privacy Policy</span>
-        <div className="flex items-center justify-center w-full">
-          {/* Using unoptimized for external payment banner URL to bypass next.config domain checks */}
-          <Image
-            src="/footer-payment.webp"
-            alt="Payment Methods"
-            width={250}
-            height={30}
-            unoptimized
-            className="object-contain"
-          />
+        <div className="flex items-center justify-center gap-2 w-full">
+          {/* /footer-payment.webp was missing from public/, causing a 404.
+              Rebuilt as individual badges using the already-installed react-icons/si set. */}
+          <span
+            className="flex h-8 w-12 items-center justify-center rounded-md bg-[#003087]"
+            title="PayPal"
+          >
+            <SiPaypal size={18} className="text-white" />
+          </span>
+          <span
+            className="flex h-8 w-12 items-center justify-center rounded-md bg-[#1A1F71]"
+            title="Visa"
+          >
+            <SiVisa size={22} className="text-white" />
+          </span>
+          <span
+            className="flex h-8 w-12 items-center justify-center rounded-md bg-white border border-gray-200"
+            title="Mastercard"
+          >
+            <SiMastercard size={22} className="text-[#EB001B]" />
+          </span>
+          <span
+            className="flex h-8 w-12 items-center justify-center rounded-md bg-[#635BFF]"
+            title="Stripe"
+          >
+            <SiStripe size={18} className="text-white" />
+          </span>
         </div>
       </div>
     </footer>

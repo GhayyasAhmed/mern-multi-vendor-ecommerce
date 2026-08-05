@@ -54,7 +54,7 @@ const Header = ({ activeHeading }) => {
   return (
     <>
       <div className={`${styles.section}`}>
-        <div className="hidden 800px:h-[50px] 800px:my-[20px] 800px:flex items-center justify-between">
+        <div className="hidden 800px:h-12.5 800px:my-5 800px:flex items-center justify-between">
           <div>
             <Link href="/">
               <Image
