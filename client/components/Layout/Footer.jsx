@@ -15,6 +15,7 @@ import {
 const Footer = () => {
   return (
     <div className="bg-black text-white">
+      {/* Newsletter Section */}
       <div className="md:flex md:justify-between md:items-center sm:px-12 px-4 bg-[#342ac8] py-7">
         <h1 className="lg:text-4xl text-3xl md:mb-0 mb-6 lg:leading-normal font-semibold md:w-2/5">
           <span className="text-[#56d879]">Sub</span>scribe us for get news{" "}
@@ -33,28 +34,27 @@ const Footer = () => {
           </button>
         </div>
       </div>
+
+      {/* Main Footer Links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:px-8 px-5 py-16 sm:text-center">
         <ul className="px-5 text-center sm:text-start flex flex-col sm:block items-center">
+          {/* FIX: Serve directly from the root '/' directory */}
           <Image
-            src="https://shopo.quomodothemes.com/assets/images/logo.svg"
+            src="/svg-image-1.svg"
             alt="Logo"
             width={150}
             height={50}
-            style={{ filter: "brightness(0) invert(1)" }}
+            // className="brightness-0 invert"
           />
           <br />
           <p>The home and elements needed for create beautiful products.</p>
-          <div className="flex items-center mt-3.75">
+
+          {/* FIX: Standardized margins or used arbitrary values */}
+          <div className="flex items-center mt-4 space-x-3.5">
             <AiOutlineFacebook size={25} className="cursor-pointer" />
-            <AiOutlineTwitter
-              size={25}
-              className="ml-3.75 cursor-pointer"
-            />
-            <AiOutlineInstagram
-              size={25}
-              className="ml-3.75 cursor-pointer"
-            />
-            <AiOutlineYoutube size={25} className="ml-3.75 cursor-pointer" />
+            <AiOutlineTwitter size={25} className="cursor-pointer" />
+            <AiOutlineInstagram size={25} className="cursor-pointer" />
+            <AiOutlineYoutube size={25} className="cursor-pointer" />
           </div>
         </ul>
 
@@ -101,6 +101,7 @@ const Footer = () => {
         </ul>
       </div>
 
+      {/* Bottom Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 text-center pt-2 text-gray-400 text-sm pb-8">
         <span>© {new Date().getFullYear()} Shopo. All rights reserved.</span>
         <span>Terms · Privacy Policy</span>

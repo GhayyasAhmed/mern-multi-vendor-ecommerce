@@ -8,19 +8,20 @@ const sponsors = [
   },
   {
     name: "Dell",
-    src: "https://logos-world.net/wp-content/uploads/2020/08/Dell-Logo-1989-2010.png",
+    src: "https://logos-world.net/wp-content/uploads/2020/08/Dell-Logo-1989-2016.png",
   },
+  // https://logos-world.net/wp-content/uploads/2023/05/LG-Logo-New-500x281.png
   {
     name: "LG",
-    src: "https://upload.wikimedia.org/wikipedia/commons/2/24/LG_logo_%282015%29.svg",
+    src: "https://logos-world.net/wp-content/uploads/2023/05/LG-Logo-New-500x281.png"   
   },
   {
     name: "Apple",
-    src: "https://www.vectorlogo.zone/logos/apple/apple-ar21.png",
+    src: "https://logos-world.net/wp-content/uploads/2020/04/Apple-Logo-700x394.png"
   },
   {
     name: "Nike",
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg",
+    src: "https://logos-world.net/wp-content/uploads/2020/06/Nike-Logo.png",
   },
 ];
 

@@ -7,7 +7,7 @@ const Hero = () => {
       className={`relative min-h-[70vh] 800px:min-h-[80vh] w-full bg-no-repeat ${styles.normalFlex}`}
       style={{
         backgroundImage:
-          "url(https://repository-images.githubusercontent.com/503039908/0b686380-e71c-11ec-9111-925232a500f4)",
+          "url(https://themes.rslahmed.dev/rafcart/assets/images/banner-2.jpg)",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}

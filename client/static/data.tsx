@@ -21,16 +21,24 @@ export interface CategoryData {
 }
 
 export interface Shop {
-  _id: string;
+  _id?: string;
   name: string;
   shop_avatar: {
+    public_id?: string;
     url: string;
   };
   ratings: number;
 }
 
 export interface ProductImage {
+  public_id?: string;
   url: string;
+}
+
+export interface ProductReview {
+  user: Record<string, unknown>;
+  comment: string;
+  rating: number;
 }
 
 export interface Product {
@@ -45,6 +53,7 @@ export interface Product {
   rating: number;
   total_sell: number;
   stock: number;
+  reviews?: ProductReview[];
 }
 
 // Navigation Items
@@ -172,70 +181,69 @@ export const categoriesData: CategoryData[] = [
     title: "Computers and Laptops",
     subTitle: "",
     image_Url:
-      "https://cdn.shopify.com/s/files/1/1706/9177/products/NEWAppleMacbookProwithRetinaDisplay15_1024x1024.jpg?v=1569581963",
+      "https://cdn.shopify.com/s/files/1/1706/9177/products/NEWAppleMacbookProwithM1ProChip14InchLaptop2021ModelMKGQ3LL_A_16GB_1TBSSD_custommacbd.jpg?v=1659592838",
   },
   {
     id: 2,
-    title: "Cosmetics and Body Care",
+    title: "cosmetics and body care",
     subTitle: "",
     image_Url:
-      "https://indian-cosmetics.ru/images/product_images/popup_images/140015_0.jpg",
+      "https://indian-retailer.s3.ap-south-1.amazonaws.com/s3fs-public/2021-07/kosme1.png",
   },
   {
     id: 3,
-    title: "Accessories",
+    title: "Accesories",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-accessories_24908-55447.jpg",
+      "https://img.freepik.com/free-vector/ordering-goods-online-internet-store-online-shopping-niche-e-commerce-website-mother-buying-babies-clothes-footwear-toys-infant-accessories_335657-2345.jpg?w=2000",
   },
   {
     id: 4,
-    title: "Clothes",
+    title: "Cloths",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-clothes_24908-55430.jpg",
+      "https://www.shift4shop.com/2015/images/industries/clothing/clothing-apparel.png",
   },
   {
     id: 5,
     title: "Shoes",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-shoes_24908-55448.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvBQPQMVNRd6TtDkGs2dCri0Y-rxKkFOiEWw&usqp=CAU",
   },
   {
     id: 6,
     title: "Gifts",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-gifts_24908-55435.jpg",
+      "https://securecdn.pymnts.com/wp-content/uploads/2014/11/Gifts-Photo-700x489.jpg",
   },
   {
     id: 7,
     title: "Pet Care",
     subTitle: "",
-    image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-pet-care_24908-55452.jpg",
+    image_Url: "https://cdn.openpr.com/T/c/Tc15444071_g.jpg",
   },
   {
     id: 8,
     title: "Mobile and Tablets",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-mobile-tablets_24908-55444.jpg",
+      "https://st-troy.mncdn.com/mnresize/1500/1500/Content/media/ProductImg/original/mpwp3tua-apple-iphone-14-256gb-mavi-mpwp3tua-637986832343472449.jpg",
   },
   {
     id: 9,
     title: "Music and Gaming",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-music-gaming_24908-55445.jpg",
+      "https://static.vecteezy.com/system/resources/previews/011/996/555/original/3d-black-headphone-illustration-ecommerce-icon-png.png",
   },
   {
     id: 10,
     title: "Others",
     subTitle: "",
     image_Url:
-      "https://img.freepik.com/free-vector/set-icons-related-others_24908-55446.jpg",
+      "https://searchspring.com/wp-content/uploads/2022/10/Hero-Image-Platform-Others-2.png",
   },
 ];
 
@@ -244,130 +252,319 @@ export const productData: Product[] = [
   {
     id: 1,
     category: "Computers and Laptops",
-    name: "MacBook Pro M2 M2 Max 16-inch 2023 64 GB RAM 1TB SSD Space Gray",
+    name: "MacBook pro M2 chipset 256gb ssd 8gb ram space-gray color with apple 1 year warranty",
     description:
-      "Product details are a crucial part of any eCommerce business... Supercharged by M2 Pro or M2 Max, MacBook Pro takes its power and efficiency further than ever.",
+      "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying.",
     image_Url: [
       {
-        url: "https://m.media-amazon.com/images/I/61fd2oCrvyL._AC_SL1500_.jpg",
+        url: "https://www.istorebangladesh.com/images/thumbs/0000286_macbook-pro-m1_550.png",
       },
       {
-        url: "https://m.media-amazon.com/images/I/61fd2oCrvyL._AC_SL1500_.jpg",
+        url: "https://www.istorebangladesh.com/images/thumbs/0000286_macbook-pro-m1_550.png",
       },
     ],
     shop: {
       _id: "shop_1",
-      name: "Apple Store Official",
+      name: "Apple inc.",
       shop_avatar: {
         url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
       },
-      ratings: 4.8,
+      ratings: 4.2,
     },
     price: 1099,
-    discount_price: 999,
-    rating: 5,
+    discount_price: 1049,
+    rating: 4,
     total_sell: 35,
     stock: 10,
   },
   {
     id: 2,
     category: "Mobile and Tablets",
-    name: "IPhone 14 Pro Max 256GB Deep Purple",
+    name: "Iphone 14 pro max 256 gb ssd and 8 gb ram silver colour",
     description:
-      "Designed for durability. With Ceramic Shield, tougher than any smartphone glass. Water resistance. Surgical-grade stainless steel.",
+      "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying.",
     image_Url: [
       {
-        url: "https://m.media-amazon.com/images/I/71yzJoE7WlL._AC_SL1500_.jpg",
+        url: "https://m.media-amazon.com/images/I/31Vle5fVdaL.jpg",
+      },
+      {
+        url: "https://m.media-amazon.com/images/I/31Vle5fVdaL.jpg",
       },
     ],
     shop: {
       _id: "shop_1",
-      name: "Apple Store Official",
+      name: "Amazon Ltd",
       shop_avatar: {
         url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
       },
-      ratings: 4.8,
+      ratings: 4.2,
     },
-    price: 1299,
-    discount_price: 1199,
+    price: 1199,
+    discount_price: 1099,
     rating: 5,
     total_sell: 80,
-    stock: 15,
+    stock: 10,
   },
   {
     id: 3,
-    category: "Music and Gaming",
-    name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
+    category: "Computers and Laptops",
+    name: "MacBook pro M2 chipset 256gb ssd 8gb ram space gray color with apple 1 year warranty",
     description:
-      "Industry-leading noise cancellation two processors and 8 microphones for unprecedented noise cancellation.",
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
     image_Url: [
       {
-        url: "https://m.media-amazon.com/images/I/51SKmu235WL._AC_SL1500_.jpg",
+        public_id: "test",
+        url: "https://www.istorebangladesh.com/images/thumbs/0000286_macbook-pro-m1_550.png",
+      },
+      {
+        public_id: "test",
+        url: "https://www.istorebangladesh.com/images/thumbs/0000286_macbook-pro-m1_550.png",
       },
     ],
     shop: {
-      _id: "shop_2",
-      name: "Sony Tech Store",
+      name: "Apple inc.",
       shop_avatar: {
+        public_id: "test",
         url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
       },
-      ratings: 4.5,
+      ratings: 4.2,
     },
-    price: 399,
-    discount_price: 349,
-    rating: 4.5,
-    total_sell: 120,
-    stock: 25,
+    price: 1099,
+    discount_price: 1049,
+    rating: 4,
+    total_sell: 75,
+    stock: 10,
   },
   {
     id: 4,
-    category: "Shoes",
-    name: "Nike Air Max 270 Running Shoes for Men",
+    category: "Others",
+    name: "New Fashionable Watch for men 2023 with multiple colors",
     description:
-      "Nike's first lifestyle Air Max brings you style, comfort and big attitude in the Nike Air Max 270.",
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
     image_Url: [
       {
-        url: "https://m.media-amazon.com/images/I/71oEKkghg-L._AC_UX679_.jpg",
+        public_id: "test",
+        url: "https://i0.wp.com/eccocibd.com/wp-content/uploads/2022/01/1802NL02_1.png?fit=550%2C550&ssl=1",
+      },
+      {
+        public_id: "test",
+        url: "https://i0.wp.com/eccocibd.com/wp-content/uploads/2022/01/1802NL02_1.png?fit=550%2C550&ssl=1",
       },
     ],
     shop: {
-      _id: "shop_3",
-      name: "Nike Official Store",
+      name: "Shahriar Watch House",
       shop_avatar: {
+        public_id: "test",
         url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
       },
-      ratings: 4.7,
+      ratings: 4.2,
     },
-    price: 150,
-    discount_price: 120,
+    price: 100,
+    discount_price: 79,
     rating: 4,
-    total_sell: 95,
-    stock: 12,
+    total_sell: 12,
+    stock: 10,
   },
   {
     id: 5,
-    category: "Accessories",
-    name: "Gaming Mouse RGB Wireless 16000 DPI",
+    category: "Shoes",
+    name: "New Trend shoes for gents with all sizes",
     description:
-      "Ergonomic rechargeable wireless gaming mouse with customizable RGB lighting and programmable side buttons.",
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
     image_Url: [
       {
-        url: "https://m.media-amazon.com/images/I/61l1Ij230SL._AC_SL1500_.jpg",
+        public_id: "test",
+        url: "https://mirzacdns3.s3.ap-south-1.amazonaws.com/cache/catalog/RLV0015/2-800x800.jpg",
+      },
+      {
+        public_id: "test",
+        url: "https://mirzacdns3.s3.ap-south-1.amazonaws.com/cache/catalog/RLV0015/2-800x800.jpg",
       },
     ],
     shop: {
-      _id: "shop_4",
-      name: "Razer Official",
+      name: "Alisha Shoes Mart",
       shop_avatar: {
+        public_id: "test",
         url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
       },
-      ratings: 4.6,
+      ratings: 4.2,
     },
-    price: 79,
-    discount_price: 59,
+    price: 120,
+    discount_price: 89,
+    rating: 5,
+    total_sell: 49,
+    stock: 10,
+  },
+  {
+    id: 6,
+    category: "Music and Gaming",
+    name: "Gaming Headphone Asus with mutiple color and free delivery",
+    description:
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
+    image_Url: [
+      {
+        public_id: "test",
+        url: "https://www.startech.com.bd/image/cache/catalog/headphone/havit/h763d/h763d-02-500x500.jpg",
+      },
+      {
+        public_id: "test",
+        url: "https://eratablet.com/wp-content/uploads/2022/08/H51ba6537405f4948972e293927673546u.jpg",
+      },
+    ],
+    shop: {
+      name: "Asus Ltd",
+      shop_avatar: {
+        public_id: "test",
+        url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
+      },
+      ratings: 4.2,
+    },
+    price: 300,
+    discount_price: 239,
     rating: 4.5,
-    total_sell: 210,
-    stock: 40,
+    reviews: [
+      {
+        user: {},
+        comment: "IT's so cool!",
+        rating: 5,
+      },
+    ],
+    total_sell: 20,
+    stock: 10,
+  },
+  {
+    id: 7,
+    category: "Others",
+    name: "New Fashionable Watch for men 2023 with multiple colors",
+    description:
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
+    image_Url: [
+      {
+        public_id: "test",
+        url: "https://i0.wp.com/eccocibd.com/wp-content/uploads/2022/01/1802NL02_1.png?fit=550%2C550&ssl=1",
+      },
+      {
+        public_id: "test",
+        url: "https://i0.wp.com/eccocibd.com/wp-content/uploads/2022/01/1802NL02_1.png?fit=550%2C550&ssl=1",
+      },
+    ],
+    shop: {
+      name: "Shahriar Watch House",
+      shop_avatar: {
+        public_id: "test",
+        url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
+      },
+      ratings: 4.2,
+    },
+    price: 100,
+    discount_price: 79,
+    rating: 4,
+    total_sell: 62,
+    stock: 10,
+  },
+  {
+    id: 8,
+    category: "Music and Gaming",
+    name: "Gaming Headphone Asus with mutiple color and free delivery",
+    description:
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
+    image_Url: [
+      {
+        public_id: "test",
+        url: "https://www.startech.com.bd/image/cache/catalog/headphone/havit/h763d/h763d-02-500x500.jpg",
+      },
+      {
+        public_id: "test",
+        url: "https://eratablet.com/wp-content/uploads/2022/08/H51ba6537405f4948972e293927673546u.jpg",
+      },
+    ],
+    shop: {
+      name: "Asus Ltd",
+      shop_avatar: {
+        public_id: "test",
+        url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
+      },
+      ratings: 4.2,
+    },
+    price: 300,
+    discount_price: 239,
+    rating: 4.5,
+    reviews: [
+      {
+        user: {},
+        comment: "IT's so cool!",
+        rating: 5,
+      },
+    ],
+    total_sell: 20,
+    stock: 10,
+  },
+  {
+    id: 9,
+    category: "Mobile and Tablets",
+    name: "Iphone 14 pro max 256 gb ssd and 8 gb ram silver colour",
+    description:
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
+    image_Url: [
+      {
+        public_id: "test",
+        url: "https://m.media-amazon.com/images/I/31Vle5fVdaL.jpg",
+      },
+      {
+        public_id: "test",
+        url: "https://m.media-amazon.com/images/I/31Vle5fVdaL.jpg",
+      },
+    ],
+    shop: {
+      name: "Amazon Ltd",
+      shop_avatar: {
+        public_id: "test",
+        url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
+      },
+      ratings: 4.2,
+    },
+    price: 1199,
+    discount_price: 1099,
+    rating: 5,
+    total_sell: 20,
+    stock: 10,
+  },
+  {
+    id: 10,
+    category: "Music and Gaming",
+    name: "Gaming Headphone Asus with mutiple color and free delivery",
+    description:
+      "Product details are a crucial part of any eCommerce website or online marketplace.",
+    image_Url: [
+      {
+        public_id: "test",
+        url: "https://www.startech.com.bd/image/cache/catalog/headphone/havit/h763d/h763d-02-500x500.jpg",
+      },
+      {
+        public_id: "test",
+        url: "https://eratablet.com/wp-content/uploads/2022/08/H51ba6537405f4948972e293927673546u.jpg",
+      },
+    ],
+    shop: {
+      name: "Asus Ltd",
+      shop_avatar: {
+        public_id: "test",
+        url: "https://www.hatchwise.com/wp-content/uploads/2022/05/amazon-logo-1024x683.png",
+      },
+      ratings: 4.2,
+    },
+    price: 300,
+    discount_price: 239,
+    rating: 4.5,
+    reviews: [
+      {
+        user: {},
+        comment: "IT's so cool!",
+        rating: 5,
+      },
+    ],
+    total_sell: 20,
+    stock: 10,
   },
 ];
 
