@@ -1,11 +1,33 @@
-// import QueryProvider from "@/providers/query-provider";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Poppins, Roboto } from "next/font/google";
+import "./globals.css";
 import StoreProvider from "@/providers/store-provider";
 
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-export const metadata = {
- title:"Multi Vendor Ecommerce",
- description:
- "Marketplace platform",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const poppins = Poppins({
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-poppins",
+});
+
+const roboto = Roboto({
+  weight: ["300", "400", "500", "700", "900"],
+  subsets: ["latin"],
+  variable: "--font-roboto",
+});
+
+export const metadata: Metadata = {
+  title: "Multi Vendor Ecommerce",
+  description: "Marketplace platform",
 };
 
 export default function RootLayout({
@@ -14,12 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html>
-      <body>
-        <StoreProvider>
-          {children}
-          {/* <QueryProvider>{children}</QueryProvider> */}
-        </StoreProvider>
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased`}
+      >
+        <StoreProvider>{children}</StoreProvider>
       </body>
     </html>
   );
