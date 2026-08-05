@@ -5,8 +5,10 @@ import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 import { redis } from "./config/redis.js";
 // import { initSocketServer } from "./socketServer.js";
+import { initSocketServer } from "./socket/index.js";
 
 const server = http.createServer(app);
+const io = initSocketServer(server);
 // initSocketServer(server);
 
 console.log(
@@ -48,11 +50,22 @@ async function gracefulShutdown(signal: string): Promise<void> {
   console.log(`${signal} received. Starting graceful shutdown...`);
 
   try {
-    if (server) {
-      await new Promise<void>((resolve, reject) => {
-        server.close((err) => (err ? reject(err) : resolve()));
+    // if (server) {
+    //   await new Promise<void>((resolve, reject) => {
+    //     server.close((err) => (err ? reject(err) : resolve()));
+    //   });
+    //   console.log("HTTP server closed. No longer accepting new requests.");
+    // }
+
+    if (io) {
+      // io.close() also closes the underlying http server — calling
+      // server.close() separately here would double-close it. Websocket
+      // connections stay open past a plain server.close(), so this is
+      // needed for shutdown to actually complete instead of hanging.
+      await new Promise<void>((resolve) => {
+        io.close(() => resolve());
       });
-      console.log("HTTP server closed. No longer accepting new requests.");
+      console.log("HTTP server and Socket.IO connections closed. No longer accepting new requests.");
     }
 
     if (mongoose.connection.readyState !== 0) {
