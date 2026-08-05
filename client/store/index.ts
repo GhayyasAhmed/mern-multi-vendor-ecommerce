@@ -1,14 +1,22 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
 import { apiSlice } from "@/lib/api/apiSlice";
 
-export const makeStore = () =>
-  configureStore({
+export const makeStore = () => {
+  const store = configureStore({
     reducer: {
       [apiSlice.reducerPath]: apiSlice.reducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(apiSlice.middleware),
   });
+
+  // Enables refetchOnFocus/refetchOnReconnect for queries that opt in
+  // (used by the current-user session query).
+  setupListeners(store.dispatch);
+
+  return store;
+};
 
 export type AppStore = ReturnType<typeof makeStore>;
 export type RootState = ReturnType<AppStore["getState"]>;

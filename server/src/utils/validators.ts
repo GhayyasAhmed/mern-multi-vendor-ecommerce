@@ -115,6 +115,22 @@ const updateUserPasswordSchema = z.object({
   }),
 });
 
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string('Email is required').email('Invalid email address'),
+  }),
+});
+
+const resetPasswordSchema = z.object({
+  params: z.object({
+    token: z.string('Reset token is required'),
+  }),
+  body: z.object({
+    password: z.string('Password is required').min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string('Confirm password is required'),
+  }),
+});
+
 export const UserValidations = {
   createUserSchema,
   loginUserSchema,
@@ -122,4 +138,6 @@ export const UserValidations = {
   updateUserAvatarSchema,
   updateUserAddressesSchema,
   updateUserPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 };

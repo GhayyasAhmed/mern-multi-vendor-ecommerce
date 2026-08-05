@@ -13,7 +13,9 @@ import {
   getUserInfo,
   getAllUsersAdmin,
   deleteUserAdmin,
-  refreshAccessToken
+  refreshAccessToken,
+  forgotPassword,
+  resetPassword
 } from "../controllers/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -25,6 +27,8 @@ const userRouter = express.Router();
 userRouter.post("/create-user", authLimiter, validate(UserValidations.createUserSchema), createUser);
 userRouter.post("/activation", authLimiter, validate(activationSchema), activateUser);
 userRouter.post("/login-user", authLimiter, validate(UserValidations.loginUserSchema), loginUser);
+userRouter.post("/forgot-password", authLimiter, validate(UserValidations.forgotPasswordSchema), forgotPassword);
+userRouter.put("/reset-password/:token", authLimiter, validate(UserValidations.resetPasswordSchema), resetPassword);
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
 userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.post("/refresh-token", refreshAccessToken);

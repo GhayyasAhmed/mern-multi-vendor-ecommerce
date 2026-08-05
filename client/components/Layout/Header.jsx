@@ -17,6 +17,7 @@ import Navbar from "./Navbar";
 import Cart from "@/components/Cart/Cart";
 import Wishlist from "@/components/Wishlist/Wishlist.jsx";
 
+
 const Header = ({ activeHeading }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchData, setSearchData] = useState(null);

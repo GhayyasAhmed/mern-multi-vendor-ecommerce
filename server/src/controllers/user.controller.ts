@@ -489,3 +489,87 @@ export const deleteUserAdmin = catchAsyncErrors(
         });
     }
 );
+
+// 14. Forgot Password — issues a short-lived reset token (stored hashed on
+// the existing resetPasswordToken/resetPasswordTime fields) and emails the
+// reset link, mirroring the activation-email flow above.
+export const forgotPassword = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return next(new ErrorHandler("User not found with this email", 404));
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        await user.save({ validateBeforeSave: false });
+
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: "Password Reset Request",
+                message: `Hello ${user.name},\n\nYou requested a password reset. Click the link below to set a new password:\n\n${resetUrl}\n\nThis link will expire in 15 minutes. If you did not request this, you can safely ignore this email.`,
+            });
+
+            res.status(200).json({
+                success: true,
+                message: `A password reset link has been sent to ${user.email}`,
+            });
+        } catch (error: any) {
+            // Rollback the reset token if the email fails to send, mirroring the
+            // activation-email compensating action above.
+            user.resetPasswordToken = undefined;
+            user.resetPasswordTime = undefined;
+            await user.save({ validateBeforeSave: false });
+            return next(new ErrorHandler(error.message || "Failed to send reset email", 500));
+        }
+    }
+);
+
+// 15. Reset Password — consumes the token issued above and sets a new password.
+export const resetPassword = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const { token } = req.params;
+        const { password, confirmPassword } = req.body;
+
+        if (password !== confirmPassword) {
+            return next(new ErrorHandler("Passwords do not match!", 400));
+        }
+
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordTime: { $gt: new Date() },
+        }).select("+resetPasswordToken +resetPasswordTime");
+
+        if (!user) {
+            return next(new ErrorHandler("Reset password link is invalid or has expired", 400));
+        }
+
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordTime = undefined;
+
+        await user.save();
+
+        // Invalidate any existing session so a leaked/old session can't
+        // survive a password reset — same mechanism logoutUser uses.
+        await redis.del(user._id.toString());
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully! You can now log in with your new password.",
+        });
+    }
+);
