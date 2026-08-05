@@ -1,4 +1,6 @@
-import QueryProvider from "@/providers/query-provider";
+// import QueryProvider from "@/providers/query-provider";
+import StoreProvider from "@/providers/store-provider";
+
 
 export const metadata = {
  title:"Multi Vendor Ecommerce",
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html>
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <StoreProvider>
+          {children}
+          {/* <QueryProvider>{children}</QueryProvider> */}
+        </StoreProvider>
       </body>
     </html>
   );
