@@ -31,7 +31,7 @@ userRouter.post("/forgot-password", authLimiter, validate(UserValidations.forgot
 userRouter.put("/reset-password/:token", authLimiter, validate(UserValidations.resetPasswordSchema), resetPassword);
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
 userRouter.post("/logout", isAuthenticated, logoutUser);
-userRouter.post("/refresh-token", refreshAccessToken);
+userRouter.post("/refresh-token", authLimiter, refreshAccessToken);
 userRouter.put("/update-user-info", isAuthenticated, validate(UserValidations.updateUserInfoSchema), updateUserInfo);
 userRouter.put("/update-avatar", isAuthenticated, validate(UserValidations.updateUserAvatarSchema), updateUserAvatar);
 userRouter.put("/update-user-addresses", isAuthenticated, validate(UserValidations.updateUserAddressesSchema), updateUserAddresses);
