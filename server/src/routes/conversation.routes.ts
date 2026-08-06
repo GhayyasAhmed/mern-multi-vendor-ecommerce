@@ -5,21 +5,25 @@ import {
   getUserAllConversations,
   updateLastMessage,
 } from "../controllers/conversation.controller.js";
-import { isAuthenticated, isSeller } from "../middlewares/auth.js";
+import { isAuthenticated, isSeller, attachIdentity } from "../middlewares/auth.js";
+import validate from "../middlewares/validate.js";
+import { ConversationValidations } from "../utils/validators.js";
 
 const conversationRouter = express.Router();
 
-conversationRouter.post("/create-new-conversation", createNewConversation);
-conversationRouter.get(
-  "/get-all-conversation-seller/:id",
-  isSeller,
-  getSellerAllConversations
-);
-conversationRouter.get(
-  "/get-all-conversation-user/:id",
+conversationRouter.post(
+  "/create-new-conversation",
   isAuthenticated,
-  getUserAllConversations
+  validate(ConversationValidations.createConversationSchema),
+  createNewConversation
 );
-conversationRouter.put("/update-last-message/:id", updateLastMessage);
+conversationRouter.get("/get-all-conversation-seller/:id", isSeller, getSellerAllConversations);
+conversationRouter.get("/get-all-conversation-user/:id", isAuthenticated, getUserAllConversations);
+conversationRouter.put(
+  "/update-last-message/:id",
+  attachIdentity,
+  validate(ConversationValidations.updateLastMessageSchema),
+  updateLastMessage
+);
 
 export default conversationRouter;

@@ -1,112 +1,167 @@
 import { Request, Response, NextFunction } from "express";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import ConversationModel from "../models/conversation.model.js";
+import ConversationModel, { IConversation } from "../models/conversation.model.js";
+import ShopModel from "../models/shop.model.js";
 
-// create a new conversation
+const getUnreadCount = (conversation: IConversation, memberId: string): number => {
+  const unreadCounts = conversation.unreadCounts;
+  if (!unreadCounts) return 0;
+  if (unreadCounts instanceof Map) return unreadCounts.get(memberId) || 0;
+  return (unreadCounts as unknown as Record<string, number>)[memberId] || 0;
+};
+
+const decorateForMember = (conversation: IConversation, memberId: string) => {
+  const plain: any =
+    typeof (conversation as any).toObject === "function"
+      ? (conversation as any).toObject({ flattenMaps: true })
+      : conversation;
+  const unreadCount = getUnreadCount(conversation, memberId);
+  const { unreadCounts, ...rest } = plain;
+  return { ...rest, unreadCount };
+};
+
+// create (or reuse) a conversation between the authenticated user and a shop
 export const createNewConversation = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { groupTitle, userId, sellerId } = req.body;
-
-      const isConversationExist = await ConversationModel.findOne({ groupTitle });
-
-      if (isConversationExist) {
-        res.status(201).json({
-          success: true,
-          conversation: isConversationExist,
-        });
-      } else {
-        const conversation = await ConversationModel.create({
-          members: [userId, sellerId],
-          groupTitle,
-        });
-
-        res.status(201).json({
-          success: true,
-          conversation,
-        });
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!req.user) {
+      return next(new ErrorHandler("Please login to start a conversation", 401));
     }
+
+    const { sellerId } = req.body;
+
+    const shop = await ShopModel.findById(sellerId);
+
+    if (!shop) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    const userId = String(req.user._id);
+    const groupTitle = `${userId}_${String(shop._id)}`;
+
+    let conversation = await ConversationModel.findOne({ groupTitle });
+
+    if (!conversation) {
+      const conversationData = {
+        members: [userId, String(shop._id)],
+        groupTitle,
+        userId,
+        sellerId: String(shop._id),
+        user: {
+          id: userId,
+          name: req.user.name,
+          avatar: req.user.avatar?.url,
+        },
+        seller: {
+          id: String(shop._id),
+          name: shop.name,
+          avatar: shop.avatar?.url,
+        },
+      };
+
+      try {
+        conversation = await ConversationModel.create(conversationData);
+      } catch (error: any) {
+        if (error?.code === 11000) {
+          conversation = await ConversationModel.findOne({ groupTitle });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    if (!conversation) {
+      return next(new ErrorHandler("Could not start conversation", 500));
+    }
+
+    res.status(201).json({
+      success: true,
+      conversation: decorateForMember(conversation, userId),
+    });
   }
 );
 
 // get seller conversations
 export const getSellerAllConversations = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const sellerId = req.params.id as string;
-
-      const conversations = await ConversationModel.find({
-        members: {
-          $in: [sellerId],
-        },
-      }).sort({ updatedAt: -1, createdAt: -1 });
-
-      res.status(201).json({
-        success: true,
-        conversations,
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!req.seller) {
+      return next(new ErrorHandler("Please login to view your conversations", 401));
     }
+
+    const sellerId = String(req.seller._id);
+
+    if (req.params.id && req.params.id !== sellerId) {
+      return next(new ErrorHandler("You are not authorized to view these conversations", 403));
+    }
+
+    const conversations = await ConversationModel.find({
+      members: { $in: [sellerId] },
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      conversations: conversations.map((c) => decorateForMember(c, sellerId)),
+    });
   }
 );
 
 // get user conversations
 export const getUserAllConversations = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userId = req.params.id as string;
-
-      const conversations = await ConversationModel.find({
-        members: {
-          $in: [userId],
-        },
-      }).sort({ updatedAt: -1, createdAt: -1 });
-
-      res.status(201).json({
-        success: true,
-        conversations,
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!req.user) {
+      return next(new ErrorHandler("Please login to view your conversations", 401));
     }
+
+    const userId = String(req.user._id);
+
+    if (req.params.id && req.params.id !== userId) {
+      return next(new ErrorHandler("You are not authorized to view these conversations", 403));
+    }
+
+    const conversations = await ConversationModel.find({
+      members: { $in: [userId] },
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      conversations: conversations.map((c) => decorateForMember(c, userId)),
+    });
   }
 );
 
-// update the last message
+// update the last message preview of a conversation the requester belongs to
 export const updateLastMessage = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { lastMessage, lastMessageId } = req.body;
-      const conversationId = req.params.id as string;
+    const identityId = req.user?._id
+      ? String(req.user._id)
+      : req.seller?._id
+        ? String(req.seller._id)
+        : undefined;
 
-      const conversation = await ConversationModel.findByIdAndUpdate(
-        conversationId,
-        {
-          lastMessage,
-          lastMessageId,
-        },
-        { new: true }
-      );
-
-      if (!conversation) {
-        return next(new ErrorHandler("Conversation not found with this id", 404));
-      }
-
-      res.status(201).json({
-        success: true,
-        conversation,
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!identityId) {
+      return next(new ErrorHandler("Please login to access this resource", 401));
     }
+
+    const { lastMessage, lastMessageId } = req.body;
+    const conversationId = req.params.id as string;
+
+    const conversation = await ConversationModel.findById(conversationId);
+
+    if (!conversation) {
+      return next(new ErrorHandler("Conversation not found with this id", 404));
+    }
+
+    if (!conversation.members.map(String).includes(identityId)) {
+      return next(new ErrorHandler("You are not a participant of this conversation", 403));
+    }
+
+    conversation.lastMessage = lastMessage;
+    conversation.lastMessageId = lastMessageId;
+    await conversation.save();
+
+    res.status(200).json({
+      success: true,
+      conversation: decorateForMember(conversation, identityId),
+    });
   }
 );

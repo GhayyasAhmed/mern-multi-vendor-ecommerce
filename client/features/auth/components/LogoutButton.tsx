@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLogoutUserMutation } from "../authApiSlice";
 import { getErrorMessage } from "../utils";
+import { disconnectSocket } from "@/lib/socket";
 
 interface LogoutButtonProps {
   className?: string;
@@ -19,6 +20,7 @@ export default function LogoutButton({ className, onLoggedOut }: LogoutButtonPro
     setError(null);
     try {
       await logoutUser().unwrap();
+      disconnectSocket();
       onLoggedOut?.();
       router.push("/login");
       router.refresh();

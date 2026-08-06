@@ -270,3 +270,39 @@ const createEventSchema = z.object({
 export const EventValidations = {
   createEventSchema,
 };
+
+
+const createConversationSchema = z.object({
+  body: z.object({
+    sellerId: z.string('Seller id is required'),
+  }),
+});
+
+const updateLastMessageSchema = z.object({
+  body: z.object({
+    lastMessage: z.string('Last message is required'),
+    lastMessageId: z.string('Last message id is required'),
+  }),
+});
+
+export const ConversationValidations = {
+  createConversationSchema,
+  updateLastMessageSchema,
+};
+
+const createMessageSchema = z.object({
+  body: z
+    .object({
+      conversationId: z.string('Conversation id is required'),
+      text: z.string().optional(),
+      images: z.string().optional(),
+    })
+    .refine((data) => Boolean(data.text?.trim()) || Boolean(data.images), {
+      message: 'Message must contain text or an image',
+      path: ['text'],
+    }),
+});
+
+export const MessageValidations = {
+  createMessageSchema,
+};

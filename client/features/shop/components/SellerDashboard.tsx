@@ -1,33 +1,36 @@
 "use client";
 
+import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
+import {
+  useCreateEventMutation,
+  useDeleteEventMutation,
+  useGetShopEventsQuery,
+} from "@/features/events/eventApiSlice";
+import {
+  useCreateProductMutation,
+  useDeleteProductMutation,
+  useGetShopProductsQuery,
+} from "@/features/products/productApiSlice";
+import styles from "@/styles/styles";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import styles from "@/styles/styles";
-import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
 import { useUpdateSellerInfoMutation, useUpdateShopAvatarMutation } from "../shopApiSlice";
 import {
-  useGetShopProductsQuery,
-  useCreateProductMutation,
-  useDeleteProductMutation,
-} from "@/features/products/productApiSlice";
-import {
-  useGetShopEventsQuery,
-  useCreateEventMutation,
-  useDeleteEventMutation,
-} from "@/features/events/eventApiSlice";
-import ShopLogoutButton from "./ShopLogoutButton";
-import {
-  productFormSchema,
   eventFormSchema,
-  type ProductFormValues,
+  productFormSchema,
   type EventFormValues,
+  type ProductFormValues,
 } from "../validators";
+import ShopLogoutButton from "./ShopLogoutButton";
+import InboxPanel from "@/components/Inbox/InboxPanel";
 
-type Tab = "profile" | "products" | "events";
+
+type Tab = "profile" | "products" | "events" | "messages"
+
 
 export default function SellerDashboard() {
   const { seller } = useCurrentSeller();
@@ -61,7 +64,7 @@ export default function SellerDashboard() {
 
       <div className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b mb-6">
-          {(["profile", "products", "events"] as Tab[]).map((t) => (
+          {(["profile", "products", "events", "messages"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -78,9 +81,14 @@ export default function SellerDashboard() {
         {tab === "profile" && <ProfilePanel />}
         {tab === "products" && <ProductsPanel shopId={seller._id} />}
         {tab === "events" && <EventsPanel shopId={seller._id} />}
+        {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
       </div>
     </div>
   );
+}
+
+function MessagesPanel({ sellerId }: { sellerId: string }) {
+  return <InboxPanel role="seller" identityId={sellerId} />;
 }
 
 function ProfilePanel() {

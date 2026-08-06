@@ -1,27 +1,33 @@
 "use client";
-import { useState } from "react";
+import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
+import ProductCard from "@/components/Route/ProductCard/ProductCard";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
+import {
+  useGetProductByIdQuery,
+  useGetRelatedProductsQuery,
+} from "@/features/products/productApiSlice";
+import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   AiFillHeart,
   AiOutlineHeart,
   AiOutlineMessage,
   AiOutlineShoppingCart,
 } from "react-icons/ai";
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
-import ProductCard from "@/components/Route/ProductCard/ProductCard";
-import styles from "@/styles/styles";
-import {
-  useGetProductByIdQuery,
-  useGetRelatedProductsQuery,
-} from "@/features/products/productApiSlice";
-import { getErrorMessage } from "@/features/auth/utils";
 
 const ProductDetails = ({ productId }) => {
   const [count, setCount] = useState(1);
   const [click, setClick] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const [createConversation, { isLoading: isStartingChat }] = useCreateConversationMutation();
 
   const {
     data: productData,
@@ -43,8 +49,20 @@ const ProductDetails = ({ productId }) => {
   };
   const incrementCount = () => setCount(count + 1);
 
-  const handleMessageSubmit = () => {
-    // Message handler logic
+  const handleMessageSubmit = async () => {
+    if (!product?.shop?._id) return;
+
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/product/${productId}`)}`);
+      return;
+    }
+
+    try {
+      const result = await createConversation({ sellerId: product.shop._id }).unwrap();
+      router.push(`/inbox?conversation=${result.conversation._id}`);
+    } catch {
+      // Best-effort: the user can retry from the product page if this fails.
+    }
   };
 
   if (isLoading) {
@@ -130,11 +148,12 @@ const ProductDetails = ({ productId }) => {
             </div>
 
             <button
-              className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer"
+              className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
               onClick={handleMessageSubmit}
+              disabled={isStartingChat}
             >
               <span className="text-white flex items-center">
-                Send Message <AiOutlineMessage className="ml-1" />
+                {isStartingChat ? "Starting chat..." : "Send Message"} <AiOutlineMessage className="ml-1" />
               </span>
             </button>
 

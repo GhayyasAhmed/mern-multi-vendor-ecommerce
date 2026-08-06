@@ -10,6 +10,7 @@ export interface IMessage extends Document {
   text?: string;
   sender?: string;
   images?: IMessageImage;
+  seen: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,11 +34,16 @@ const messageSchema: Schema<IMessage> = new mongoose.Schema(
         type: String,
       },
     },
+    seen: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );
 
 messageSchema.index({ conversationId: 1 });
+messageSchema.index({ conversationId: 1, seen: 1 });
 
 const MessageModel = mongoose.model<IMessage>("Messages", messageSchema);
 
