@@ -44,7 +44,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
             <div className="w-full md:w-1/2">
               <div className="relative w-full h-75">
                 <Image
-                  src={data?.image_Url?.[0]?.url || "/placeholder.png"}
+                  src={data?.images?.[0]?.url || "/placeholder.png"}
                   alt={data?.name || "Product Image"}
                   fill
                   className="object-contain"
@@ -57,9 +57,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                 >
                   <div className="relative w-12.5 h-12.5 rounded-full overflow-hidden mr-2">
                     <Image
-                      src={
-                        data?.shop?.shop_avatar?.url || "/placeholder.png"
-                      }
+                      src={data?.shop?.avatar?.url || "/placeholder.png"}
                       alt={data?.shop?.name || "Shop Avatar"}
                       fill
                       className="object-cover"
@@ -86,7 +84,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </button>
 
               <h5 className="text-[16px] text-red-500 mt-5 font-Roboto">
-                ({data?.total_sell || 0}) Sold
+                ({data?.sold_out  || 0}) Sold
               </h5>
             </div>
 
@@ -100,12 +98,12 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </p>
 
               <div className="flex pt-3">
-                <h4 className={`${styles.productDiscountPrice}`}>
-                  {data?.discount_price}$
+                 <h4 className={`${styles.productDiscountPrice}`}>
+                  {data?.discountPrice}$
                 </h4>
-                <h3 className={`${styles.price}`}>
-                  {data?.price ? data.price + "$" : null}
-                </h3>
+                {data?.originalPrice ? (
+                  <h3 className={`${styles.price}`}>{data.originalPrice}$</h3>
+                ) : null}
               </div>
 
               <div className="flex items-center mt-12 justify-between pr-3">

@@ -1,21 +1,35 @@
 "use client";
-import { productData } from "@/static/data";
+import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
 import styles from "@/styles/styles";
 import ProductCard from "../ProductCard/ProductCard";
 
 const FeaturedProduct = () => {
+  const { data, isLoading, isError } = useGetAllProductsQuery({
+    limit: 10,
+    sortBy: "newest",
+  });
+
+  const products = data?.products ?? [];
+
   return (
     <div>
       <div className={`${styles.section}`}>
         <div className={`${styles.heading}`}>
           <h1>Featured Products</h1>
         </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">
-          {productData &&
-            productData.map((i, index) => (
-              <ProductCard data={i} key={i.id || index} />
+        {isLoading ? (
+          <p className="text-center text-[15px] text-[#00000082] pb-12">Loading featured products...</p>
+        ) : isError ? (
+          <p className="text-center text-[15px] text-red-500 pb-12">Could not load featured products.</p>
+        ) : products.length === 0 ? (
+          <p className="text-center text-[15px] text-[#00000082] pb-12">No products available yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">
+            {products.map((product) => (
+              <ProductCard data={product} key={product._id} />
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -131,6 +131,36 @@ const resetPasswordSchema = z.object({
   }),
 });
 
+
+const createProductSchema = z.object({
+  body: z.object({
+    name: z.string('Please enter your product name!'),
+    description: z.string('Please enter your product description!'),
+    category: z.string('Please enter your product category!'),
+    tags: z.string().optional(),
+    originalPrice: z.number().optional(),
+    discountPrice: z.number({ message: 'Please enter your product price!' }),
+    stock: z.number({ message: 'Please enter your product stock!' }),
+    images: z.union([z.string(), z.array(z.string())]),
+    shopId: z.string('Shop id is required'),
+  }),
+});
+
+const createReviewSchema = z.object({
+  body: z.object({
+    user: z.union([z.string(), z.record(z.string(), z.unknown())]),
+    rating: z.number({ message: 'Rating is required' }).min(1).max(5),
+    comment: z.string().optional(),
+    productId: z.string('Product id is required'),
+    orderId: z.string('Order id is required'),
+  }),
+});
+
+export const ProductValidations = {
+  createProductSchema,
+  createReviewSchema,
+};
+
 export const UserValidations = {
   createUserSchema,
   loginUserSchema,

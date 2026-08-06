@@ -50,3 +50,37 @@ export type IApiError = {
   success: false;
   message: string;
 };
+
+
+export interface IProductImage {
+  public_id: string;
+  url: string;
+}
+
+export interface IProductReview {
+  _id?: string;
+  user: Record<string, unknown> | string;
+  rating: number;
+  comment?: string;
+  productId: string;
+  createdAt?: string;
+}
+
+export interface IProduct {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  tags?: string;
+  originalPrice?: number;
+  discountPrice: number;
+  stock: number;
+  images: IProductImage[];
+  reviews?: IProductReview[];
+  ratings?: number;
+  shopId: string;
+  shop: IShop;
+  sold_out?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

@@ -3,7 +3,9 @@ import Cart from "@/components/Cart/Cart";
 import Wishlist from "@/components/Wishlist/Wishlist.jsx";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
-import { categoriesData, productData } from "@/static/data";
+import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
+import { useDebounce } from "@/hooks/use-debounce";
+import { categoriesData } from "@/static/data";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,7 +24,7 @@ import Navbar from "./Navbar";
 
 const Header = ({ activeHeading }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchData, setSearchData] = useState(null);
+  // const [searchData, setSearchData] = useState(null);
   const [active, setActive] = useState(false);
   const [dropDown, setDropDown] = useState(false);
   const [openCart, setOpenCart] = useState(false);
@@ -35,16 +37,17 @@ const Header = ({ activeHeading }) => {
   // subscription — no extra network request is triggered here.
   const { user, isAuthenticated, isLoading } = useCurrentUser();
 
-  const handleSearchChange = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
+  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 300);
+  const { data: searchResults, isFetching: isSearching } = useGetAllProductsQuery(
+    { search: debouncedSearchTerm, limit: 8 },
+    { skip: debouncedSearchTerm.length < 2 }
+  );
+  const searchData = debouncedSearchTerm.length < 2 ? null : searchResults?.products ?? [];
 
-    const filteredProducts =
-      productData &&
-      productData.filter((product) =>
-        product.name.toLowerCase().includes(term.toLowerCase())
-      );
-    setSearchData(filteredProducts);
+
+  const handleSearchChange = (e) => {
+    // const term = e.target.value;
+    setSearchTerm(e.target.value);
   };
 
   useEffect(() => {
@@ -97,26 +100,28 @@ const Header = ({ activeHeading }) => {
               size={30}
               className="absolute right-2 top-1.5 cursor-pointer"
             />
-            {searchData && searchData.length !== 0 ? (
+            {searchData !== null ? (
               <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-9 p-4 w-full left-0 top-11.25">
-                {searchData.map((i, index) => {
-                  const d = i.name;
-                  const Product_name = d.replace(/\s+/g, "-");
-                  return (
-                    <Link href={`/product/${Product_name}`} key={index}>
+                {isSearching ? (
+                  <p className="text-sm text-gray-500 px-2 py-3">Searching...</p>
+                ) : searchData.length === 0 ? (
+                  <p className="text-sm text-gray-500 px-2 py-3">No products found.</p>
+                ) : (
+                  searchData.map((product) => (
+                    <Link href={`/product/${product._id}`} key={product._id}>
                       <div className="w-full flex items-start py-3">
                         <Image
-                          src={i.image_Url[0]?.url}
-                          alt={i.name || "Product image"}
+                          src={product.images?.[0]?.url || "/placeholder.png"}
+                          alt={product.name || "Product image"}
                           width={40}
                           height={40}
                           className="w-10 h-10 mr-2.5 object-cover"
                         />
-                        <h1>{i.name}</h1>
+                        <h1>{product.name}</h1>
                       </div>
                     </Link>
-                  );
-                })}
+                  ))
+                )}
               </div>
             ) : null}
           </div>
@@ -321,26 +326,28 @@ const Header = ({ activeHeading }) => {
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
-              {searchData && searchData.length !== 0 ? (
+              {searchData !== null ? (
                 <div className="absolute bg-white z-10 shadow w-full left-0 p-3 top-11.25">
-                  {searchData.map((i, index) => {
-                    const d = i.name;
-                    const Product_name = d.replace(/\s+/g, "-");
-                    return (
-                      <Link href={`/product/${Product_name}`} key={index}>
+                  {isSearching ? (
+                    <p className="text-sm text-gray-500 px-2 py-2">Searching...</p>
+                  ) : searchData.length === 0 ? (
+                    <p className="text-sm text-gray-500 px-2 py-2">No products found.</p>
+                  ) : (
+                    searchData.map((product) => (
+                      <Link href={`/product/${product._id}`} key={product._id}>
                         <div className="flex items-center py-2">
                           <Image
-                            src={i.image_Url[0]?.url}
-                            alt={i.name || "Product image"}
+                            src={product.images?.[0]?.url || "/placeholder.png"}
+                            alt={product.name || "Product image"}
                             width={30}
                             height={30}
                             className="w-7.5 h-7.5 mr-2 object-cover"
                           />
-                          <h5>{i.name}</h5>
+                          <h5>{product.name}</h5>
                         </div>
                       </Link>
-                    );
-                  })}
+                    ))
+                  )}
                 </div>
               ) : null}
             </div>

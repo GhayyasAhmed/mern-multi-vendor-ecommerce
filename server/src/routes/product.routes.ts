@@ -4,18 +4,34 @@ import {
   getAllProductsShop,
   deleteProduct,
   getAllProducts,
+  getProductById,
+  getRelatedProducts,
   createNewReview,
   getAdminAllProducts,
 } from "../controllers/product.controller.js";
 import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
+import validate from "../middlewares/validate.js";
+import { ProductValidations } from "../utils/validators.js";
 
 const productRouter = express.Router();
 
-productRouter.post("/create-product", isSeller, createProduct);
+productRouter.post(
+  "/create-product",
+  isSeller,
+  validate(ProductValidations.createProductSchema),
+  createProduct
+);
 productRouter.get("/get-all-products-shop/:id", getAllProductsShop);
 productRouter.delete("/delete-shop-product/:id", isSeller, deleteProduct);
 productRouter.get("/get-all-products", getAllProducts);
-productRouter.put("/create-new-review", isAuthenticated, createNewReview);
+productRouter.get("/get-product/:id", getProductById);
+productRouter.get("/get-related-products/:id", getRelatedProducts);
+productRouter.put(
+  "/create-new-review",
+  isAuthenticated,
+  validate(ProductValidations.createReviewSchema),
+  createNewReview
+);
 
 // admin routes
 productRouter.get(

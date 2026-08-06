@@ -124,20 +124,96 @@ export const deleteProduct = catchAsyncErrors(
   }
 );
 
-// get all products
+// get all products (with pagination, category filter, search, sorting)
 export const getAllProducts = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const products = await ProductModel.find().sort({ createdAt: -1 });
+      const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 12, 1), 50);
+      const category = req.query.category as string | undefined;
+      const search = req.query.search as string | undefined;
+      const sortBy = (req.query.sortBy as string) || "newest";
 
-      res.status(201).json({
+      const filter: Record<string, any> = {};
+      if (category) {
+        filter.category = category;
+      }
+      if (search) {
+        filter.name = { $regex: search, $options: "i" };
+      }
+
+      const sortOptions: Record<string, Record<string, 1 | -1>> = {
+        newest: { createdAt: -1 },
+        oldest: { createdAt: 1 },
+        "best-selling": { sold_out: -1 },
+        "price-low": { discountPrice: 1 },
+        "price-high": { discountPrice: -1 },
+      };
+      const sort = sortOptions[sortBy] || sortOptions.newest;
+
+      const [products, totalProducts] = await Promise.all([
+        ProductModel.find(filter)
+          .sort(sort)
+          .skip((page - 1) * limit)
+          .limit(limit),
+        ProductModel.countDocuments(filter),
+      ]);
+
+      res.status(200).json({
         success: true,
         products,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.max(Math.ceil(totalProducts / limit), 1),
+          totalProducts,
+          limit,
+        },
       });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       return next(new ErrorHandler(message, 400));
     }
+  }
+);
+
+// get single product by id
+export const getProductById = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const product = await ProductModel.findById(req.params.id);
+
+    if (!product) {
+      return next(new ErrorHandler("Product not found with this id", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      product,
+    });
+  }
+);
+
+// get related products (same category, excluding current product)
+export const getRelatedProducts = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const product = await ProductModel.findById(req.params.id).select("category");
+
+    if (!product) {
+      return next(new ErrorHandler("Product not found with this id", 404));
+    }
+
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 4, 1), 20);
+
+    const relatedProducts = await ProductModel.find({
+      category: product.category,
+      _id: { $ne: product._id },
+    })
+      .sort({ sold_out: -1, createdAt: -1 })
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      products: relatedProducts,
+    });
   }
 );
 

@@ -117,6 +117,7 @@ const productSchema = new Schema<IProduct>(
 );
 
 productSchema.index({ shopId: 1 });
+productSchema.index({ category: 1 });
 
 const ProductModel: Model<IProduct> = mongoose.model<IProduct>("Product", productSchema);
 

@@ -17,7 +17,7 @@ const ProductCard = ({ data }) => {
   const [click, setClick] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const productName = data?.name ? data.name.replace(/\s+/g, "-") : "";
+  // const productName = data?.name ? data.name.replace(/\s+/g, "-") : "";
 
   return (
     <>
@@ -41,9 +41,9 @@ const ProductCard = ({ data }) => {
             />
           )}
         </div>
-        <Link href={`/product/${productName}`}>
+        <Link href={`/product/${data?._id}`}>
           <Image
-            src={data?.image_Url?.[0]?.url || "/placeholder.png"}
+            src={data?.images?.[0]?.url || "/placeholder.png"}
             alt={data?.name || "Product image"}
             width={300}
             height={170}
@@ -53,7 +53,7 @@ const ProductCard = ({ data }) => {
         <Link href={`/shop/preview/${data?.shop?._id}`}>
           <h5 className={`${styles.shop_name}`}>{data?.shop?.name}</h5>
         </Link>
-        <Link href={`/product/${productName}`}>
+        <Link href={`/product/${data?._id}`}>
           <h4 className="pb-3 font-medium">
             {data?.name?.length > 40
               ? data.name.slice(0, 40) + "..."
@@ -61,24 +61,26 @@ const ProductCard = ({ data }) => {
           </h4>
 
           <div className="flex">
-            <AiFillStar className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-            <AiFillStar className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-            <AiFillStar className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-            <AiFillStar className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-            <AiOutlineStar className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
+            {Array.from({ length: 5 }).map((_, index) =>
+              index < Math.round(data?.ratings || 0) ? (
+                <AiFillStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
+              ) : (
+                <AiOutlineStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
+              )
+            )}
           </div>
 
           <div className="py-2 flex items-center justify-between">
             <div className="flex">
               <h5 className={`${styles.productDiscountPrice}`}>
-                {data?.price === 0 ? data?.price : data?.discount_price}$
+                {data?.discountPrice}$
               </h5>
-              <h4 className={`${styles.price}`}>
-                {data?.price ? data.price + "$" : null}
-              </h4>
+              {data?.originalPrice ? (
+                <h4 className={`${styles.price}`}>{data.originalPrice}$</h4>
+              ) : null}
             </div>
             <span className="font-normal text-[17px] text-[#68d8d4]">
-              {data?.total_sell} sold
+              {data?.sold_out || 0} sold
             </span>
           </div>
         </Link>
