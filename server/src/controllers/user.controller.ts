@@ -186,7 +186,11 @@ export const loginUser = catchAsyncErrors(
 // 4. Get Authenticated User Details
 export const getUserDetails = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const user = await User.findById((req as any).user._id);
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User doesn't exist", 400));
+        }
+
+        const user = await User.findById(req.user._id);
 
         if (!user) {
             return next(new ErrorHandler("User doesn't exist", 400));
@@ -202,7 +206,7 @@ export const getUserDetails = catchAsyncErrors(
 // 5. Logout User
 export const logoutUser = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const userId = (req as any).user?._id;
+        const userId = req.user?._id;
 
         res.cookie("accessToken", "", {
             expires: new Date(Date.now()),
@@ -227,7 +231,6 @@ export const logoutUser = catchAsyncErrors(
         });
     }
 );
-
 
 export const refreshAccessToken = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -319,7 +322,11 @@ export const updateUserInfo = catchAsyncErrors(
 // 7. Update User Avatar
 export const updateUserAvatar = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        let existsUser = await User.findById((req as any).user._id);
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        let existsUser = await User.findById(req.user._id);
 
         if (!existsUser) {
             return next(new ErrorHandler("User not found", 404));
@@ -353,7 +360,11 @@ export const updateUserAvatar = catchAsyncErrors(
 // 8. Update User Addresses
 export const updateUserAddresses = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const user = await User.findById((req as any).user._id);
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const user = await User.findById(req.user._id);
 
         if (!user) {
             return next(new ErrorHandler("User not found", 404));
@@ -391,7 +402,11 @@ export const updateUserAddresses = catchAsyncErrors(
 // 9. Delete User Address
 export const deleteUserAddress = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const userId = (req as any).user._id;
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const userId = req.user._id;
         const addressId = req.params.id;
 
         await User.updateOne(
@@ -408,7 +423,11 @@ export const deleteUserAddress = catchAsyncErrors(
 // 10. Update User Password
 export const updateUserPassword = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const user = await User.findById((req as any).user._id).select("+password");
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const user = await User.findById(req.user._id).select("+password");
 
         if (!user) {
             return next(new ErrorHandler("User not found", 404));
@@ -539,18 +558,16 @@ export const forgotPassword = catchAsyncErrors(
 // 15. Reset Password — consumes the token issued above and sets a new password.
 export const resetPassword = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { token } = req.params;
         const { password, confirmPassword } = req.body;
 
         if (password !== confirmPassword) {
             return next(new ErrorHandler("Passwords do not match!", 400));
         }
 
-       const hashedToken = crypto
-  .createHash("sha256")
-  .update(String(req.params.token || ""))
-  .digest("hex");
-
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(String(req.params.token || ""))
+            .digest("hex");
 
         const user = await User.findOne({
             resetPasswordToken: hashedToken,

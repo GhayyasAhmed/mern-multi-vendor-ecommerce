@@ -27,7 +27,6 @@ export interface IShopActivationRequest {
   };
 }
 
-
 const refreshSellerSession = async (shop: any): Promise<void> => {
   const sanitized = typeof shop.toJSON === "function" ? shop.toJSON() : shop;
   await redis.set(
@@ -181,7 +180,11 @@ export const loginShop = catchAsyncErrors(
 // 5. Get Logged-In Seller Details
 export const getSellerDetails = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const seller = await Shop.findById(req.seller?._id);
+    if (!req.seller?._id) {
+      return next(new ErrorHandler("Seller not found", 400));
+    }
+
+    const seller = await Shop.findById(req.seller._id);
 
     if (!seller) {
       return next(new ErrorHandler("Seller not found", 400));
@@ -211,10 +214,11 @@ export const getShopInfo = catchAsyncErrors(
     });
   }
 );
+
 // 7. Logout Shop
 export const logoutShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const sellerId = (req as any).seller?._id;
+    const sellerId = req.seller?._id;
 
     res.cookie("seller_token", "", {
       expires: new Date(Date.now()),
@@ -237,7 +241,11 @@ export const logoutShop = catchAsyncErrors(
 // 8. Update Shop Avatar
 export const updateShopAvatar = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const existingShop = await Shop.findById(req.seller?._id);
+    if (!req.seller?._id) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    const existingShop = await Shop.findById(req.seller._id);
 
     if (!existingShop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -270,7 +278,11 @@ export const updateSellerInfo = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { name, description, address, phoneNumber, zipCode } = req.body;
 
-    const shop = await Shop.findById(req.seller?._id);
+    if (!req.seller?._id) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    const shop = await Shop.findById(req.seller._id);
 
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -292,14 +304,17 @@ export const updateSellerInfo = catchAsyncErrors(
   }
 );
 
-// --- replace updatePaymentMethods ---
 // 10. Update Payment/Withdraw Methods
 export const updatePaymentMethods = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { withdrawMethod } = req.body;
 
+    if (!req.seller?._id) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
     const shop = await Shop.findByIdAndUpdate(
-      req.seller?._id,
+      req.seller._id,
       { withdrawMethod },
       { new: true, runValidators: true }
     );
@@ -317,11 +332,14 @@ export const updatePaymentMethods = catchAsyncErrors(
   }
 );
 
-// --- replace deleteWithdrawMethod ---
 // 11. Delete Withdraw Method
 export const deleteWithdrawMethod = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const shop = await Shop.findById(req.seller?._id);
+    if (!req.seller?._id) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    const shop = await Shop.findById(req.seller._id);
 
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -337,7 +355,6 @@ export const deleteWithdrawMethod = catchAsyncErrors(
     });
   }
 );
-
 
 // 12. Get All Sellers (Admin Only)
 export const getAllSellers = catchAsyncErrors(
