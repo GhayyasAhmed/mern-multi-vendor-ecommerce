@@ -31,75 +31,76 @@ const decorateEvent = (event: IEvent): DecoratedEvent => {
 // create event --- always scoped to the authenticated seller's own shop
 export const createEvent = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const sellerId = req.seller?._id;
+
+    if (!sellerId) {
+      return next(new ErrorHandler("Seller not found in request", 400));
+    }
+
+    const shop = await ShopModel.findById(sellerId);
+
+    if (!shop) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    let images: string[] = [];
+
+    if (typeof req.body.images === "string") {
+      images.push(req.body.images);
+    } else if (Array.isArray(req.body.images)) {
+      images = req.body.images;
+    }
+
+    const validImages = images.filter((img): img is string => Boolean(img));
+
+    const uploadResults = await Promise.allSettled(
+      validImages.map((image) => uploadToCloudinary(image, "products"))
+    );
+
+    const failedUpload = uploadResults.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+
+    if (failedUpload) {
+      const uploaded = uploadResults.filter(
+        (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof uploadToCloudinary>>> =>
+          result.status === "fulfilled"
+      );
+      await Promise.all(uploaded.map((res) => deleteFromCloudinary(res.value.public_id)));
+      throw failedUpload.reason;
+    }
+
     const imagesLinks: Array<{ public_id: string; url: string }> = [];
+
+    for (const result of uploadResults) {
+      if (result.status === "fulfilled") {
+        imagesLinks.push({
+          public_id: result.value.public_id,
+          url: result.value.secure_url,
+        });
+      }
+    }
+
+    const productData = req.body;
+    productData.images = imagesLinks;
+    productData.shop = shop;
+    productData.shopId = String(sellerId);
+
+    // Targeted compensating cleanup: if database insertion fails, remove uploaded Cloudinary images first
     try {
-      const sellerId = req.seller?._id;
-
-      if (!sellerId) {
-        return next(new ErrorHandler("Seller not found in request", 400));
-      }
-
-      const shop = await ShopModel.findById(sellerId);
-
-      if (!shop) {
-        return next(new ErrorHandler("Shop not found", 404));
-      }
-
-      let images: string[] = [];
-
-      if (typeof req.body.images === "string") {
-        images.push(req.body.images);
-      } else if (Array.isArray(req.body.images)) {
-        images = req.body.images;
-      }
-
-      const validImages = images.filter((img): img is string => Boolean(img));
-
-      const uploadResults = await Promise.allSettled(
-        validImages.map((image) => uploadToCloudinary(image, "products"))
-      );
-
-      const failedUpload = uploadResults.find(
-        (result): result is PromiseRejectedResult => result.status === "rejected"
-      );
-
-      if (failedUpload) {
-        const uploaded = uploadResults.filter(
-          (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof uploadToCloudinary>>> =>
-            result.status === "fulfilled"
-        );
-        await Promise.all(uploaded.map((res) => deleteFromCloudinary(res.value.public_id)));
-        throw failedUpload.reason;
-      }
-
-      for (const result of uploadResults) {
-        if (result.status === "fulfilled") {
-          imagesLinks.push({
-            public_id: result.value.public_id,
-            url: result.value.secure_url,
-          });
-        }
-      }
-
-      const productData = req.body;
-      productData.images = imagesLinks;
-      productData.shop = shop;
-      productData.shopId = String(sellerId);
-
       const event = await EventModel.create(productData);
 
       res.status(201).json({
         success: true,
         event: decorateEvent(event),
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (imagesLinks.length > 0) {
         await Promise.all(
           imagesLinks.map((img) => deleteFromCloudinary(img.public_id))
         );
       }
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 400));
+      throw error; // Re-throw so catchAsyncErrors forwards the original Mongoose/DB error preserving proper status codes
     }
   }
 );
@@ -107,28 +108,23 @@ export const createEvent = catchAsyncErrors(
 // get all events (public) — optional ?status=active|upcoming|expired and ?limit=
 export const getAllEvents = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const statusFilter = req.query.status as string | undefined;
-      const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-      const limit = rawLimit ? Math.min(Math.max(rawLimit, 1), 50) : undefined;
+    const statusFilter = req.query.status as string | undefined;
+    const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+    const limit = rawLimit ? Math.min(Math.max(rawLimit, 1), 50) : undefined;
 
-      const events = await EventModel.find().sort({ createdAt: -1 });
-      let decorated = events.map(decorateEvent);
+    const events = await EventModel.find().sort({ createdAt: -1 });
+    let decorated = events.map(decorateEvent);
 
-      if (statusFilter === "active") decorated = decorated.filter((e) => e.isActive);
-      else if (statusFilter === "upcoming") decorated = decorated.filter((e) => e.isUpcoming);
-      else if (statusFilter === "expired") decorated = decorated.filter((e) => e.isExpired);
+    if (statusFilter === "active") decorated = decorated.filter((e) => e.isActive);
+    else if (statusFilter === "upcoming") decorated = decorated.filter((e) => e.isUpcoming);
+    else if (statusFilter === "expired") decorated = decorated.filter((e) => e.isExpired);
 
-      if (limit) decorated = decorated.slice(0, limit);
+    if (limit) decorated = decorated.slice(0, limit);
 
-      res.status(200).json({
-        success: true,
-        events: decorated,
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 400));
-    }
+    res.status(200).json({
+      success: true,
+      events: decorated,
+    });
   }
 );
 
@@ -151,70 +147,55 @@ export const getEventById = catchAsyncErrors(
 // get all events of a shop
 export const getShopAllEvents = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const events = await EventModel.find({ shopId: req.params.id }).sort({ createdAt: -1 });
+    const events = await EventModel.find({ shopId: req.params.id }).sort({ createdAt: -1 });
 
-      res.status(200).json({
-        success: true,
-        events: events.map(decorateEvent),
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 400));
-    }
+    res.status(200).json({
+      success: true,
+      events: events.map(decorateEvent),
+    });
   }
 );
 
 // delete event of a shop --- only the owning seller may delete
 export const deleteShopEvent = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const event = await EventModel.findById(req.params.id);
+    const event = await EventModel.findById(req.params.id);
 
-      if (!event) {
-        return next(new ErrorHandler("Event is not found with this id", 404));
-      }
-
-      if (String(event.shopId) !== String(req.seller?._id)) {
-        return next(new ErrorHandler("You are not authorized to delete this event", 403));
-      }
-
-      const images = event.images || [];
-      const deletePromises = images
-        .map((img) => img?.public_id)
-        .filter((publicId): publicId is string => Boolean(publicId))
-        .map((publicId) => deleteFromCloudinary(publicId));
-
-      await Promise.all(deletePromises);
-
-      await EventModel.findByIdAndDelete(req.params.id);
-
-      res.status(200).json({
-        success: true,
-        message: "Event Deleted successfully!",
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 400));
+    if (!event) {
+      return next(new ErrorHandler("Event is not found with this id", 404));
     }
+
+    if (String(event.shopId) !== String(req.seller?._id)) {
+      return next(new ErrorHandler("You are not authorized to delete this event", 403));
+    }
+
+    const images = event.images || [];
+    const deletePromises = images
+      .map((img) => img?.public_id)
+      .filter((publicId): publicId is string => Boolean(publicId))
+      .map((publicId) => deleteFromCloudinary(publicId));
+
+    await Promise.all(deletePromises);
+
+    await EventModel.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Event Deleted successfully!",
+    });
   }
 );
 
 // all events --- for admin
 export const getAdminAllEvents = catchAsyncErrors(
   async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const events = await EventModel.find().sort({
-        createdAt: -1,
-      });
+    const events = await EventModel.find().sort({
+      createdAt: -1,
+    });
 
-      res.status(200).json({
-        success: true,
-        events: events.map(decorateEvent),
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
-    }
+    res.status(200).json({
+      success: true,
+      events: events.map(decorateEvent),
+    });
   }
 );

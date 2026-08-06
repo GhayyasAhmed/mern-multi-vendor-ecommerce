@@ -24,62 +24,48 @@ export const processPayment = catchAsyncErrors(
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    try {
-      const { amount, currency } = req.body;
+    const { amount, currency } = req.body;
 
-      if (!amount || typeof amount !== "number" || amount <= 0) {
-        return next(
-          new ErrorHandler("Please provide a valid payment amount.", 400)
-        );
-      }
-
-      const paymentCurrency =
-        currency || process.env.STRIPE_CURRENCY || "usd";
-      const companyName = process.env.COMPANY_NAME || "mern-multi-vendor-ecommerce";
-
-      const myPayment = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // Ensure amount is an integer representing smallest currency unit
-        currency: paymentCurrency.toLowerCase(),
-        metadata: {
-          company: companyName,
-        },
-      });
-
-      res.status(200).json({
-        success: true,
-        client_secret: myPayment.client_secret,
-      });
-    } catch (error: unknown) {
-      if (error instanceof Stripe.errors.StripeError) {
-        return next(new ErrorHandler(error.message, error.statusCode || 400));
-      }
-
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!amount || typeof amount !== "number" || amount <= 0) {
+      return next(
+        new ErrorHandler("Please provide a valid payment amount.", 400)
+      );
     }
+
+    const paymentCurrency =
+      currency || process.env.STRIPE_CURRENCY || "usd";
+    const companyName = process.env.COMPANY_NAME || "mern-multi-vendor-ecommerce";
+
+    const myPayment = await stripe.paymentIntents.create({
+      amount: Math.round(amount), // Ensure amount is an integer representing smallest currency unit
+      currency: paymentCurrency.toLowerCase(),
+      metadata: {
+        company: companyName,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      client_secret: myPayment.client_secret,
+    });
   }
 );
 
 export const getStripeApiKey = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const stripeApiKey = process.env.STRIPE_PUBLISHABLE_KEY;
+    const stripeApiKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
-      if (!stripeApiKey) {
-        return next(
-          new ErrorHandler(
-            "Stripe API Key is not configured on the server.",
-            500
-          )
-        );
-      }
-
-      res.status(200).json({
-        stripeApikey: stripeApiKey,
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      return next(new ErrorHandler(message, 500));
+    if (!stripeApiKey) {
+      return next(
+        new ErrorHandler(
+          "Stripe API Key is not configured on the server.",
+          500
+        )
+      );
     }
+
+    res.status(200).json({
+      stripeApikey: stripeApiKey,
+    });
   }
 );
