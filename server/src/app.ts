@@ -8,7 +8,7 @@ import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 import { redis } from "./config/redis.js";
 import errorMiddleware from "./middlewares/error.js";
-import { apiLimiter } from "./middlewares/rateLimiter.js";
+import { readLimiter, writeLimiter } from "./middlewares/rateLimiter.js";
 import conversationRouter from "./routes/conversation.routes.js";
 import couponCodeRouter from "./routes/couponCode.routes.js";
 import eventRouter from "./routes/event.routes.js";
@@ -23,33 +23,40 @@ import withdrawRouter from "./routes/withdraw.routes.js";
 const app = express();
 
 if (env.nodeEnv === "production") {
-  app.set("trust proxy", 1);
+    app.set("trust proxy", 1);
 }
 
 connectCloudinary();
 
 // Serverless Middleware: Ensures MongoDB connection is established for Vercel functions
 app.use(async (req, res, next) => {
-  try {
-    await connectDatabase();
-    next();
-  } catch (error) {
-    console.error("Database connection middleware error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Database connection failed",
-    });
-  }
+    try {
+        await connectDatabase();
+        next();
+    } catch (error) {
+        console.error("Database connection middleware error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Database connection failed",
+        });
+    }
 });
 
 app.use((helmet as any)());
 app.use(
-  cors({
-    origin: env.allowedOrigins,
-    credentials: true,
-  })
+    cors({
+        origin: env.allowedOrigins,
+        credentials: true,
+    })
 );
-app.use(apiLimiter);
+
+// Apply method-scoped rate limiters (higher ceiling for read-only GET traffic, tighter for writes)
+app.use((req, res, next) => {
+    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+        return readLimiter(req, res, next);
+    }
+    return writeLimiter(req, res, next);
+});
 
 // Reduced global body limit from 50mb to 10mb to mitigate DoS / excessive memory parsing attacks
 app.use(express.json({ limit: "10mb" }));
@@ -61,18 +68,18 @@ app.use(cookieParser());
 // (non-cookie flow) are exempt, since only browsers auto-attach cookies
 // cross-site — bearer-token clients are not CSRF-exposed.
 app.use((req, res, next) => {
-  const safeMethods = ["GET", "HEAD", "OPTIONS"];
-  if (safeMethods.includes(req.method) || req.headers.authorization) {
+    const safeMethods = ["GET", "HEAD", "OPTIONS"];
+    if (safeMethods.includes(req.method) || req.headers.authorization) {
+        return next();
+    }
+    const origin = req.headers.origin;
+    if (!origin || !env.allowedOrigins.includes(origin)) {
+        return res.status(403).json({
+            success: false,
+            message: "Request origin not allowed",
+        });
+    }
     return next();
-  }
-  const origin = req.headers.origin;
-  if (!origin || !env.allowedOrigins.includes(origin)) {
-    return res.status(403).json({
-      success: false,
-      message: "Request origin not allowed",
-    });
-  }
-  return next();
 });
 
 // API Routes
@@ -88,27 +95,27 @@ app.use("/api/v1/withdraw", withdrawRouter);
 app.use("/api/v1/payment", paymentRouter);
 
 app.get("/api/v1/health-check", (req, res) => {
-  const isDbConnected = mongoose.connection.readyState === 1;
-  const isRedisReady = redis.status === "ready";
-  const isHealthy = isDbConnected && isRedisReady;
+    const isDbConnected = mongoose.connection.readyState === 1;
+    const isRedisReady = redis.status === "ready";
+    const isHealthy = isDbConnected && isRedisReady;
 
-  res.status(isHealthy ? 200 : 503).json({
-    success: isHealthy,
-    status: isHealthy ? "ok" : "unavailable",
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()),
-    services: {
-      db: isDbConnected ? "connected" : "disconnected",
-      redis: isRedisReady ? "connected" : "disconnected",
-    },
-  });
+    res.status(isHealthy ? 200 : 503).json({
+        success: isHealthy,
+        status: isHealthy ? "ok" : "unavailable",
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime()),
+        services: {
+            db: isDbConnected ? "connected" : "disconnected",
+            redis: isRedisReady ? "connected" : "disconnected",
+        },
+    });
 });
 
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
+    res.status(404).json({
+        success: false,
+        message: "Route not found",
+    });
 });
 
 app.use(errorMiddleware);
