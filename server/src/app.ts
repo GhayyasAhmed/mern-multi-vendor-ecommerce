@@ -50,7 +50,9 @@ app.use(
   })
 );
 app.use(apiLimiter);
-app.use(express.json({ limit: "50mb" }));
+
+// Reduced global body limit from 50mb to 10mb to mitigate DoS / excessive memory parsing attacks
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
 // Lightweight CSRF mitigation: auth cookies use sameSite:"none" to support

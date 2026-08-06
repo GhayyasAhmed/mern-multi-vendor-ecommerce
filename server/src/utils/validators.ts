@@ -131,6 +131,11 @@ const resetPasswordSchema = z.object({
   }),
 });
 
+// Helper for validating product and event images with a max limit of 8
+const imageListValidation = z.union([
+  z.string(),
+  z.array(z.string()).min(1, 'At least one image is required').max(8, 'Maximum 8 images allowed'),
+]);
 
 const createProductSchema = z.object({
   body: z.object({
@@ -141,7 +146,7 @@ const createProductSchema = z.object({
     originalPrice: z.number().optional(),
     discountPrice: z.number({ message: 'Please enter your product price!' }),
     stock: z.number({ message: 'Please enter your product stock!' }),
-    images: z.union([z.string(), z.array(z.string())]),
+    images: imageListValidation,
     shopId: z.string().optional(),
   }),
 });
@@ -250,7 +255,6 @@ export const CouponValidations = {
   validateCouponSchema,
 };
 
-
 const createEventSchema = z.object({
   body: z.object({
     name: z.string('Please enter your event product name!'),
@@ -262,7 +266,7 @@ const createEventSchema = z.object({
     originalPrice: z.number().optional(),
     discountPrice: z.number({ message: 'Please enter your event product price!' }),
     stock: z.number({ message: 'Please enter your event product stock!' }),
-    images: z.union([z.string(), z.array(z.string())]),
+    images: imageListValidation,
     shopId: z.string().optional(),
   }),
 });
@@ -270,7 +274,6 @@ const createEventSchema = z.object({
 export const EventValidations = {
   createEventSchema,
 };
-
 
 const createConversationSchema = z.object({
   body: z.object({
