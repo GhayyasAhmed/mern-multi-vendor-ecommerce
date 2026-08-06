@@ -1,30 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RxCross1 } from "react-icons/rx";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { HiOutlineMinus, HiPlus } from "react-icons/hi";
 import styles from "@/styles/styles";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { removeItem, updateQty, selectCartItems, selectCartSubtotal } from "@/features/cart/cartSlice";
 
 const Cart = ({ setOpenCart }) => {
-  const cartData = [
-    {
-      name: "IPhone 14 Pro Max 256GB Deep Purple",
-      description: "Designed for durability.",
-      price: 999,
-      qty: 1,
-      image_Url:
-        "https://m.media-amazon.com/images/I/71yzJoE7WlL._AC_SL1500_.jpg",
-    },
-    {
-      name: "Shoes Nike Air Max 270 Running",
-      description: "Nike Air Max 270",
-      price: 120,
-      qty: 1,
-      image_Url:
-        "https://m.media-amazon.com/images/I/71oEKkghg-L._AC_UX679_.jpg",
-    },
-  ];
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const cartData = useAppSelector(selectCartItems);
+  const subtotal = useAppSelector(selectCartSubtotal);
+
+  const handleCheckout = () => {
+    setOpenCart(false);
+    router.push("/checkout");
+  };
 
   return (
     <div className="fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-50">
@@ -38,7 +33,6 @@ const Cart = ({ setOpenCart }) => {
             />
           </div>
 
-          {/* Item length */}
           <div className={`${styles.normalFlex} p-4`}>
             <IoBagHandleOutline size={25} />
             <h5 className="pl-2 text-[20px] font-medium">
@@ -46,45 +40,69 @@ const Cart = ({ setOpenCart }) => {
             </h5>
           </div>
 
-          {/* Cart Single Items */}
           <br />
-          <div className="w-full border-t">
-            {cartData.map((item, index) => (
-              <CartSingle key={index} data={item} />
-            ))}
-          </div>
+          {cartData.length === 0 ? (
+            <div className="w-full flex flex-col items-center justify-center py-16 px-4 text-center">
+              <IoBagHandleOutline size={50} className="text-gray-300 mb-3" />
+              <p className="text-[#00000082]">Your cart is empty.</p>
+              <Link
+                href="/products"
+                onClick={() => setOpenCart(false)}
+                className="mt-3 text-[#3957db] hover:underline"
+              >
+                Browse products
+              </Link>
+            </div>
+          ) : (
+            <div className="w-full border-t">
+              {cartData.map((item) => (
+                <CartSingle
+                  key={item.productId}
+                  data={item}
+                  onRemove={() => dispatch(removeItem({ productId: item.productId }))}
+                  onQtyChange={(qty) => dispatch(updateQty({ productId: item.productId, qty }))}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="px-5 mb-3">
-          <button className="h-11.25 flex items-center justify-center w-full bg-[#e44343] rounded-[5px]">
-            <h1 className="text-white text-[18px] font-semibold">
-              Checkout Now (USD $1119)
-            </h1>
-          </button>
-        </div>
+        {cartData.length > 0 && (
+          <div className="px-5 mb-3">
+            <button
+              onClick={handleCheckout}
+              className="h-11.25 flex items-center justify-center w-full bg-[#e44343] rounded-[5px] cursor-pointer"
+            >
+              <h1 className="text-white text-[18px] font-semibold">
+                Checkout Now (USD ${subtotal.toFixed(2)})
+              </h1>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const CartSingle = ({ data }) => {
-  const [value, setValue] = useState(data.qty);
-  const totalPrice = data.price * value;
+const CartSingle = ({ data, onRemove, onQtyChange }) => {
+  const totalPrice = data.price * data.qty;
 
   return (
     <div className="border-b p-4 flex items-center justify-between">
       <div className="flex items-center">
         <div>
           <div
-            className="bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center cursor-pointer"
-            onClick={() => setValue(value + 1)}
+            className={`bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center ${
+              data.qty >= data.stock && data.stock > 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+            }`}
+            onClick={() => (data.stock <= 0 || data.qty < data.stock) && onQtyChange(data.qty + 1)}
           >
             <HiPlus size={18} color="#fff" />
           </div>
-          <span className="pl-2.5">{value}</span>
+          <span className="pl-2.5">{data.qty}</span>
           <div
             className="bg-[#a7abb14d] rounded-full w-6.25 h-6.25 flex items-center justify-center cursor-pointer mt-1"
-            onClick={() => setValue(value > 1 ? value - 1 : 1)}
+            onClick={() => onQtyChange(data.qty > 1 ? data.qty - 1 : 1)}
           >
             <HiOutlineMinus size={16} color="#7d879c" />
           </div>
@@ -92,7 +110,7 @@ const CartSingle = ({ data }) => {
 
         <div className="relative w-20 h-20 ml-3">
           <Image
-            src={data.image_Url}
+            src={data.image}
             alt={data.name}
             fill
             className="object-cover rounded-[5px]"
@@ -100,16 +118,16 @@ const CartSingle = ({ data }) => {
         </div>
 
         <div className="pl-1.25">
-          <h1>{data.name.slice(0, 20)}...</h1>
+          <h1>{data.name?.length > 20 ? `${data.name.slice(0, 20)}...` : data.name}</h1>
           <h4 className="font-normal text-[15px] text-[#00000082]">
-            ${data.price} * {value}
+            ${data.price} x {data.qty}
           </h4>
           <h4 className="font-semibold text-[17px] pt-0.75 text-[#d02222] font-Roboto">
-            US${totalPrice}
+            US${totalPrice.toFixed(2)}
           </h4>
         </div>
       </div>
-      <RxCross1 className="cursor-pointer font-bold" />
+      <RxCross1 className="cursor-pointer font-bold" onClick={onRemove} />
     </div>
   );
 };

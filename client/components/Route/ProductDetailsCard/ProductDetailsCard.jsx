@@ -1,19 +1,30 @@
 "use client";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
-    AiFillHeart,
-    AiOutlineClose,
-    AiOutlineHeart,
-    AiOutlineMessage,
-    AiOutlineShoppingCart
+  AiFillHeart,
+  AiOutlineClose,
+  AiOutlineHeart,
+  AiOutlineMessage,
+  AiOutlineShoppingCart
 } from "react-icons/ai";
 
 const ProductDetailsCard = ({ setOpen, data }) => {
   const [count, setCount] = useState(1);
   const [click, setClick] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const outOfStock = (data?.stock ?? 0) <= 0;
+
+  const handleAddToCart = () => {
+    if (outOfStock || !data) return;
+    dispatch(addItem({ item: productToCartItem(data, count) }));
+    setOpen(false);
+  };
 
   const handleMessageSubmit = () => {
     // Message handler logic
@@ -84,7 +95,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </button>
 
               <h5 className="text-[16px] text-red-500 mt-5 font-Roboto">
-                ({data?.sold_out  || 0}) Sold
+                ({data?.sold_out || 0}) Sold
               </h5>
             </div>
 
@@ -98,7 +109,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </p>
 
               <div className="flex pt-3">
-                 <h4 className={`${styles.productDiscountPrice}`}>
+                <h4 className={`${styles.productDiscountPrice}`}>
                   {data?.discountPrice}$
                 </h4>
                 {data?.originalPrice ? (
@@ -146,9 +157,14 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                 </div>
               </div>
 
-              <button className={`${styles.button} mt-6 rounded-md text-white font-medium flex items-center justify-center cursor-pointer`}>
+              <button
+                className={`${styles.button} mt-6 rounded-md text-white font-medium flex items-center justify-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  }`}
+                onClick={handleAddToCart}
+                disabled={outOfStock}
+              >
                 <span className="text-white flex items-center">
-                  Add to cart <AiOutlineShoppingCart className="ml-1" />
+                  {outOfStock ? "Out of stock" : "Add to cart"} <AiOutlineShoppingCart className="ml-1" />
                 </span>
               </button>
             </div>

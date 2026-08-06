@@ -1,4 +1,7 @@
 "use client";
+import ProductDetailsCard from "@/components/Route/ProductDetailsCard/ProductDetailsCard";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,11 +14,19 @@ import {
   AiOutlineShoppingCart,
   AiOutlineStar,
 } from "react-icons/ai";
-import ProductDetailsCard from "@/components/Route/ProductDetailsCard/ProductDetailsCard";
 
 const ProductCard = ({ data }) => {
   const [click, setClick] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const outOfStock = (data?.stock ?? 0) <= 0;
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (outOfStock || !data) return;
+    dispatch(addItem({ item: productToCartItem(data, 1) }));
+  };
 
   // const productName = data?.name ? data.name.replace(/\s+/g, "-") : "";
 
@@ -96,10 +107,12 @@ const ProductCard = ({ data }) => {
           />
           <AiOutlineShoppingCart
             size={25}
-            className="cursor-pointer absolute right-2 top-24"
-            onClick={() => setOpen(!open)}
+            className={`absolute right-2 top-24 ${
+              outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+            }`}
+            onClick={handleAddToCart}
             color="#444"
-            title="Add to cart"
+            title={outOfStock ? "Out of stock" : "Add to cart"}
           />
           {open ? <ProductDetailsCard setOpen={setOpen} data={data} /> : null}
         </div>

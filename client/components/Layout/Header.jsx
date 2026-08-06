@@ -3,9 +3,11 @@ import Cart from "@/components/Cart/Cart";
 import Wishlist from "@/components/Wishlist/Wishlist.jsx";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { selectCartCount } from "@/features/cart/cartSlice";
 import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
 import { useDebounce } from "@/hooks/use-debounce";
 import { categoriesData } from "@/static/data";
+import { useAppSelector } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,14 +25,13 @@ import DropDown from "./DropDown";
 import Navbar from "./Navbar";
 
 const Header = ({ activeHeading }) => {
+  const cartCount = useAppSelector(selectCartCount);
   const [searchTerm, setSearchTerm] = useState("");
-  // const [searchData, setSearchData] = useState(null);
   const [active, setActive] = useState(false);
   const [dropDown, setDropDown] = useState(false);
   const [openCart, setOpenCart] = useState(false);
   const [openWishlist, setOpenWishlist] = useState(false);
   const [open, setOpen] = useState(false);
-
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef(null);
   // Single source of truth for auth state, shared with AuthProvider's
@@ -192,7 +193,7 @@ const Header = ({ activeHeading }) => {
                   color="rgb(255 255 255 / 83%)"
                 />
                 <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
-                  1
+                  {cartCount}
                 </span>
               </div>
             </div>
@@ -289,7 +290,7 @@ const Header = ({ activeHeading }) => {
           >
             <AiOutlineShoppingCart size={30} />
             <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
-              1
+              {cartCount}
             </span>
           </div>
         </div>

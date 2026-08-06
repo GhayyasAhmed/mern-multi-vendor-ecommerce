@@ -171,3 +171,81 @@ export const UserValidations = {
   forgotPasswordSchema,
   resetPasswordSchema,
 };
+
+// ---- Order Validations ----
+const cartItemSchema = z.object({
+  _id: z.string('Product id is required'),
+  shopId: z.string('Shop id is required'),
+  qty: z.number({ message: 'Quantity is required' }).min(1, 'Quantity must be at least 1'),
+  name: z.string().optional(),
+  discountPrice: z.number().optional(),
+  images: z.array(z.object({ url: z.string() })).optional(),
+});
+
+const shippingAddressSchema = z.object({
+  address1: z.string('Street address is required').min(1, 'Street address is required'),
+  address2: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  zipCode: z.union([z.string(), z.number()]).optional(),
+  addressType: z.string().optional(),
+});
+
+const createOrderSchema = z.object({
+  body: z.object({
+    cart: z.array(cartItemSchema).min(1, 'Cart cannot be empty'),
+    shippingAddress: shippingAddressSchema,
+    paymentInfo: z
+      .object({
+        id: z.string().optional(),
+        status: z.string().optional(),
+        type: z.string().optional(),
+      })
+      .optional(),
+    couponCode: z.string().optional(),
+  }),
+});
+
+const ORDER_STATUSES = [
+  'Processing',
+  'Transferred to delivery partner',
+  'Shipped',
+  'On the way',
+  'Delivered',
+] as const;
+
+const updateOrderStatusSchema = z.object({
+  body: z.object({
+    status: z.enum(ORDER_STATUSES, { message: 'Invalid order status' }),
+  }),
+});
+
+export const OrderValidations = {
+  createOrderSchema,
+  updateOrderStatusSchema,
+};
+
+// ---- Coupon Validations ----
+const createCouponCodeSchema = z.object({
+  body: z.object({
+    name: z.string('Coupon name is required').min(3, 'Coupon name must be at least 3 characters'),
+    value: z.number({ message: 'Discount value is required' }).min(1).max(100),
+    minAmount: z.number().optional(),
+    maxAmount: z.number().optional(),
+    selectedProduct: z.string().optional(),
+  }),
+});
+
+const validateCouponSchema = z.object({
+  body: z.object({
+    name: z.string('Coupon code is required'),
+    shopId: z.string('Shop id is required'),
+    subtotal: z.number({ message: 'Subtotal is required' }).min(0),
+    productIds: z.array(z.string()).optional(),
+  }),
+});
+
+export const CouponValidations = {
+  createCouponCodeSchema,
+  validateCouponSchema,
+};

@@ -15,6 +15,11 @@ export interface IPaymentInfo {
   type?: string;
 }
 
+export interface IOrderCoupon {
+  name: string;
+  discountAmount: number;
+}
+
 export interface IOrder extends Document {
   cart: Array<object>;
   shippingAddress: IShippingAddress;
@@ -22,6 +27,7 @@ export interface IOrder extends Document {
   totalPrice: number;
   status: string;
   paymentInfo?: IPaymentInfo;
+  coupon?: IOrderCoupon;
   paidAt?: Date;
   deliveredAt?: Date;
   createdAt?: Date;
@@ -61,6 +67,10 @@ const orderSchema = new Schema<IOrder>(
         type: String,
       },
     },
+    coupon: {
+      name: { type: String },
+      discountAmount: { type: Number },
+    },
     paidAt: {
       type: Date,
       default: Date.now,
@@ -73,6 +83,9 @@ const orderSchema = new Schema<IOrder>(
     timestamps: true,
   }
 );
+
+orderSchema.index({ "user._id": 1 });
+orderSchema.index({ "cart.shopId": 1 });
 
 const OrderModel: Model<IOrder> = mongoose.model<IOrder>("Order", orderSchema);
 

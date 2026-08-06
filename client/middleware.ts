@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Route prefixes that require an authenticated session.
  * Extend this list as protected pages (e.g. /profile, /orders) are built.
  */
-const PROTECTED_ROUTES: string[] = [];
+const PROTECTED_ROUTES: string[] = ["/checkout", "/orders"];
 
 /** Auth routes a logged-in user shouldn't need to see again. */
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
@@ -44,6 +44,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-  matcher:  ["/login", "/signup", "/forgot-password"],
+  matcher: ["/login", "/signup", "/forgot-password", "/checkout", "/orders/:path*"],
 };
