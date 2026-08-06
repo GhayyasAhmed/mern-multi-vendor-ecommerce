@@ -23,7 +23,7 @@ router.post("/create-shop",authLimiter, validate(ShopValidations.createShopSchem
 router.post("/activation",authLimiter, validate(activationSchema), activateShop);
 router.post("/login-shop",authLimiter, validate(ShopValidations.loginShopSchema), loginShop);
 router.get("/getSeller", isSeller, getSellerDetails);
-router.get("/logout", isSeller, logoutShop);
+router.post("/logout", isSeller, logoutShop);
 router.get("/get-shop-info/:id", getShopInfo);
 router.put("/update-shop-avatar", isSeller, validate(ShopValidations.updateShopAvatarSchema), updateShopAvatar);
 router.put("/update-seller-info", isSeller, validate(ShopValidations.updateSellerInfoSchema), updateSellerInfo);

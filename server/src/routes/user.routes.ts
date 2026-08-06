@@ -1,21 +1,21 @@
 import express from "express";
 import {
-  createUser,
-  activateUser,
-  loginUser,
-  getUserDetails,
-  logoutUser,
-  updateUserInfo,
-  updateUserAvatar,
-  updateUserAddresses,
-  deleteUserAddress,
-  updateUserPassword,
-  getUserInfo,
-  getAllUsersAdmin,
-  deleteUserAdmin,
-  refreshAccessToken,
-  forgotPassword,
-  resetPassword
+    createUser,
+    activateUser,
+    loginUser,
+    getUserDetails,
+    logoutUser,
+    updateUserInfo,
+    updateUserAvatar,
+    updateUserAddresses,
+    deleteUserAddress,
+    updateUserPassword,
+    getUserInfo,
+    getAllUsersAdmin,
+    deleteUserAdmin,
+    refreshAccessToken,
+    forgotPassword,
+    resetPassword
 } from "../controllers/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -30,7 +30,7 @@ userRouter.post("/login-user", authLimiter, validate(UserValidations.loginUserSc
 userRouter.post("/forgot-password", authLimiter, validate(UserValidations.forgotPasswordSchema), forgotPassword);
 userRouter.put("/reset-password/:token", authLimiter, validate(UserValidations.resetPasswordSchema), resetPassword);
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
-userRouter.get("/logout", isAuthenticated, logoutUser);
+userRouter.post("/logout", isAuthenticated, logoutUser);
 userRouter.post("/refresh-token", refreshAccessToken);
 userRouter.put("/update-user-info", isAuthenticated, validate(UserValidations.updateUserInfoSchema), updateUserInfo);
 userRouter.put("/update-avatar", isAuthenticated, validate(UserValidations.updateUserAvatarSchema), updateUserAvatar);
