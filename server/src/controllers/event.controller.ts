@@ -13,8 +13,8 @@ type DecoratedEvent = Record<string, unknown> & {
 
 const decorateEvent = (event: IEvent): DecoratedEvent => {
   const now = Date.now();
-  const start = new Date(event.start_Date).getTime();
-  const finish = new Date(event.Finish_Date).getTime();
+  const start = event?.start_Date ? new Date(event.start_Date).getTime() : 0;
+  const finish = event?.Finish_Date ? new Date(event.Finish_Date).getTime() : 0;
 
   const isUpcoming = start > now;
   const isExpired = finish < now;
@@ -54,7 +54,7 @@ export const createEvent = catchAsyncErrors(
     const validImages = images.filter((img): img is string => Boolean(img));
 
     const uploadResults = await Promise.allSettled(
-      validImages.map((image) => uploadToCloudinary(image, "products"))
+      validImages.map((image) => uploadToCloudinary(image, "events"))
     );
 
     const failedUpload = uploadResults.find(
@@ -81,14 +81,14 @@ export const createEvent = catchAsyncErrors(
       }
     }
 
-    const productData = req.body;
-    productData.images = imagesLinks;
-    productData.shop = shop;
-    productData.shopId = String(sellerId);
+    const eventData = req.body;
+    eventData.images = imagesLinks;
+    eventData.shop = shop;
+    eventData.shopId = String(sellerId);
 
     // Targeted compensating cleanup: if database insertion fails, remove uploaded Cloudinary images first
     try {
-      const event = await EventModel.create(productData);
+      const event = await EventModel.create(eventData);
 
       res.status(201).json({
         success: true,
@@ -100,7 +100,7 @@ export const createEvent = catchAsyncErrors(
           imagesLinks.map((img) => deleteFromCloudinary(img.public_id))
         );
       }
-      throw error; // Re-throw so catchAsyncErrors forwards the original Mongoose/DB error preserving proper status codes
+      throw error;
     }
   }
 );

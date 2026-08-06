@@ -59,6 +59,10 @@ export const createShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, address, phoneNumber, zipCode, avatar } = req.body;
 
+    if (!avatar) {
+      return next(new ErrorHandler("Please upload a shop avatar", 400));
+    }
+
     const existingShop = await Shop.findOne({ email });
     if (existingShop) {
       return next(new ErrorHandler("User/Shop already exists with this email", 400));
@@ -88,8 +92,6 @@ export const createShop = catchAsyncErrors(
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const activationUrl = `${frontendUrl}/activation/${activationToken}`;
 
-    // Kept: this try/catch performs a compensating action (rollback of the
-    // Redis activation key) on failure, it is not just forwarding the error.
     try {
       await sendEmail({
         email: sellerData.email,
@@ -102,7 +104,11 @@ export const createShop = catchAsyncErrors(
         message: `Please check your email (${sellerData.email}) to activate your shop!`,
       });
     } catch (error: any) {
+      // Compensating action: clean up Redis token and Cloudinary uploaded avatar on email failure
       await redis.del(`activation:${activationToken}`);
+      if (sellerData.avatar?.public_id) {
+        await deleteFromCloudinary(sellerData.avatar.public_id);
+      }
       return next(new ErrorHandler(error.message || "Failed to send activation email", 500));
     }
   }
@@ -173,7 +179,7 @@ export const loginShop = catchAsyncErrors(
       return next(new ErrorHandler("Please provide the correct credentials", 400));
     }
 
-    await sendShopToken(shop, 201, res, "Login successful");
+    await sendShopToken(shop, 200, res, "Login successful");
   }
 );
 
@@ -231,7 +237,7 @@ export const logoutShop = catchAsyncErrors(
       await redis.del(`seller_${sellerId.toString()}`);
     }
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Log out successful!",
     });
@@ -274,6 +280,7 @@ export const updateShopAvatar = catchAsyncErrors(
   }
 );
 
+// 9. Update Seller Info
 export const updateSellerInfo = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { name, description, address, phoneNumber, zipCode } = req.body;
@@ -363,7 +370,7 @@ export const getAllSellers = catchAsyncErrors(
       createdAt: -1,
     });
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       sellers,
     });
@@ -381,9 +388,14 @@ export const deleteSeller = catchAsyncErrors(
       );
     }
 
-    await Shop.findByIdAndDelete(req.params.id);
+    if (seller.avatar?.public_id) {
+      await deleteFromCloudinary(seller.avatar.public_id);
+    }
 
-    res.status(201).json({
+    await Shop.findByIdAndDelete(req.params.id);
+    await redis.del(`seller_${req.params.id}`);
+
+    res.status(200).json({
       success: true,
       message: "Seller deleted successfully!",
     });

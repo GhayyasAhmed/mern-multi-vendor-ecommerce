@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface IEventImage {
   public_id: string;
@@ -17,8 +17,8 @@ export interface IEvent extends Document {
   discountPrice: number;
   stock: number;
   images: IEventImage[];
-  shopId: string;
-  shop: Record<string, unknown>;
+  shopId: mongoose.Types.ObjectId;
+  shop?: Record<string, unknown>;
   sold_out: number;
   createdAt: Date;
 }
@@ -75,12 +75,12 @@ const eventSchema: Schema<IEvent> = new mongoose.Schema({
     },
   ],
   shopId: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "Shop",
     required: true,
   },
   shop: {
-    type: Object,
-    required: true,
+    type: Schema.Types.Mixed,
   },
   sold_out: {
     type: Number,
@@ -94,6 +94,6 @@ const eventSchema: Schema<IEvent> = new mongoose.Schema({
 
 eventSchema.index({ shopId: 1 });
 
-const EventModel = mongoose.model<IEvent>("Event", eventSchema);
+const EventModel: Model<IEvent> = mongoose.model<IEvent>("Event", eventSchema);
 
 export default EventModel;

@@ -1,11 +1,11 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface ICouponCode extends Document {
   name: string;
   value: number;
   minAmount?: number;
   maxAmount?: number;
-  shopId: string;
+  shopId: mongoose.Types.ObjectId;
   selectedProduct?: string;
   createdAt: Date;
 }
@@ -27,7 +27,8 @@ const couponCodeSchema: Schema<ICouponCode> = new mongoose.Schema({
     type: Number,
   },
   shopId: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "Shop",
     required: true,
   },
   selectedProduct: {
@@ -41,7 +42,7 @@ const couponCodeSchema: Schema<ICouponCode> = new mongoose.Schema({
 
 couponCodeSchema.index({ shopId: 1 });
 
-const CouponCodeModel = mongoose.model<ICouponCode>(
+const CouponCodeModel: Model<ICouponCode> = mongoose.model<ICouponCode>(
   "CouponCode",
   couponCodeSchema
 );

@@ -25,8 +25,8 @@ export interface IProduct extends Document {
   images: IImage[];
   reviews?: IReview[];
   ratings?: number;
-  shopId: mongoose.Types.ObjectId | string;
-  shop: mongoose.Types.ObjectId | object;
+  shopId: mongoose.Types.ObjectId;
+  shop?: mongoose.Types.ObjectId | object;
   sold_out?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -104,7 +104,6 @@ const productSchema = new Schema<IProduct>(
     },
     shop: {
       type: Schema.Types.Mixed,
-      required: true,
     },
     sold_out: {
       type: Number,

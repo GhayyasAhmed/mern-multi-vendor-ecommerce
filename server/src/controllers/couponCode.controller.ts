@@ -102,7 +102,8 @@ export const calculateCouponDiscount = (
     return { valid: false, reason: "Coupon does not apply to the items in your cart", discountAmount: 0 };
   }
 
-  const discountAmount = Math.round(((subtotal * coupon.value) / 100) * 100) / 100;
+  const rawDiscount = Math.round(((subtotal * coupon.value) / 100) * 100) / 100;
+  const discountAmount = Math.min(rawDiscount, subtotal);
   return { valid: true, discountAmount };
 };
 

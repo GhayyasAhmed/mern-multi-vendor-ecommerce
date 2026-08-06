@@ -83,7 +83,7 @@ export const createProduct = catchAsyncErrors(
           imagesLinks.map((img) => deleteFromCloudinary(img.public_id))
         );
       }
-      throw error; // Re-throw so catchAsyncErrors forwards the original Mongoose/DB error preserving proper status codes
+      throw error;
     }
   }
 );
@@ -224,6 +224,10 @@ export const createNewReview = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { user, rating, comment, productId, orderId } = req.body;
 
+    if (!req.user?._id) {
+      return next(new ErrorHandler("User authentication required", 401));
+    }
+
     const product = await ProductModel.findById(productId);
 
     if (!product) {
@@ -267,12 +271,11 @@ export const createNewReview = catchAsyncErrors(
     product.reviews = reviewsList;
 
     let avg = 0;
-
     product.reviews.forEach((rev: IReview) => {
       avg += rev.rating;
     });
 
-    product.ratings = avg / product.reviews.length;
+    product.ratings = product.reviews.length > 0 ? avg / product.reviews.length : 0;
 
     await product.save({ validateBeforeSave: false });
 
@@ -284,7 +287,7 @@ export const createNewReview = catchAsyncErrors(
 
     res.status(200).json({
       success: true,
-      message: "Reviewed succesfully!",
+      message: "Reviewed successfully!",
     });
   }
 );
