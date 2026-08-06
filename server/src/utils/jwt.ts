@@ -16,21 +16,23 @@ interface ITokenOptions {
 const accessTokenExpiresIn = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "2", 10) * 60 * 60 * 1000;
 const refreshTokenExpiresIn = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60 * 1000;
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // options for cookies
 export const accessTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + accessTokenExpiresIn),
     maxAge: accessTokenExpiresIn,
     httpOnly: true,
-    sameSite: "none",
-    secure: true
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction
 };
 
 export const refreshTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + refreshTokenExpiresIn),
     maxAge: refreshTokenExpiresIn,
     httpOnly: true,
-    sameSite: "none",
-    secure: true
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction
 };
 
 export const sendToken = async (user: IUser | IShop, statusCode: number, res: Response, message: string) => {

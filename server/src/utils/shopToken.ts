@@ -22,11 +22,13 @@ const sendShopToken = async (
     expiresIn: `${SELLER_SESSION_SECONDS}s`,
   });
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   const options = {
     expires: new Date(Date.now() + SELLER_SESSION_SECONDS * 1000),
     httpOnly: true,
-    sameSite: "none" as const,
-    secure: true,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction,
   };
 
   // Sanitize document explicitly before Redis cache and HTTP response payload
