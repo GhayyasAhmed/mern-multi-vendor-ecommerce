@@ -6,6 +6,11 @@ import ShopModel from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js";
 
+// Helper function to escape special regex metacharacters
+const escapeRegex = (text: string): string => {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 // create product
 export const createProduct = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -139,7 +144,8 @@ export const getAllProducts = catchAsyncErrors(
       filter.category = category;
     }
     if (search) {
-      filter.name = { $regex: search, $options: "i" };
+      const escapedSearch = escapeRegex(search.trim());
+      filter.name = { $regex: escapedSearch, $options: "i" };
     }
 
     const sortOptions: Record<string, Record<string, 1 | -1>> = {
