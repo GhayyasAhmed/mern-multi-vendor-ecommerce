@@ -42,6 +42,16 @@ function getRequestUrl(args: string | FetchArgs): string {
 // 401s again, triggering another refresh attempt — an infinite loop.
 let sessionInvalid = false
 
+function isRefreshExemptUrl(url: string): boolean {
+  // Seller sessions run on a separate long-lived seller_token cookie with
+  // no refresh-token flow of their own; the user access/refresh
+  // interceptor below must never engage for shop endpoints, or a stale
+  // seller session would spuriously invalidate a valid user session via
+  // the shared `sessionInvalid` circuit breaker below.
+  if (url.includes("/shop/")) return true;
+  return REFRESH_EXEMPT_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+}
+
 const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -50,7 +60,7 @@ const baseQuery: BaseQueryFn<
   let result = await rawBaseQuery(args, api, extraOptions);
 
   const url = getRequestUrl(args);
-  const isExempt = REFRESH_EXEMPT_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+  const isExempt = isRefreshExemptUrl(url);
 
   if (!result.error && SESSION_ESTABLISHING_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
     sessionInvalid = false;

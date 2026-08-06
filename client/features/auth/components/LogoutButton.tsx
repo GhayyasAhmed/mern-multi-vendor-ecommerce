@@ -10,7 +10,6 @@ interface LogoutButtonProps {
   onLoggedOut?: () => void;
 }
 
-/** Reusable logout trigger — wire into Header/account menu when those are built. */
 export default function LogoutButton({ className, onLoggedOut }: LogoutButtonProps) {
   const router = useRouter();
   const [logoutUser, { isLoading }] = useLogoutUserMutation();

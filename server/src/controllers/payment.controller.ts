@@ -18,10 +18,6 @@ interface ProcessPaymentBody {
   currency?: string;
 }
 
-/**
- * Process Payment Intent
- * Creates a Stripe Payment Intent with validated amount and configurable currency/metadata.
- */
 export const processPayment = catchAsyncErrors(
   async (
     req: Request<{}, {}, ProcessPaymentBody>,
@@ -64,10 +60,6 @@ export const processPayment = catchAsyncErrors(
   }
 );
 
-/**
- * Get Stripe Publishable API Key
- * Returns the client-side publishable key configured in environment variables.
- */
 export const getStripeApiKey = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

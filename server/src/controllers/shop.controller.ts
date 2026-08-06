@@ -27,6 +27,17 @@ export interface IShopActivationRequest {
   };
 }
 
+
+const refreshSellerSession = async (shop: any): Promise<void> => {
+  const sanitized = typeof shop.toJSON === "function" ? shop.toJSON() : shop;
+  await redis.set(
+    `seller_${shop._id.toString()}`,
+    JSON.stringify(sanitized),
+    "EX",
+    90 * 24 * 60 * 60
+  );
+};
+
 // 1. Helper Function: Create and Save Activation Token in Redis
 export const createActivationToken = async (
   shop: IShopActivationRequest
@@ -170,7 +181,7 @@ export const loginShop = catchAsyncErrors(
 // 5. Get Logged-In Seller Details
 export const getSellerDetails = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const seller = await Shop.findById((req as any).user._id);
+    const seller = await Shop.findById(req.seller?._id);
 
     if (!seller) {
       return next(new ErrorHandler("Seller not found", 400));
@@ -187,7 +198,7 @@ export const getSellerDetails = catchAsyncErrors(
 export const getShopInfo = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const shop = await Shop.findById(req.params.id).select(
-      "name description avatar address"
+      "name description avatar address createdAt"
     );
 
     if (!shop) {
@@ -200,7 +211,6 @@ export const getShopInfo = catchAsyncErrors(
     });
   }
 );
-
 // 7. Logout Shop
 export const logoutShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -227,7 +237,7 @@ export const logoutShop = catchAsyncErrors(
 // 8. Update Shop Avatar
 export const updateShopAvatar = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const existingShop = await Shop.findById((req as any).user._id);
+    const existingShop = await Shop.findById(req.seller?._id);
 
     if (!existingShop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -247,6 +257,7 @@ export const updateShopAvatar = catchAsyncErrors(
     }
 
     await existingShop.save();
+    await refreshSellerSession(existingShop);
 
     res.status(200).json({
       success: true,
@@ -255,12 +266,11 @@ export const updateShopAvatar = catchAsyncErrors(
   }
 );
 
-// 9. Update Seller Info
 export const updateSellerInfo = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { name, description, address, phoneNumber, zipCode } = req.body;
 
-    const shop = await Shop.findById((req as any).user._id);
+    const shop = await Shop.findById(req.seller?._id);
 
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -273,6 +283,7 @@ export const updateSellerInfo = catchAsyncErrors(
     if (zipCode !== undefined) shop.zipCode = zipCode;
 
     await shop.save();
+    await refreshSellerSession(shop);
 
     res.status(200).json({
       success: true,
@@ -281,13 +292,14 @@ export const updateSellerInfo = catchAsyncErrors(
   }
 );
 
+// --- replace updatePaymentMethods ---
 // 10. Update Payment/Withdraw Methods
 export const updatePaymentMethods = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { withdrawMethod } = req.body;
 
     const shop = await Shop.findByIdAndUpdate(
-      (req as any).user._id,
+      req.seller?._id,
       { withdrawMethod },
       { new: true, runValidators: true }
     );
@@ -296,6 +308,8 @@ export const updatePaymentMethods = catchAsyncErrors(
       return next(new ErrorHandler("Shop not found", 404));
     }
 
+    await refreshSellerSession(shop);
+
     res.status(200).json({
       success: true,
       shop,
@@ -303,10 +317,11 @@ export const updatePaymentMethods = catchAsyncErrors(
   }
 );
 
+// --- replace deleteWithdrawMethod ---
 // 11. Delete Withdraw Method
 export const deleteWithdrawMethod = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const shop = await Shop.findById((req as any).user._id);
+    const shop = await Shop.findById(req.seller?._id);
 
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
@@ -314,6 +329,7 @@ export const deleteWithdrawMethod = catchAsyncErrors(
 
     shop.withdrawMethod = undefined;
     await shop.save();
+    await refreshSellerSession(shop);
 
     res.status(200).json({
       success: true,

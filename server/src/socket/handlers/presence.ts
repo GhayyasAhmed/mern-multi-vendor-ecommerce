@@ -1,11 +1,7 @@
 import type { AppSocket, AppSocketServer } from "../types.js";
 import { getIdentityId } from "../utils.js";
 
-/**
- * userId -> set of active socket ids. A Set (vs. the reference
- * implementation's single-socket array) correctly supports one user being
- * connected from multiple tabs/devices at once.
- */
+
 const onlineUsers = new Map<string, Set<string>>();
 
 function addOnlineSocket(userId: string, socketId: string): boolean {

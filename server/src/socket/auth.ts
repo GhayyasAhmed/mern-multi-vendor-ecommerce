@@ -6,11 +6,6 @@ import type { IUser } from "../models/user.model.js";
 import type { IShop } from "../models/shop.model.js";
 import type { AppSocket } from "./types.js";
 
-/**
- * Minimal cookie-header parser for the socket handshake. Avoids pulling in
- * an extra dependency for the small subset cookie-parser already covers
- * on the REST side (these cookies are never signed, same as the REST flow).
- */
 function parseCookies(cookieHeader?: string): Record<string, string> {
   const cookies: Record<string, string> = {};
   if (!cookieHeader) return cookies;
@@ -31,12 +26,6 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
   return cookies;
 }
 
-/**
- * Authenticates a socket connection using the exact same cookies/JWTs/Redis
- * sessions as isAuthenticated / isSeller (middlewares/auth.ts). No socket
- * token, no client-supplied id — identity comes entirely from the existing
- * auth system.
- */
 export const socketAuthMiddleware = async (
   socket: AppSocket,
   next: (err?: ExtendedError) => void

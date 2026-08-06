@@ -1,8 +1,6 @@
 import { v2 as cloudinary, UploadApiResponse, DeleteApiResponse } from 'cloudinary';
 
-/**
- * Configure Cloudinary with environment credentials
- */
+
 const connectCloudinary = (): void => {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,12 +9,6 @@ const connectCloudinary = (): void => {
   });
 };
 
-/**
- * Uploads a file (base64 string or local file path) to Cloudinary
- * 
- * @param file - Base64 data URI string or path to a local temporary file
- * @param folder - Cloudinary directory path to store the file
- */
 export const uploadToCloudinary = async (
   file: string,
   folder: string = 'shops'
@@ -33,11 +25,6 @@ export const uploadToCloudinary = async (
   }
 };
 
-/**
- * Deletes an asset from Cloudinary using its public_id
- * 
- * @param publicId - The public_id of the file saved on Cloudinary
- */
 export const deleteFromCloudinary = async (
   publicId: string
 ): Promise<DeleteApiResponse> => {

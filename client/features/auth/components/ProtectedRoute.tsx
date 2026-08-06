@@ -4,12 +4,6 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
-/**
- * Client-side gate for pages that require an authenticated session.
- * Wrap future protected pages (e.g. /profile, /orders) with this; combined
- * with the accessToken/refreshToken cookie check in middleware.ts, this
- * gives defense-in-depth route protection.
- */
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useCurrentUser();
   const router = useRouter();

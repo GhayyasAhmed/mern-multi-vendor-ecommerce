@@ -2,11 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import * as z from "zod";
 import ErrorHandler from "../utils/errorhandler.js";
 
-/**
- * Generic Zod validation middleware.
- * Validates { body, query, params } against the given schema and
- * replaces req.body with the parsed (typed/stripped) result.
- */
 const validate =
   (schema: z.ZodType) =>
   (req: Request, res: Response, next: NextFunction) => {

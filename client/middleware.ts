@@ -9,6 +9,13 @@ const PROTECTED_ROUTES: string[] = ["/checkout", "/orders"];
 /** Auth routes a logged-in user shouldn't need to see again. */
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
+const SELLER_PROTECTED_ROUTES: string[] = ["/seller/dashboard"];
+const SELLER_AUTH_PATHS = ["/seller", "/seller/login"];
+
+function hasSellerSession(request: NextRequest): boolean {
+  return Boolean(request.cookies.get("seller_token")?.value);
+}
+
 function hasSession(request: NextRequest): boolean {
   // accessToken/refreshToken are httpOnly but still readable server-side
   // via the request's cookie header. refreshToken is checked too since it
@@ -24,6 +31,21 @@ export function middleware(request: NextRequest) {
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+
+  const sellerAuthenticated = hasSellerSession(request);
+
+  const isSellerProtectedRoute = SELLER_PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const isSellerAuthPath = SELLER_AUTH_PATHS.includes(pathname);
+
+  if (isSellerProtectedRoute && !sellerAuthenticated) {
+    const loginUrl = new URL("/seller/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isSellerAuthPath && sellerAuthenticated && !searchParams.has("redirect")) {
+    return NextResponse.redirect(new URL("/seller/dashboard", request.url));
+  }
 
   if (isProtectedRoute && !authenticated) {
     const loginUrl = new URL("/login", request.url);
@@ -44,5 +66,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/signup", "/forgot-password", "/checkout", "/orders/:path*"],
+  matcher: [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/checkout",
+    "/orders/:path*",
+    "/seller",
+    "/seller/login",
+    "/seller/dashboard/:path*",
+  ],
 };

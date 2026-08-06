@@ -11,11 +11,16 @@ export const createProduct = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const imagesLinks: Array<{ public_id: string; url: string }> = [];
     try {
-      const shopId = req.body.shopId;
-      const shop = await ShopModel.findById(shopId);
+      const sellerId = req.seller?._id;
+
+      if (!sellerId) {
+        return next(new ErrorHandler("Seller not found in request", 400));
+      }
+
+      const shop = await ShopModel.findById(sellerId);
 
       if (!shop) {
-        return next(new ErrorHandler("Shop Id is invalid!", 400));
+        return next(new ErrorHandler("Shop not found", 404));
       }
 
       let images: string[] = [];
@@ -57,6 +62,7 @@ export const createProduct = catchAsyncErrors(
       const productData = req.body;
       productData.images = imagesLinks;
       productData.shop = shop;
+      productData.shopId = String(sellerId);
 
       const product = await ProductModel.create(productData);
 
@@ -76,13 +82,13 @@ export const createProduct = catchAsyncErrors(
   }
 );
 
-// get all products of a shop
+// --- get all products of a shop: fix GET status code (201 -> 200) ---
 export const getAllProductsShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const products = await ProductModel.find({ shopId: req.params.id });
+      const products = await ProductModel.find({ shopId: req.params.id }).sort({ createdAt: -1 });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
@@ -93,7 +99,7 @@ export const getAllProductsShop = catchAsyncErrors(
   }
 );
 
-// delete product of a shop
+// --- delete product of a shop: add ownership check, fix status code ---
 export const deleteProduct = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -101,6 +107,10 @@ export const deleteProduct = catchAsyncErrors(
 
       if (!product) {
         return next(new ErrorHandler("Product is not found with this id", 404));
+      }
+
+      if (String(product.shopId) !== String(req.seller?._id)) {
+        return next(new ErrorHandler("You are not authorized to delete this product", 403));
       }
 
       const images = product.images || [];
@@ -113,7 +123,7 @@ export const deleteProduct = catchAsyncErrors(
 
       await ProductModel.findByIdAndDelete(req.params.id);
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "Product Deleted successfully!",
       });

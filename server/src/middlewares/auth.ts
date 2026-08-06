@@ -66,15 +66,7 @@ export const authorizeRoles = (...roles: string[]) => {
     };
 };
 
-// --- append this export to the end of the file ---
 
-/**
- * Non-strict identity resolver: tries both the user (accessToken) and
- * seller (seller_token) auth flows without failing if either is absent or
- * invalid, populating req.user/req.seller when valid. Used for resources
- * like a single order that can legitimately belong to either identity;
- * downstream controllers perform the actual ownership check.
- */
 export const attachIdentity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const accessToken = req.cookies.accessToken || req.headers.authorization?.split(" ")[1];

@@ -10,8 +10,6 @@ export interface RegisterUserRequest {
   name: string;
   email: string;
   password: string;
-  /** Base64 data URI. Required in practice: the backend uploads it to
-   *  Cloudinary unconditionally on account creation. */
   avatar: string;
 }
 

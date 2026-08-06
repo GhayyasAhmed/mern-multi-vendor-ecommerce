@@ -85,11 +85,6 @@ export const getCouponValueByName = catchAsyncErrors(
   }
 );
 
-/**
- * Shared discount calculation, used by both /validate-coupon (live cart
- * totals) and order creation (server-side source of truth). `value` is
- * treated as a percentage discount (0-100).
- */
 export const calculateCouponDiscount = (
   coupon: ICouponCode,
   subtotal: number,

@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "components/Events/EventCard.jsx", "components/Events/Events.jsx"  ],
   "exclude": ["node_modules"]
 }

@@ -4,7 +4,6 @@ import type { IShop } from "../models/shop.model.js";
 
 export type SocketRole = "user" | "seller";
 
-/** Populated exclusively by socketAuthMiddleware — never set from client input. */
 export interface SocketData {
   role: SocketRole;
   user?: IUser;

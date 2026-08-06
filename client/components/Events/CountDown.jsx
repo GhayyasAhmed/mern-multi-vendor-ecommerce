@@ -23,7 +23,7 @@ const calculateTimeLeft = (finishDate) => {
 };
 
 const CountDown = ({ data }) => {
-  const finishDate = data?.finish_Date;
+  const finishDate = data?.Finish_Date;
   const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft(finishDate));
 
   useEffect(() => {

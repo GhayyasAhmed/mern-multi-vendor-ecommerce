@@ -6,7 +6,6 @@ interface ApiErrorPayload {
   message?: string;
 }
 
-/** Extracts a human-readable message from an RTK Query error shape. */
 export function getErrorMessage(
   error: unknown,
   fallback = "Something went wrong. Please try again."
@@ -35,7 +34,6 @@ const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export class AvatarTooLargeError extends Error {}
 
-/** Reads a File into a base64 data URI, as expected by the Cloudinary upload on the backend. */
 export function readFileAsBase64(file: File): Promise<string> {
   if (file.size > MAX_AVATAR_SIZE_BYTES) {
     return Promise.reject(new AvatarTooLargeError("Image must be smaller than 5MB"));

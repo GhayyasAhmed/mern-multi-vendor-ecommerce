@@ -32,6 +32,34 @@ export interface GetAllProductsParams {
   sortBy?: "newest" | "oldest" | "best-selling" | "price-low" | "price-high";
 }
 
+
+export interface GetShopProductsResponse {
+  success: boolean;
+  products: IProduct[];
+}
+
+export interface CreateProductRequest {
+  name: string;
+  description: string;
+  category: string;
+  tags?: string;
+  originalPrice?: number;
+  discountPrice: number;
+  stock: number;
+  images: string[];
+  shopId: string;
+}
+
+export interface CreateProductResponse {
+  success: boolean;
+  product: IProduct;
+}
+
+export interface DeleteProductResponse {
+  success: boolean;
+  message: string;
+}
+
 function buildQueryString(params: GetAllProductsParams): string {
   const query = new URLSearchParams();
   if (params.page) query.set("page", String(params.page));
@@ -74,6 +102,45 @@ export const productApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: (_result, _error, { id }) => [{ type: "Product", id: `RELATED-${id}` }],
     }),
+
+    getShopProducts: builder.query<GetShopProductsResponse, string>({
+      query: (shopId) => ({
+        url: `/product/get-all-products-shop/${shopId}`,
+        method: "GET",
+      }),
+      providesTags: (result, _error, shopId) =>
+        result
+          ? [
+              ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),
+              { type: "Product" as const, id: `SHOP-${shopId}` },
+            ]
+          : [{ type: "Product" as const, id: `SHOP-${shopId}` }],
+    }),
+
+    createProduct: builder.mutation<CreateProductResponse, CreateProductRequest>({
+      query: (body) => ({
+        url: "/product/create-product",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, body) => [
+        { type: "Product", id: "LIST" },
+        { type: "Product", id: `SHOP-${body.shopId}` },
+      ],
+    }),
+
+    deleteProduct: builder.mutation<DeleteProductResponse, { id: string; shopId: string }>({
+      query: ({ id }) => ({
+        url: `/product/delete-shop-product/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { id, shopId }) => [
+        { type: "Product", id },
+        { type: "Product", id: "LIST" },
+        { type: "Product", id: `SHOP-${shopId}` },
+      ],
+    }),
+    
   }),
   overrideExisting: false,
 });
@@ -83,4 +150,7 @@ export const {
   useGetProductByIdQuery,
   useGetRelatedProductsQuery,
   useLazyGetAllProductsQuery,
+  useGetShopProductsQuery,
+  useCreateProductMutation,
+  useDeleteProductMutation,
 } = productApiSlice;

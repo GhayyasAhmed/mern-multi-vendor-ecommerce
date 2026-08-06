@@ -142,7 +142,7 @@ const createProductSchema = z.object({
     discountPrice: z.number({ message: 'Please enter your product price!' }),
     stock: z.number({ message: 'Please enter your product stock!' }),
     images: z.union([z.string(), z.array(z.string())]),
-    shopId: z.string('Shop id is required'),
+    shopId: z.string().optional(),
   }),
 });
 
@@ -248,4 +248,25 @@ const validateCouponSchema = z.object({
 export const CouponValidations = {
   createCouponCodeSchema,
   validateCouponSchema,
+};
+
+
+const createEventSchema = z.object({
+  body: z.object({
+    name: z.string('Please enter your event product name!'),
+    description: z.string('Please enter your event product description!'),
+    category: z.string('Please enter your event product category!'),
+    start_Date: z.union([z.string(), z.date()], { message: 'Please provide a start date' }),
+    Finish_Date: z.union([z.string(), z.date()], { message: 'Please provide a finish date' }),
+    tags: z.string().optional(),
+    originalPrice: z.number().optional(),
+    discountPrice: z.number({ message: 'Please enter your event product price!' }),
+    stock: z.number({ message: 'Please enter your event product stock!' }),
+    images: z.union([z.string(), z.array(z.string())]),
+    shopId: z.string().optional(),
+  }),
+});
+
+export const EventValidations = {
+  createEventSchema,
 };
