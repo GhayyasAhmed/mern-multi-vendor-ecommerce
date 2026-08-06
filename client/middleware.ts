@@ -19,7 +19,7 @@ function hasSession(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const authenticated = hasSession(request);
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
@@ -31,7 +31,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute && authenticated) {
+  // A `redirect` param means the app itself sent the user here (e.g.
+  // ProtectedRoute bouncing an invalidated session). Cookie presence alone
+  // can't tell a live session from one invalidated server-side, so this
+  // case is left to the client's real auth check instead of bouncing away
+  // and trapping the user in a loop until the stale cookie expires.
+  if (isAuthRoute && authenticated && !searchParams.has("redirect")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
