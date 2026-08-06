@@ -131,6 +131,21 @@ const resetPasswordSchema = z.object({
   }),
 });
 
+
+const updateUserProfileSchema = z.object({
+    body: z.object({
+        name: z.string().optional(),
+        phoneNumber: z.number().optional(),
+    }),
+});
+
+const updateUserEmailSchema = z.object({
+    body: z.object({
+        email: z.string('Email is required').email('Invalid email address'),
+        password: z.string('Password is required'),
+    }),
+});
+
 // Helper for validating product and event images with a max limit of 8
 const imageListValidation = z.union([
   z.string(),
@@ -167,14 +182,15 @@ export const ProductValidations = {
 };
 
 export const UserValidations = {
-  createUserSchema,
-  loginUserSchema,
-  updateUserInfoSchema,
-  updateUserAvatarSchema,
-  updateUserAddressesSchema,
-  updateUserPasswordSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
+    createUserSchema,
+    loginUserSchema,
+    updateUserProfileSchema,
+    updateUserEmailSchema,
+    updateUserAvatarSchema,
+    updateUserAddressesSchema,
+    updateUserPasswordSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema,
 };
 
 // ---- Order Validations ----

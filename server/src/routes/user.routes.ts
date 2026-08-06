@@ -5,7 +5,8 @@ import {
     loginUser,
     getUserDetails,
     logoutUser,
-    updateUserInfo,
+    updateUserProfile,
+    updateUserEmail,
     updateUserAvatar,
     updateUserAddresses,
     deleteUserAddress,
@@ -32,7 +33,10 @@ userRouter.put("/reset-password/:token", authLimiter, validate(UserValidations.r
 userRouter.get("/getuser", isAuthenticated, getUserDetails);
 userRouter.post("/logout", isAuthenticated, logoutUser);
 userRouter.post("/refresh-token", authLimiter, refreshAccessToken);
-userRouter.put("/update-user-info", isAuthenticated, validate(UserValidations.updateUserInfoSchema), updateUserInfo);
+
+// Profile & Account Settings Routes
+userRouter.put("/update-user-profile", isAuthenticated, validate(UserValidations.updateUserProfileSchema), updateUserProfile);
+userRouter.put("/update-user-email", isAuthenticated, validate(UserValidations.updateUserEmailSchema), updateUserEmail);
 userRouter.put("/update-avatar", isAuthenticated, validate(UserValidations.updateUserAvatarSchema), updateUserAvatar);
 userRouter.put("/update-user-addresses", isAuthenticated, validate(UserValidations.updateUserAddressesSchema), updateUserAddresses);
 userRouter.delete("/delete-user-address/:id", isAuthenticated, deleteUserAddress);

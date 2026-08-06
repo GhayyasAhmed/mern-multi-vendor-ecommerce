@@ -272,32 +272,81 @@ export const refreshAccessToken = catchAsyncErrors(
     }
 );
 
-// 6. Update User Information
-export const updateUserInfo = catchAsyncErrors(
+// 6. Update User Profile (Name & Phone Number - Session Authenticated Only)
+export const updateUserProfile = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { email, password, phoneNumber, name } = req.body;
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
 
-        const user = await User.findOne({ email }).select("+password");
+        const user = await User.findById(req.user._id);
 
         if (!user) {
-            return next(new ErrorHandler("User not found", 400));
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const { name, phoneNumber } = req.body;
+
+        if (name !== undefined) {
+            user.name = name;
+        }
+        if (phoneNumber !== undefined) {
+            user.phoneNumber = phoneNumber;
+        }
+
+        await user.save();
+
+        const sessionRaw = await redis.get(user._id.toString());
+        if (sessionRaw) {
+            const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+            await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
+        }
+
+        res.status(200).json({
+            success: true,
+            user,
+        });
+    }
+);
+
+// 6b. Update User Email (Explicitly Password-Verified)
+export const updateUserEmail = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const { email, password } = req.body;
+
+        const user = await User.findById(req.user._id).select("+password");
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
         }
 
         const isPasswordValid = await user.comparePassword(password);
 
         if (!isPasswordValid) {
             return next(
-                new ErrorHandler("Please provide the correct information", 400)
+                new ErrorHandler("Please provide the correct password", 400)
             );
         }
 
-        user.name = name;
-        user.email = email;
-        user.phoneNumber = phoneNumber;
+        const existingUser = await User.findOne({ email });
+        if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+            return next(new ErrorHandler("Email already in use", 400));
+        }
 
+        user.email = email;
         await user.save();
 
-        res.status(201).json({
+        const sessionRaw = await redis.get(user._id.toString());
+        if (sessionRaw) {
+            const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+            await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
+        }
+
+        res.status(200).json({
             success: true,
             user,
         });
