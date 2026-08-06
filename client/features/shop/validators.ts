@@ -33,15 +33,20 @@ export const productFormSchema = z.object({
 });
 export type ProductFormValues = z.infer<typeof productFormSchema>;
 
-export const eventFormSchema = z.object({
-  name: z.string("Event name is required").min(1, "Event name is required"),
-  description: z.string("Description is required").min(1, "Description is required"),
-  category: z.string("Category is required").min(1, "Category is required"),
-  tags: z.string().optional(),
-  originalPrice: z.string().optional(),
-  discountPrice: z.string("Price is required").min(1, "Price is required"),
-  stock: z.string("Stock is required").min(1, "Stock is required"),
-  start_Date: z.string("Start date is required").min(1, "Start date is required"),
-  Finish_Date: z.string("Finish date is required").min(1, "Finish date is required"),
-});
+export const eventFormSchema = z
+  .object({
+    name: z.string("Event name is required").min(1, "Event name is required"),
+    description: z.string("Description is required").min(1, "Description is required"),
+    category: z.string("Category is required").min(1, "Category is required"),
+    tags: z.string().optional(),
+    originalPrice: z.string().optional(),
+    discountPrice: z.string("Price is required").min(1, "Price is required"),
+    stock: z.string("Stock is required").min(1, "Stock is required"),
+    start_Date: z.string("Start date is required").min(1, "Start date is required"),
+    Finish_Date: z.string("Finish date is required").min(1, "Finish date is required"),
+  })
+  .refine((data) => new Date(data.Finish_Date) > new Date(data.start_Date), {
+    message: "Finish date must be after start date",
+    path: ["Finish_Date"],
+  });
 export type EventFormValues = z.infer<typeof eventFormSchema>;
