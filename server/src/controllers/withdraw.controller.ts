@@ -61,7 +61,7 @@ export const getAllWithdrawRequests = catchAsyncErrors(
     try {
       const withdraws = await WithdrawModel.find().sort({ createdAt: -1 });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         withdraws,
       });

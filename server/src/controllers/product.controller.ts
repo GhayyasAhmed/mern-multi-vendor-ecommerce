@@ -310,7 +310,7 @@ export const getAdminAllProducts = catchAsyncErrors(
         createdAt: -1,
       });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
