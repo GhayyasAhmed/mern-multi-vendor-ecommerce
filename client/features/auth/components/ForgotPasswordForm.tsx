@@ -74,7 +74,7 @@ export default function ForgotPasswordForm() {
         </p>
       )}
 
-      <button type="submit" disabled={isLoading} className={`${styles.button} w-full disabled:opacity-60`}>
+      <button type="submit" disabled={isLoading} className={`${styles.submit_button} w-full disabled:opacity-60`}>
         <span className="text-white font-[Poppins]">{isLoading ? "Sending link..." : "Send reset link"}</span>
       </button>
 

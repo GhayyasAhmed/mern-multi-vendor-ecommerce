@@ -1,22 +1,24 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import styles from "@/styles/styles";
+import Cart from "@/components/Cart/Cart";
+import Wishlist from "@/components/Wishlist/Wishlist.jsx";
+import LogoutButton from "@/features/auth/components/LogoutButton";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { categoriesData, productData } from "@/static/data";
+import styles from "@/styles/styles";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   AiOutlineHeart,
   AiOutlineSearch,
   AiOutlineShoppingCart,
 } from "react-icons/ai";
-import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { BiMenuAltLeft } from "react-icons/bi";
+import { CgProfile } from "react-icons/cg";
+import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
-import Cart from "@/components/Cart/Cart";
-import Wishlist from "@/components/Wishlist/Wishlist.jsx";
-
 
 const Header = ({ activeHeading }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,6 +28,12 @@ const Header = ({ activeHeading }) => {
   const [openCart, setOpenCart] = useState(false);
   const [openWishlist, setOpenWishlist] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef(null);
+  // Single source of truth for auth state, shared with AuthProvider's
+  // subscription — no extra network request is triggered here.
+  const { user, isAuthenticated, isLoading } = useCurrentUser();
 
   const handleSearchChange = (e) => {
     const term = e.target.value;
@@ -52,6 +60,16 @@ const Header = ({ activeHeading }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleClickOutside = (event) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [accountMenuOpen]);
   return (
     <>
       <div className={`${styles.section}`}>
@@ -114,9 +132,8 @@ const Header = ({ activeHeading }) => {
       </div>
 
       <div
-        className={`${
-          active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
-        } transition hidden 800px:flex items-center justify-between w-full bg-[#3321c8] h-17.5`}
+        className={`${active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
+          } transition hidden 800px:flex items-center justify-between w-full bg-[#3321c8] h-17.5`}
       >
         <div className={`${styles.section} relative ${styles.normalFlex} justify-between`}>
           {/* Categories */}
@@ -176,13 +193,55 @@ const Header = ({ activeHeading }) => {
             </div>
 
             <div className={`${styles.normalFlex}`}>
-              <div className="relative cursor-pointer mr-3.75">
-                <Link href="/login">
-                  <div className="w-7.5 h-7.5 rounded-full bg-slate-300 flex items-center justify-center font-bold text-gray-700">
-                    U
-                  </div>
-                </Link>
-              </div>
+              {isLoading ? (
+                <div className="w-7.5 h-7.5 rounded-full bg-slate-200 animate-pulse mr-3.75" />
+              ) : isAuthenticated ? (
+                <div className="relative mr-3.75" ref={accountMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setAccountMenuOpen((prev) => !prev)}
+                    className="w-7.5 h-7.5 rounded-full bg-slate-300 flex items-center justify-center font-bold text-gray-700 overflow-hidden cursor-pointer"
+                    aria-haspopup="menu"
+                    aria-expanded={accountMenuOpen}
+                  >
+                    {user?.avatar?.url ? (
+                      <Image
+                        src={user.avatar.url}
+                        alt={user.name || "Account"}
+                        width={30}
+                        height={30}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      (user?.name?.[0] || "U").toUpperCase()
+                    )}
+                  </button>
+                  {accountMenuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-10 w-45 bg-white rounded-md shadow-sm py-2 z-20"
+                    >
+                      {user?.name && (
+                        <p className="px-4 py-1 text-sm font-medium text-gray-700 truncate">
+                          {user.name}
+                        </p>
+                      )}
+                      <LogoutButton
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 disabled:opacity-60"
+                        onLoggedOut={() => setAccountMenuOpen(false)}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative cursor-pointer mr-3.75">
+                  <Link href="/login">
+                    {/* <div className="w-7.5 h-7.5 rounded-full bg-slate-300 flex items-center justify-center font-bold text-gray-700"> */}
+                      <CgProfile size={30} color="rgb(255 255 255 / 83%)" />
+                    {/* </div> */}
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Cart popup */}
@@ -198,9 +257,8 @@ const Header = ({ activeHeading }) => {
 
       {/* Mobile Header */}
       <div
-        className={`${
-          active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
-        } w-full h-15 bg-white z-50 top-0 left-0 shadow-sm 800px:hidden flex items-center justify-between px-4`}
+        className={`${active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
+          } w-full h-15 bg-white z-50 top-0 left-0 shadow-sm 800px:hidden flex items-center justify-between px-4`}
       >
         <div>
           <BiMenuAltLeft
@@ -298,17 +356,29 @@ const Header = ({ activeHeading }) => {
             <br />
             <br />
             <br />
-            <div className="flex w-full justify-center">
-              <Link
-                href="/login"
-                className="text-[18px] pr-2 text-[#000000b7]"
-              >
-                Login /
-              </Link>
-              <Link href="/signup" className="text-[18px] text-[#000000b7]">
-                Sign up
-              </Link>
-            </div>
+            {isAuthenticated ? (
+              <div className="flex w-full flex-col items-center gap-2">
+                {user?.name && (
+                  <span className="text-[16px] text-[#000000b7]">{user.name}</span>
+                )}
+                <LogoutButton
+                  className="text-[18px] text-[#000000b7] disabled:opacity-60"
+                  onLoggedOut={() => setOpen(false)}
+                />
+              </div>
+            ) : (
+              <div className="flex w-full justify-center">
+                <Link
+                  href="/login"
+                  className="text-[18px] pr-2 text-[#000000b7]"
+                >
+                  Login /
+                </Link>
+                <Link href="/signup" className="text-[18px] text-[#000000b7]">
+                  Sign up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

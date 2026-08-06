@@ -94,7 +94,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         </p>
       )}
 
-      <button type="submit" disabled={isLoading} className={`${styles.button} w-full disabled:opacity-60`}>
+      <button type="submit" disabled={isLoading} className={`${styles.submit_button} w-full disabled:opacity-60`}>
         <span className="text-white font-[Poppins]">{isLoading ? "Resetting..." : "Reset password"}</span>
       </button>
     </form>
