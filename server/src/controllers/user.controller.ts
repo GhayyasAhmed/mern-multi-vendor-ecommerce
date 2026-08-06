@@ -546,7 +546,11 @@ export const resetPassword = catchAsyncErrors(
             return next(new ErrorHandler("Passwords do not match!", 400));
         }
 
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+       const hashedToken = crypto
+  .createHash("sha256")
+  .update(String(req.params.token || ""))
+  .digest("hex");
+
 
         const user = await User.findOne({
             resetPasswordToken: hashedToken,
