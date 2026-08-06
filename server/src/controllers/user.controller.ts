@@ -5,6 +5,8 @@ import { NextFunction, Request, Response } from "express";
 import { redis } from "../config/redis.js";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import User from "../models/user.model.js";
+import Product from "../models/product.model.js";
+import Conversation from "../models/conversation.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { sendToken } from "../utils/jwt.js";
 import sendEmail from "../utils/sendEmail.js";
@@ -38,13 +40,9 @@ export interface IActivationRequest {
 export const createActivationToken = async (
     user: IActivationRequest
 ): Promise<IActivationToken> => {
-    // Generate a cryptographically secure, unique token (used in URL)
     const activationToken = crypto.randomBytes(32).toString("hex");
-
-    // Read expiration time from environment variable (default: 5 mins)
     const expireMinutes = parseInt(process.env.JWT_EXPIRES || "5", 10);
 
-    // Store user registration data directly under the activation token key
     await redis.set(
         `activation:${activationToken}`,
         JSON.stringify(user),
@@ -65,7 +63,6 @@ export const createUser = catchAsyncErrors(
             return next(new ErrorHandler("User already exists", 400));
         }
 
-        // Hash password before saving to Redis
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -83,14 +80,11 @@ export const createUser = catchAsyncErrors(
             },
         };
 
-        // Call the helper function
         const { activationToken, expireMinutes } = await createActivationToken(user);
 
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
         const activationUrl = `${frontendUrl}/activation/${activationToken}`;
 
-        // Kept: this try/catch performs a compensating action (rollback of the
-        // Redis activation key) on failure, it is not just forwarding the error.
         try {
             await sendEmail({
                 email: user.email,
@@ -103,7 +97,6 @@ export const createUser = catchAsyncErrors(
                 message: `Please check your email (${user.email}) to activate your account!`,
             });
         } catch (error: any) {
-            // Rollback Redis key if email fails to send
             await redis.del(`activation:${activationToken}`);
             return next(new ErrorHandler(error.message, 500));
         }
@@ -119,7 +112,6 @@ export const activateUser = catchAsyncErrors(
             return next(new ErrorHandler("Activation token is missing", 400));
         }
 
-        // Check Redis for token existence
         const redisData = await redis.get(`activation:${activation_token}`);
 
         if (!redisData) {
@@ -133,14 +125,12 @@ export const activateUser = catchAsyncErrors(
 
         const user: IActivationRequest = JSON.parse(redisData);
 
-        // Check if user was already created
         const existingUser = await User.findOne({ email: user.email });
         if (existingUser) {
             await redis.del(`activation:${activation_token}`);
             return next(new ErrorHandler("User already exists", 400));
         }
 
-        // Create user in database
         const newUser = await User.create({
             name: user.name,
             email: user.email,
@@ -148,10 +138,8 @@ export const activateUser = catchAsyncErrors(
             password: user.password,
         });
 
-        // Clean up Redis key so it cannot be reused
         await redis.del(`activation:${activation_token}`);
 
-        // Log user in & set cookie/response token
         sendToken(newUser, 201, res, "Account activated successfully!");
     }
 );
@@ -254,21 +242,18 @@ export const refreshAccessToken = catchAsyncErrors(
 
         const user = JSON.parse(sessionRaw);
 
-        // Issue new access token
         const newAccessToken = jwt.sign(
             { id: decoded.id },
             env.accessTokenSecret,
             { expiresIn: `${process.env.ACCESS_TOKEN_EXPIRE || "2"}h` as any }
         );
 
-        // Rotate refresh token to limit reuse window
         const newRefreshToken = jwt.sign(
             { id: decoded.id },
             env.refreshTokenSecret,
             { expiresIn: `${process.env.REFRESH_TOKEN_EXPIRE || "24"}h` as any }
         );
 
-        // Extend Redis session TTL to match new refresh token lifetime
         const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
         await redis.set(
             decoded.id as string,
@@ -500,7 +485,17 @@ export const deleteUserAdmin = catchAsyncErrors(
             await cloudinary.uploader.destroy(user.avatar.public_id);
         }
 
+        // Cascade delete / cleanup dependent data (reviews and conversations)
+        await Product.updateMany(
+            { "reviews.user": user._id },
+            { $pull: { reviews: { user: user._id } } }
+        );
+        await Conversation.deleteMany({
+            $or: [{ members: user._id }, { userId: user._id }, { users: user._id }]
+        } as any);
+
         await User.findByIdAndDelete(req.params.id);
+        await redis.del(user._id.toString());
 
         res.status(200).json({
             success: true,
@@ -509,9 +504,7 @@ export const deleteUserAdmin = catchAsyncErrors(
     }
 );
 
-// 14. Forgot Password — issues a short-lived reset token (stored hashed on
-// the existing resetPasswordToken/resetPasswordTime fields) and emails the
-// reset link, mirroring the activation-email flow above.
+// 14. Forgot Password
 export const forgotPassword = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         const { email } = req.body;
@@ -526,7 +519,7 @@ export const forgotPassword = catchAsyncErrors(
         const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
         user.resetPasswordToken = hashedToken;
-        user.resetPasswordTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        user.resetPasswordTime = new Date(Date.now() + 15 * 60 * 1000);
 
         await user.save({ validateBeforeSave: false });
 
@@ -545,8 +538,6 @@ export const forgotPassword = catchAsyncErrors(
                 message: `A password reset link has been sent to ${user.email}`,
             });
         } catch (error: any) {
-            // Rollback the reset token if the email fails to send, mirroring the
-            // activation-email compensating action above.
             user.resetPasswordToken = undefined;
             user.resetPasswordTime = undefined;
             await user.save({ validateBeforeSave: false });
@@ -555,7 +546,7 @@ export const forgotPassword = catchAsyncErrors(
     }
 );
 
-// 15. Reset Password — consumes the token issued above and sets a new password.
+// 15. Reset Password
 export const resetPassword = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         const { password, confirmPassword } = req.body;
@@ -584,8 +575,6 @@ export const resetPassword = catchAsyncErrors(
 
         await user.save();
 
-        // Invalidate any existing session so a leaked/old session can't
-        // survive a password reset — same mechanism logoutUser uses.
         await redis.del(user._id.toString());
 
         res.status(200).json({

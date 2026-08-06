@@ -4,10 +4,14 @@ import { NextFunction, Request, Response } from "express";
 import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary.js";
 import { redis } from "../config/redis.js";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
+import ConversationModel from "../models/conversation.model.js";
+import CouponCode from "../models/couponCode.model.js";
+import EventModel from "../models/event.model.js";
+import Product from "../models/product.model.js";
 import Shop from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import sendShopToken from "../utils/shopToken.js";
 import sendEmail from "../utils/sendEmail.js";
+import sendShopToken from "../utils/shopToken.js";
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -391,6 +395,12 @@ export const deleteSeller = catchAsyncErrors(
     if (seller.avatar?.public_id) {
       await deleteFromCloudinary(seller.avatar.public_id);
     }
+
+    // Cascade delete dependent entities to prevent orphaned data
+    await Product.deleteMany({ shopId: seller._id });
+    await CouponCode.deleteMany({ shopId: seller._id });
+    await EventModel.deleteMany({ shopId: seller._id });
+    await ConversationModel.deleteMany({ shopId: seller._id });
 
     await Shop.findByIdAndDelete(req.params.id);
     await redis.del(`seller_${req.params.id}`);

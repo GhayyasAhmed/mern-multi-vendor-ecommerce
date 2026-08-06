@@ -3,6 +3,9 @@ import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ProductModel, { IReview } from "../models/product.model.js";
 import OrderModel from "../models/order.model.js";
 import ShopModel from "../models/shop.model.js";
+import EventModel from "../models/event.model.js";
+import CouponCodeModel from "../models/couponCode.model.js";
+import ConversationModel from "../models/conversation.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js";
 
@@ -120,6 +123,10 @@ export const deleteProduct = catchAsyncErrors(
       .map((publicId) => deleteFromCloudinary(publicId));
 
     await Promise.all(deletePromises);
+
+    // Cascade delete dependent entities if required or cleanup references
+    await CouponCodeModel.deleteMany({ productIds: product._id });
+    await ConversationModel.deleteMany({ productId: product._id });
 
     await ProductModel.findByIdAndDelete(req.params.id);
 
