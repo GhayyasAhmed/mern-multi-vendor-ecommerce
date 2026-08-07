@@ -37,9 +37,28 @@ export interface IMessage {
   updatedAt: string;
 }
 
+export interface ConversationsPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
+export interface GetConversationsParams {
+  id: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface GetConversationsResponse {
   success: boolean;
   conversations: IConversation[];
+  pagination: ConversationsPagination;
+}
+
+export interface GetMessagesParams {
+  conversationId: string;
+  before?: string;
 }
 
 export interface CreateConversationRequest {
@@ -54,6 +73,8 @@ export interface CreateConversationResponse {
 export interface GetMessagesResponse {
   success: boolean;
   messages: IMessage[];
+  hasMore: boolean;
+  nextCursor: string | null;
 }
 
 export interface SendMessageRequest {
@@ -69,31 +90,43 @@ export interface SendMessageResponse {
 
 export const conversationApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getUserConversations: builder.query<GetConversationsResponse, string>({
-      query: (userId) => ({
-        url: `/conversation/get-all-conversation-user/${userId}`,
-        method: "GET",
-      }),
+    getUserConversations: builder.query<GetConversationsResponse, GetConversationsParams>({
+      query: ({ id, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/conversation/get-all-conversation-user/${id}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
       providesTags: (result) =>
         result
           ? [
-              ...result.conversations.map((c) => ({ type: "Conversation" as const, id: c._id })),
-              { type: "Conversation" as const, id: "USER-LIST" },
-            ]
+            ...result.conversations.map((c) => ({ type: "Conversation" as const, id: c._id })),
+            { type: "Conversation" as const, id: "USER-LIST" },
+          ]
           : [{ type: "Conversation" as const, id: "USER-LIST" }],
     }),
 
-    getSellerConversations: builder.query<GetConversationsResponse, string>({
-      query: (sellerId) => ({
-        url: `/conversation/get-all-conversation-seller/${sellerId}`,
-        method: "GET",
-      }),
+    getSellerConversations: builder.query<GetConversationsResponse, GetConversationsParams>({
+      query: ({ id, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/conversation/get-all-conversation-seller/${id}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
       providesTags: (result) =>
         result
           ? [
-              ...result.conversations.map((c) => ({ type: "Conversation" as const, id: c._id })),
-              { type: "Conversation" as const, id: "SELLER-LIST" },
-            ]
+            ...result.conversations.map((c) => ({ type: "Conversation" as const, id: c._id })),
+            { type: "Conversation" as const, id: "SELLER-LIST" },
+          ]
           : [{ type: "Conversation" as const, id: "SELLER-LIST" }],
     }),
 
@@ -109,12 +142,12 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
       ],
     }),
 
-    getMessages: builder.query<GetMessagesResponse, string>({
-      query: (conversationId) => ({
-        url: `/message/get-all-messages/${conversationId}`,
+    getMessages: builder.query<GetMessagesResponse, GetMessagesParams>({
+      query: ({ conversationId, before }) => ({
+        url: `/message/get-all-messages/${conversationId}${before ? `?before=${encodeURIComponent(before)}` : ""}`,
         method: "GET",
       }),
-      providesTags: (_result, _error, conversationId) => [{ type: "Message", id: conversationId }],
+      providesTags: (_result, _error, { conversationId }) => [{ type: "Message", id: conversationId }],
     }),
 
     sendMessage: builder.mutation<SendMessageResponse, SendMessageRequest>({
@@ -138,5 +171,6 @@ export const {
   useGetSellerConversationsQuery,
   useCreateConversationMutation,
   useGetMessagesQuery,
+  useLazyGetMessagesQuery,
   useSendMessageMutation,
 } = conversationApiSlice;

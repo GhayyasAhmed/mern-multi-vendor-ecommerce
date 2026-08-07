@@ -1,5 +1,14 @@
 import { apiSlice } from "@/lib/api/apiSlice";
 
+
+export interface EventsPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
+
 export interface IEventImage {
   public_id?: string;
   url: string;
@@ -27,14 +36,23 @@ export interface IEvent {
   isExpired?: boolean;
 }
 
+
 export interface GetAllEventsParams {
   status?: "active" | "upcoming" | "expired";
+  page?: number;
   limit?: number;
 }
 
 export interface GetAllEventsResponse {
   success: boolean;
   events: IEvent[];
+  pagination: EventsPagination;
+}
+
+export interface GetShopEventsParams {
+  shopId: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface GetEventResponse {
@@ -69,6 +87,7 @@ export interface DeleteEventResponse {
 function buildEventsQueryString(params: GetAllEventsParams): string {
   const query = new URLSearchParams();
   if (params.status) query.set("status", params.status);
+  if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
   const qs = query.toString();
   return qs ? `?${qs}` : "";
@@ -84,9 +103,9 @@ export const eventApiSlice = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.events.map((e) => ({ type: "Event" as const, id: e._id })),
-              { type: "Event" as const, id: "LIST" },
-            ]
+            ...result.events.map((e) => ({ type: "Event" as const, id: e._id })),
+            { type: "Event" as const, id: "LIST" },
+          ]
           : [{ type: "Event" as const, id: "LIST" }],
     }),
 
@@ -98,17 +117,23 @@ export const eventApiSlice = apiSlice.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: "Event", id }],
     }),
 
-    getShopEvents: builder.query<GetAllEventsResponse, string>({
-      query: (shopId) => ({
-        url: `/event/get-all-events/${shopId}`,
-        method: "GET",
-      }),
-      providesTags: (result, _error, shopId) =>
+    getShopEvents: builder.query<GetAllEventsResponse, GetShopEventsParams>({
+      query: ({ shopId, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/event/get-all-events/${shopId}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
+      providesTags: (result, _error, { shopId }) =>
         result
           ? [
-              ...result.events.map((e) => ({ type: "Event" as const, id: e._id })),
-              { type: "Event" as const, id: `SHOP-${shopId}` },
-            ]
+            ...result.events.map((e) => ({ type: "Event" as const, id: e._id })),
+            { type: "Event" as const, id: `SHOP-${shopId}` },
+          ]
           : [{ type: "Event" as const, id: `SHOP-${shopId}` }],
     }),
 

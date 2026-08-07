@@ -1,31 +1,57 @@
+
 import { apiSlice } from "@/lib/api/apiSlice";
 import type { IUser, IShop, IProduct } from "@/types";
 import type { IEvent } from "@/features/events/eventApiSlice";
 import type { IOrder } from "@/features/orders/orderApiSlice";
 
+export interface AdminPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
+export interface AdminPageParams {
+  page?: number;
+  limit?: number;
+}
+
+function buildAdminQueryString(params: AdminPageParams): string {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export interface AdminUsersResponse {
   success: boolean;
   users: IUser[];
+  pagination: AdminPagination;
 }
 
 export interface AdminSellersResponse {
   success: boolean;
   sellers: IShop[];
+  pagination: AdminPagination;
 }
 
 export interface AdminProductsResponse {
   success: boolean;
   products: IProduct[];
+  pagination: AdminPagination;
 }
 
 export interface AdminEventsResponse {
   success: boolean;
   events: IEvent[];
+  pagination: AdminPagination;
 }
 
 export interface AdminOrdersResponse {
   success: boolean;
   orders: IOrder[];
+  pagination: AdminPagination;
 }
 
 export interface IWithdrawRequest {
@@ -40,6 +66,21 @@ export interface IWithdrawRequest {
 export interface AdminWithdrawsResponse {
   success: boolean;
   withdraws: IWithdrawRequest[];
+  pagination: AdminPagination;
+}
+
+export interface AdminStats {
+  userCount: number;
+  sellerCount: number;
+  productCount: number;
+  eventCount: number;
+  orderCount: number;
+  pendingWithdrawCount: number;
+}
+
+export interface AdminStatsResponse {
+  success: boolean;
+  stats: AdminStats;
 }
 
 export interface ApiSuccessMessage {
@@ -49,8 +90,13 @@ export interface ApiSuccessMessage {
 
 export const adminApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAllUsersAdmin: builder.query<AdminUsersResponse, void>({
-      query: () => ({ url: "/user/admin-all-users", method: "GET" }),
+    getAdminStats: builder.query<AdminStatsResponse, void>({
+      query: () => ({ url: "/admin/stats", method: "GET" }),
+      providesTags: ["User", "Shop", "Product", "Event", "Order", "Withdraw"],
+    }),
+
+    getAllUsersAdmin: builder.query<AdminUsersResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/user/admin-all-users${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: (result) =>
         result
           ? [
@@ -65,8 +111,8 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: [{ type: "User", id: "ADMIN-LIST" }],
     }),
 
-    getAllSellersAdmin: builder.query<AdminSellersResponse, void>({
-      query: () => ({ url: "/shop/admin-all-sellers", method: "GET" }),
+    getAllSellersAdmin: builder.query<AdminSellersResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/shop/admin-all-sellers${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: [{ type: "Shop", id: "ADMIN-LIST" }],
     }),
 
@@ -75,23 +121,23 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: [{ type: "Shop", id: "ADMIN-LIST" }],
     }),
 
-    getAllProductsAdmin: builder.query<AdminProductsResponse, void>({
-      query: () => ({ url: "/product/admin-all-products", method: "GET" }),
+    getAllProductsAdmin: builder.query<AdminProductsResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/product/admin-all-products${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: [{ type: "Product", id: "ADMIN-LIST" }],
     }),
 
-    getAllEventsAdmin: builder.query<AdminEventsResponse, void>({
-      query: () => ({ url: "/event/admin-all-events", method: "GET" }),
+    getAllEventsAdmin: builder.query<AdminEventsResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/event/admin-all-events${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: [{ type: "Event", id: "ADMIN-LIST" }],
     }),
 
-    getAllOrdersAdmin: builder.query<AdminOrdersResponse, void>({
-      query: () => ({ url: "/order/admin-all-orders", method: "GET" }),
+    getAllOrdersAdmin: builder.query<AdminOrdersResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/order/admin-all-orders${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: [{ type: "Order", id: "ADMIN-LIST" }],
     }),
 
-    getAllWithdrawsAdmin: builder.query<AdminWithdrawsResponse, void>({
-      query: () => ({ url: "/withdraw/get-all-withdraw-request", method: "GET" }),
+    getAllWithdrawsAdmin: builder.query<AdminWithdrawsResponse, AdminPageParams | void>({
+      query: (params) => ({ url: `/withdraw/get-all-withdraw-request${buildAdminQueryString(params ?? {})}`, method: "GET" }),
       providesTags: [{ type: "Withdraw", id: "LIST" }],
     }),
 
@@ -108,6 +154,7 @@ export const adminApiSlice = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetAdminStatsQuery,
   useGetAllUsersAdminQuery,
   useDeleteUserAdminMutation,
   useGetAllSellersAdminQuery,

@@ -8,6 +8,7 @@ import CouponCodeModel from "../models/couponCode.model.js";
 import ConversationModel from "../models/conversation.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
 // Helper function to escape special regex metacharacters
 const escapeRegex = (text: string): string => {
@@ -94,11 +95,18 @@ export const createProduct = catchAsyncErrors(
 // get all products of a shop
 export const getAllProductsShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const products = await ProductModel.find({ shopId: req.params.id }).sort({ createdAt: -1 });
+    const { page, limit } = parsePagination(req.query, 12, 50);
+    const filter = { shopId: req.params.id };
+
+    const [products, totalItems] = await Promise.all([
+      ProductModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      ProductModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       products,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
@@ -302,13 +310,17 @@ export const createNewReview = catchAsyncErrors(
 // all products --- for admin
 export const getAdminAllProducts = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const products = await ProductModel.find().sort({
-      createdAt: -1,
-    });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+
+    const [products, totalItems] = await Promise.all([
+      ProductModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      ProductModel.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       products,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

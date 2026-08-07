@@ -12,6 +12,7 @@ import Shop from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
 import sendShopToken from "../utils/shopToken.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -370,13 +371,17 @@ export const deleteWithdrawMethod = catchAsyncErrors(
 // 12. Get All Sellers (Admin Only)
 export const getAllSellers = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
-    const sellers = await Shop.find().sort({
-      createdAt: -1,
-    });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+
+    const [sellers, totalItems] = await Promise.all([
+      Shop.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      Shop.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       sellers,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

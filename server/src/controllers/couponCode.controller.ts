@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import CouponCodeModel, { ICouponCode } from "../models/couponCode.model.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
 // create coupon code --- always scoped to the authenticated seller's shop,
 // regardless of any shopId the client may have sent
@@ -37,12 +38,18 @@ export const createCouponCode = catchAsyncErrors(
 export const getShopCoupons = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const shopId = req.seller?._id ? String(req.seller._id) : req.params.id;
+    const { page, limit } = parsePagination(req.query, 20, 100);
+    const filter = { shopId };
 
-    const couponCodes = await CouponCodeModel.find({ shopId });
+    const [couponCodes, totalItems] = await Promise.all([
+      CouponCodeModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      CouponCodeModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       couponCodes,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

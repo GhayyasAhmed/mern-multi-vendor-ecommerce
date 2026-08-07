@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import { useGetAllUsersAdminQuery, useDeleteUserAdminMutation } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminUsersPage() {
-  const { data, isLoading, isError } = useGetAllUsersAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllUsersAdminQuery({ page, limit: 20 });
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserAdminMutation();
   const users = data?.users ?? [];
 
@@ -60,6 +63,13 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

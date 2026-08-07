@@ -23,11 +23,12 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
     error: shopError,
   } = useGetShopInfoQuery(shopId, { skip: !shopId });
 
-  const { data: productsData, isLoading: isProductsLoading } = useGetShopProductsQuery(shopId, {
-    skip: !shopId,
-  });
+  const { data: productsData, isLoading: isProductsLoading } = useGetShopProductsQuery(
+    { shopId },
+    { skip: !shopId }
+  );
 
-  const { data: eventsData } = useGetShopEventsQuery(shopId, { skip: !shopId });
+  const { data: eventsData } = useGetShopEventsQuery({shopId}, { skip: !shopId });
 
   const shop = shopData?.shop;
   const products = productsData?.products ?? [];

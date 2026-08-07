@@ -1,11 +1,12 @@
 "use client";
-
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import {
   useGetMessagesQuery,
+  useLazyGetMessagesQuery,
   useSendMessageMutation,
   type IConversation,
+  type IMessage,
 } from "@/features/messaging/conversationApiSlice";
 import { useSocket } from "@/hooks/use-socket";
 import { getErrorMessage } from "@/features/auth/utils";
@@ -21,17 +22,46 @@ export default function ChatWindow({ conversation, identityId, role }: ChatWindo
   const peerId = role === "user" ? conversation.sellerId : conversation.userId;
   const peer = role === "user" ? conversation.seller : conversation.user;
 
-  const { data, isLoading, isError, refetch } = useGetMessagesQuery(conversation._id);
+  const { data, isLoading, isError, refetch } = useGetMessagesQuery({ conversationId: conversation._id });
+  const [loadOlderMessages, { isFetching: isLoadingOlder }] = useLazyGetMessagesQuery();
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [text, setText] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   
+  const [olderMessages, setOlderMessages] = useState<IMessage[]>([]);
+  const [prevConversationId, setPrevConversationId] = useState(conversation._id);
+  const [manualNextCursor, setManualNextCursor] = useState<string | null>(null);
+  const [manualHasMore, setManualHasMore] = useState<boolean | null>(null);
+
+  // Handle conversation switching safely during render without cascading effects
+  if (prevConversationId !== conversation._id) {
+    setPrevConversationId(conversation._id);
+    setOlderMessages([]);
+    setManualNextCursor(null);
+    setManualHasMore(null);
+  }
+
+  const nextCursor = manualNextCursor ?? data?.nextCursor ?? null;
+  const hasMore = manualHasMore ?? data?.hasMore ?? false;
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const socket = useSocket(true);
 
-  const messages = data?.messages ?? [];
+  const messages = [...olderMessages, ...(data?.messages ?? [])];
+
+  const handleLoadOlder = async () => {
+    if (!nextCursor) return;
+    try {
+      const result = await loadOlderMessages({ conversationId: conversation._id, before: nextCursor }).unwrap();
+      setOlderMessages((prev) => [...result.messages, ...prev]);
+      setManualHasMore(result.hasMore);
+      setManualNextCursor(result.nextCursor);
+    } catch {
+      // best-effort: user can retry the "Load earlier messages" click
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,6 +137,18 @@ export default function ChatWindow({ conversation, identityId, role }: ChatWindo
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+        {hasMore && (
+          <div className="flex justify-center pb-2">
+            <button
+              type="button"
+              onClick={handleLoadOlder}
+              disabled={isLoadingOlder}
+              className="text-xs text-[#3957db] hover:underline disabled:opacity-60 cursor-pointer"
+            >
+              {isLoadingOlder ? "Loading..." : "Load earlier messages"}
+            </button>
+          </div>
+        )}
         {isLoading ? (
           <p className="text-sm text-[#00000082]">Loading messages...</p>
         ) : isError ? (

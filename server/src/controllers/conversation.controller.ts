@@ -3,6 +3,7 @@ import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import ConversationModel, { IConversation } from "../models/conversation.model.js";
 import ShopModel from "../models/shop.model.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
 const getUnreadCount = (conversation: IConversation, memberId: string): number => {
   const unreadCounts = conversation.unreadCounts;
@@ -94,13 +95,18 @@ export const getSellerAllConversations = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to view these conversations", 403));
     }
 
-    const conversations = await ConversationModel.find({
-      members: { $in: [sellerId] },
-    }).sort({ updatedAt: -1 });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+    const filter = { members: { $in: [sellerId] } };
+
+    const [conversations, totalItems] = await Promise.all([
+      ConversationModel.find(filter).sort({ updatedAt: -1 }).skip((page - 1) * limit).limit(limit),
+      ConversationModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       conversations: conversations.map((c) => decorateForMember(c, sellerId)),
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
@@ -118,13 +124,18 @@ export const getUserAllConversations = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to view these conversations", 403));
     }
 
-    const conversations = await ConversationModel.find({
-      members: { $in: [userId] },
-    }).sort({ updatedAt: -1 });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+    const filter = { members: { $in: [userId] } };
+
+    const [conversations, totalItems] = await Promise.all([
+      ConversationModel.find(filter).sort({ updatedAt: -1 }).skip((page - 1) * limit).limit(limit),
+      ConversationModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       conversations: conversations.map((c) => decorateForMember(c, userId)),
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

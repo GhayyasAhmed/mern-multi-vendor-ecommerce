@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import WithdrawModel from "../models/withdraw.model.js";
 import ShopModel from "../models/shop.model.js";
 import sendEmail from "../utils/sendEmail.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
 // create withdraw request --- only for seller
 export const createWithdrawRequest = catchAsyncErrors(
@@ -48,11 +49,17 @@ export const createWithdrawRequest = catchAsyncErrors(
 // get all withdraws --- admin
 export const getAllWithdrawRequests = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const withdraws = await WithdrawModel.find().sort({ createdAt: -1 });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+
+    const [withdraws, totalItems] = await Promise.all([
+      WithdrawModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      WithdrawModel.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       withdraws,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

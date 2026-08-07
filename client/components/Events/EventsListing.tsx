@@ -1,14 +1,21 @@
 "use client";
+import { useState } from "react";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import EventCard from "@/components/Events/EventCard";
+import Pagination from "@/components/ui/Pagination";
 import styles from "@/styles/styles";
 import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
 
 const EventsListing = () => {
-  const { data, isLoading, isError, error } = useGetAllEventsQuery({ status: "active" });
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetAllEventsQuery({
+    status: "active",
+    page,
+  });
   const events = data?.events ?? [];
+  const pagination = data?.pagination;
 
   return (
     <div>
@@ -19,19 +26,32 @@ const EventsListing = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">Loading events...</p>
+          <p className="text-center text-[15px] text-[#00000082] py-12">
+            Loading events...
+          </p>
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 py-12">
             {getErrorMessage(error, "Could not load events.")}
           </p>
         ) : events.length === 0 ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">No active events right now.</p>
+          <p className="text-center text-[15px] text-[#00000082] py-12">
+            No active events right now.
+          </p>
         ) : (
-          <div className="w-full grid">
-            {events.map((event) => (
-              <EventCard data={event} key={event._id} />
-            ))}
-          </div>
+          <>
+            <div className="w-full grid">
+              {events.map((event) => (
+                <EventCard data={event} key={event._id} />
+              ))}
+            </div>
+            {pagination && (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         )}
       </div>
       <Footer />

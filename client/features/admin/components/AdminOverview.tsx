@@ -1,13 +1,6 @@
 "use client";
 import Link from "next/link";
-import {
-  useGetAllUsersAdminQuery,
-  useGetAllSellersAdminQuery,
-  useGetAllProductsAdminQuery,
-  useGetAllEventsAdminQuery,
-  useGetAllOrdersAdminQuery,
-  useGetAllWithdrawsAdminQuery,
-} from "../adminApiSlice";
+import { useGetAdminStatsQuery } from "../adminApiSlice";
 
 function Card({ label, value, href }: { label: string; value: number | string; href: string }) {
   return (
@@ -19,26 +12,23 @@ function Card({ label, value, href }: { label: string; value: number | string; h
 }
 
 export default function AdminOverview() {
-  const { data: usersData } = useGetAllUsersAdminQuery();
-  const { data: sellersData } = useGetAllSellersAdminQuery();
-  const { data: productsData } = useGetAllProductsAdminQuery();
-  const { data: eventsData } = useGetAllEventsAdminQuery();
-  const { data: ordersData } = useGetAllOrdersAdminQuery();
-  const { data: withdrawsData } = useGetAllWithdrawsAdminQuery();
-
-  const pendingWithdrawals =
-    withdrawsData?.withdraws.filter((w) => w.status === "Processing").length ?? 0;
+  const { data, isLoading } = useGetAdminStatsQuery();
+  const stats = data?.stats;
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Dashboard overview</h1>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card label="Users" value={usersData?.users.length ?? "-"} href="/admin/users" />
-        <Card label="Sellers" value={sellersData?.sellers.length ?? "-"} href="/admin/sellers" />
-        <Card label="Products" value={productsData?.products.length ?? "-"} href="/admin/products" />
-        <Card label="Events" value={eventsData?.events.length ?? "-"} href="/admin/events" />
-        <Card label="Orders" value={ordersData?.orders.length ?? "-"} href="/admin/orders" />
-        <Card label="Pending withdrawals" value={pendingWithdrawals} href="/admin/withdrawals" />
+        <Card label="Users" value={isLoading ? "-" : stats?.userCount ?? 0} href="/admin/users" />
+        <Card label="Sellers" value={isLoading ? "-" : stats?.sellerCount ?? 0} href="/admin/sellers" />
+        <Card label="Products" value={isLoading ? "-" : stats?.productCount ?? 0} href="/admin/products" />
+        <Card label="Events" value={isLoading ? "-" : stats?.eventCount ?? 0} href="/admin/events" />
+        <Card label="Orders" value={isLoading ? "-" : stats?.orderCount ?? 0} href="/admin/orders" />
+        <Card
+          label="Pending withdrawals"
+          value={isLoading ? "-" : stats?.pendingWithdrawCount ?? 0}
+          href="/admin/withdrawals"
+        />
       </div>
     </div>
   );

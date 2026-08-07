@@ -98,23 +98,45 @@ export const getAllMessages = catchAsyncErrors(
       return next(new ErrorHandler("You are not a participant of this conversation", 403));
     }
 
-    const messages = await MessageModel.find({ conversationId }).sort({ createdAt: 1 });
+    // Cursor pagination: `before` is the createdAt of the oldest message the
+    // client has already loaded, so history loads backwards in fixed-size
+    // pages instead of fetching the whole (unbounded) thread every time.
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 30, 1), 100);
+    const before = req.query.before as string | undefined;
 
-    await MessageModel.updateMany(
-      { conversationId, sender: { $ne: identityId }, seen: false },
-      { $set: { seen: true } }
-    );
+    const filter: Record<string, any> = { conversationId };
+    if (before) {
+      const beforeDate = new Date(before);
+      if (!Number.isNaN(beforeDate.getTime())) {
+        filter.createdAt = { $lt: beforeDate };
+      }
+    }
 
-    const unreadCounts = conversation.unreadCounts;
-    if (unreadCounts && (unreadCounts.get(identityId) || 0) !== 0) {
-      unreadCounts.set(identityId, 0);
-      conversation.unreadCounts = unreadCounts;
-      await conversation.save();
+    const descPage = await MessageModel.find(filter).sort({ createdAt: -1 }).limit(limit);
+    const messages = [...descPage].reverse();
+    const hasMore = descPage.length === limit;
+    const nextCursor = messages.length > 0 ? messages[0].createdAt.toISOString() : null;
+
+    // Only mark-as-seen / clear the unread badge on the initial (most recent) page.
+    if (!before) {
+      await MessageModel.updateMany(
+        { conversationId, sender: { $ne: identityId }, seen: false },
+        { $set: { seen: true } }
+      );
+
+      const unreadCounts = conversation.unreadCounts;
+      if (unreadCounts && (unreadCounts.get(identityId) || 0) !== 0) {
+        unreadCounts.set(identityId, 0);
+        conversation.unreadCounts = unreadCounts;
+        await conversation.save();
+      }
     }
 
     res.status(200).json({
       success: true,
       messages,
+      hasMore,
+      nextCursor,
     });
   }
 );

@@ -8,14 +8,19 @@ import styles from "@/styles/styles";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useGetMyOrdersQuery } from "@/features/orders/orderApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
+import { useState } from "react";
+import Pagination from "@/components/ui/Pagination";
 
 function OrderListContent() {
   const { user } = useCurrentUser();
-  const { data, isLoading, isError, error } = useGetMyOrdersQuery(user?._id, {
-    skip: !user?._id,
-  });
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetMyOrdersQuery(
+    { id: user?._id, page },
+    { skip: !user?._id }
+  );
 
   const orders = data?.orders ?? [];
+  const pagination = data?.pagination;
 
   return (
     <div>
@@ -39,39 +44,48 @@ function OrderListContent() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <Link
-                key={order._id}
-                href={`/orders/${order._id}`}
-                className="block rounded-lg bg-white p-5 shadow-sm hover:shadow-md transition"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm text-[#00000082]">Order #{order._id.slice(-8).toUpperCase()}</p>
-                    <p className="text-sm text-[#00000082]">
-                      Placed on {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
+          <>
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <Link
+                  key={order._id}
+                  href={`/orders/${order._id}`}
+                  className="block rounded-lg bg-white p-5 shadow-sm hover:shadow-md transition"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm text-[#00000082]">Order #{order._id.slice(-8).toUpperCase()}</p>
+                      <p className="text-sm text-[#00000082]">
+                        Placed on {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                          order.status === "Delivered"
+                            ? "bg-green-100 text-green-700"
+                            : order.status === "Refund Success"
+                              ? "bg-gray-100 text-gray-700"
+                              : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                      <p className="font-semibold text-[17px] pt-1">${order.totalPrice.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                        order.status === "Delivered"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "Refund Success"
-                            ? "bg-gray-100 text-gray-700"
-                            : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                    <p className="font-semibold text-[17px] pt-1">${order.totalPrice.toFixed(2)}</p>
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-[#00000082]">{order.cart.length} item(s)</p>
-              </Link>
-            ))}
-          </div>
+                  <p className="mt-2 text-sm text-[#00000082]">{order.cart.length} item(s)</p>
+                </Link>
+              ))}
+            </div>
+            {pagination && (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         )}
       </div>
       <Footer />

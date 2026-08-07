@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   useGetUserConversationsQuery,
@@ -12,6 +12,7 @@ import { apiSlice } from "@/lib/api/apiSlice";
 import { SOCKET_EVENTS } from "@/constants";
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
+import Pagination from "@/components/ui/Pagination";
 
 interface InboxPanelProps {
   role: "user" | "seller";
@@ -25,16 +26,20 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
   const activeConversationId = searchParams.get("conversation");
   const dispatch = useAppDispatch();
   const socket = useSocket(Boolean(identityId));
+  const [page, setPage] = useState(1);
 
-  const userConversationsQuery = useGetUserConversationsQuery(identityId ?? "", {
-    skip: role !== "user" || !identityId,
-  });
-  const sellerConversationsQuery = useGetSellerConversationsQuery(identityId ?? "", {
-    skip: role !== "seller" || !identityId,
-  });
+   const userConversationsQuery = useGetUserConversationsQuery(
+    { id: identityId ?? "", page },
+    { skip: role !== "user" || !identityId }
+  );
+  const sellerConversationsQuery = useGetSellerConversationsQuery(
+    { id: identityId ?? "", page },
+    { skip: role !== "seller" || !identityId }
+  );
 
   const { data, isLoading, isError } = role === "user" ? userConversationsQuery : sellerConversationsQuery;
   const conversations = data?.conversations ?? [];
+  const pagination = data?.pagination;
 
   const activeConversation = conversations.find((c) => c._id === activeConversationId) ?? null;
 
@@ -70,6 +75,13 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
           role={role}
           onSelect={handleSelect}
         />
+        {pagination && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={setPage}
+          />
+        )}
       </div>
       <div className="w-full md:w-2/3">
         {activeConversation && identityId ? (

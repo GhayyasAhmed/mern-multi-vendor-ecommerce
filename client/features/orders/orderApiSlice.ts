@@ -52,14 +52,40 @@ export interface CreateOrderResponse {
   orders: IOrder[];
 }
 
+export interface OrdersPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
+export interface GetOrdersParams {
+  id: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface GetOrdersResponse {
   success: boolean;
   orders: IOrder[];
+  pagination: OrdersPagination;
 }
 
 export interface GetOrderResponse {
   success: boolean;
   order: IOrder;
+}
+
+export interface UpdateOrderStatusRequest {
+  id: string;
+  shopId?: string;
+  status: string;
+}
+
+export interface OrderActionResponse {
+  success: boolean;
+  order?: IOrder;
+  message?: string;
 }
 
 export const orderApiSlice = apiSlice.injectEndpoints({
@@ -73,18 +99,69 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: [{ type: "Order", id: "LIST" }],
     }),
 
-    getMyOrders: builder.query<GetOrdersResponse, string>({
-      query: (userId) => ({
-        url: `/order/get-all-orders/${userId}`,
-        method: "GET",
-      }),
+    getMyOrders: builder.query<GetOrdersResponse, GetOrdersParams>({
+      query: ({ id, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/order/get-all-orders/${id}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
       providesTags: (result) =>
         result
           ? [
-              ...result.orders.map((o) => ({ type: "Order" as const, id: o._id })),
-              { type: "Order" as const, id: "LIST" },
-            ]
+            ...result.orders.map((o) => ({ type: "Order" as const, id: o._id })),
+            { type: "Order" as const, id: "LIST" },
+          ]
           : [{ type: "Order" as const, id: "LIST" }],
+    }),
+
+    getSellerOrders: builder.query<GetOrdersResponse, GetOrdersParams>({
+      query: ({ id, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/order/get-seller-all-orders/${id}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
+      providesTags: (result) =>
+        result
+          ? [
+            ...result.orders.map((o) => ({ type: "Order" as const, id: o._id })),
+            { type: "Order" as const, id: "SELLER-LIST" },
+          ]
+          : [{ type: "Order" as const, id: "SELLER-LIST" }],
+    }),
+
+    updateOrderStatus: builder.mutation<OrderActionResponse, UpdateOrderStatusRequest>({
+      query: ({ id, status }) => ({
+        url: `/order/update-order-status/${id}`,
+        method: "PUT",
+        body: { status },
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Order", id },
+        { type: "Order", id: "SELLER-LIST" },
+        { type: "Order", id: "LIST" },
+      ],
+    }),
+
+    orderRefundSuccess: builder.mutation<OrderActionResponse, { id: string }>({
+      query: ({ id }) => ({
+        url: `/order/order-refund-success/${id}`,
+        method: "PUT",
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Order", id },
+        { type: "Order", id: "SELLER-LIST" },
+        { type: "Order", id: "LIST" },
+      ],
     }),
 
     getOrderById: builder.query<GetOrderResponse, string>({
@@ -98,4 +175,12 @@ export const orderApiSlice = apiSlice.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useCreateOrderMutation, useGetMyOrdersQuery, useGetOrderByIdQuery } = orderApiSlice;
+export const {
+  useCreateOrderMutation,
+  useGetMyOrdersQuery,
+  useGetSellerOrdersQuery,
+  useUpdateOrderStatusMutation,
+  useOrderRefundSuccessMutation,
+  useGetOrderByIdQuery,
+} = orderApiSlice;
+

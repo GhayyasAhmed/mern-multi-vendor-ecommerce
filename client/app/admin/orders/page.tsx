@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import { useGetAllOrdersAdminQuery } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminOrdersPage() {
-  const { data, isLoading, isError } = useGetAllOrdersAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllOrdersAdminQuery({ page, limit: 20 });
   const orders = data?.orders ?? [];
 
   return (
@@ -40,6 +43,13 @@ export default function AdminOrdersPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

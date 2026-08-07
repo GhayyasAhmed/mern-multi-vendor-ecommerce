@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import { useGetAllWithdrawsAdminQuery, useUpdateWithdrawAdminMutation } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminWithdrawalsPage() {
-  const { data, isLoading, isError } = useGetAllWithdrawsAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllWithdrawsAdminQuery({ page, limit: 20 });
   const [updateWithdraw, { isLoading: isUpdating }] = useUpdateWithdrawAdminMutation();
   const withdraws = data?.withdraws ?? [];
 
@@ -59,6 +62,13 @@ export default function AdminWithdrawalsPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

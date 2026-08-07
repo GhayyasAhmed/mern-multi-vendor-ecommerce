@@ -1,9 +1,12 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
 import { useGetAllEventsAdminQuery } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminEventsPage() {
-  const { data, isLoading, isError } = useGetAllEventsAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllEventsAdminQuery({ page, limit: 20 });
   const events = data?.events ?? [];
 
   return (
@@ -48,6 +51,13 @@ export default function AdminEventsPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import { useGetAllSellersAdminQuery, useDeleteSellerAdminMutation } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminSellersPage() {
-  const { data, isLoading, isError } = useGetAllSellersAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllSellersAdminQuery({ page, limit: 20 });
   const [deleteSeller, { isLoading: isDeleting }] = useDeleteSellerAdminMutation();
   const sellers = data?.sellers ?? [];
 
@@ -58,6 +61,13 @@ export default function AdminSellersPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

@@ -33,11 +33,6 @@ export interface GetAllProductsParams {
 }
 
 
-export interface GetShopProductsResponse {
-  success: boolean;
-  products: IProduct[];
-}
-
 export interface CreateProductRequest {
   name: string;
   description: string;
@@ -59,6 +54,19 @@ export interface DeleteProductResponse {
   success: boolean;
   message: string;
 }
+
+export interface GetShopProductsParams {
+  shopId: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetShopProductsResponse {
+  success: boolean;
+  products: IProduct[];
+  pagination: ProductsPagination;
+}
+
 
 function buildQueryString(params: GetAllProductsParams): string {
   const query = new URLSearchParams();
@@ -103,12 +111,18 @@ export const productApiSlice = apiSlice.injectEndpoints({
       providesTags: (_result, _error, { id }) => [{ type: "Product", id: `RELATED-${id}` }],
     }),
 
-    getShopProducts: builder.query<GetShopProductsResponse, string>({
-      query: (shopId) => ({
-        url: `/product/get-all-products-shop/${shopId}`,
-        method: "GET",
-      }),
-      providesTags: (result, _error, shopId) =>
+    getShopProducts: builder.query<GetShopProductsResponse, GetShopProductsParams>({
+      query: ({ shopId, page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const qs = params.toString();
+        return {
+          url: `/product/get-all-products-shop/${shopId}${qs ? `?${qs}` : ""}`,
+          method: "GET",
+        };
+      },
+      providesTags: (result, _error, { shopId }) =>
         result
           ? [
               ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),

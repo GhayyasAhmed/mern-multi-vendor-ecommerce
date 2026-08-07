@@ -1,9 +1,15 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
 import { useGetAllProductsAdminQuery } from "@/features/admin/adminApiSlice";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminProductsPage() {
-  const { data, isLoading, isError } = useGetAllProductsAdminQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useGetAllProductsAdminQuery({
+    page,
+    limit: 20,
+  });
   const products = data?.products ?? [];
 
   return (
@@ -46,6 +52,13 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

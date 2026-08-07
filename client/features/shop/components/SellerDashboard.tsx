@@ -1,11 +1,17 @@
 "use client";
 
+import Pagination from "@/components/ui/Pagination";
 import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
 import {
   useCreateEventMutation,
   useDeleteEventMutation,
   useGetShopEventsQuery,
 } from "@/features/events/eventApiSlice";
+import {
+  useGetSellerOrdersQuery,
+  useUpdateOrderStatusMutation,
+  useOrderRefundSuccessMutation,
+} from "@/features/orders/orderApiSlice";
 import {
   useCreateProductMutation,
   useDeleteProductMutation,
@@ -28,9 +34,16 @@ import {
 import ShopLogoutButton from "./ShopLogoutButton";
 import InboxPanel from "@/components/Inbox/InboxPanel";
 
+type Tab = "profile" | "products" | "events" | "orders" | "messages";
 
-type Tab = "profile" | "products" | "events" | "messages"
 
+const ORDER_STATUSES = [
+  "Processing",
+  "Transferred to delivery partner",
+  "Shipped",
+  "On the way",
+  "Delivered",
+]
 
 export default function SellerDashboard() {
   const { seller } = useCurrentSeller();
@@ -64,7 +77,7 @@ export default function SellerDashboard() {
 
       <div className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b mb-6">
-          {(["profile", "products", "events", "messages"] as Tab[]).map((t) => (
+          {(["profile", "products", "events", "orders", "messages"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -81,8 +94,104 @@ export default function SellerDashboard() {
         {tab === "profile" && <ProfilePanel />}
         {tab === "products" && <ProductsPanel shopId={seller._id} />}
         {tab === "events" && <EventsPanel shopId={seller._id} />}
+        {tab === "orders" && <OrdersPanel shopId={seller._id} />}
         {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
       </div>
+    </div>
+  );
+}
+
+function OrdersPanel({ shopId }: { shopId: string }) {
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetSellerOrdersQuery({ id: shopId, page, limit: 10 });
+  const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
+  const [approveRefund, { isLoading: isRefunding }] = useOrderRefundSuccessMutation();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const orders = data?.orders ?? [];
+  const pagination = data?.pagination;
+
+  const handleStatusChange = async (orderId: string, status: string) => {
+    setActionError(null);
+    try {
+      await updateOrderStatus({ id: orderId, shopId, status }).unwrap();
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Could not update order status."));
+    }
+  };
+
+  const handleApproveRefund = async (orderId: string) => {
+    setActionError(null);
+    try {
+      await approveRefund({ id: orderId }).unwrap();
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Could not approve refund."));
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-[#333] mb-4">Orders</h2>
+      {actionError && <p className="text-sm text-red-600 mb-3">{actionError}</p>}
+
+      {isLoading ? (
+        <p className="text-[15px] text-[#00000082] py-8">Loading orders...</p>
+      ) : isError ? (
+        <p className="text-[15px] text-red-500 py-8">{getErrorMessage(error, "Could not load orders.")}</p>
+      ) : orders.length === 0 ? (
+        <p className="text-[15px] text-[#00000082] py-8">No orders for your shop yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <div key={order._id} className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Order #{order._id.slice(-8).toUpperCase()}</p>
+                  <p className="text-xs text-[#00000082]">
+                    Placed {new Date(order.createdAt).toLocaleString()} &middot; {order.cart.length} item(s)
+                  </p>
+                </div>
+                <p className="font-semibold">${order.totalPrice.toFixed(2)}</p>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {order.status === "Processing Refund" ? (
+                  <>
+                    <span className="text-sm text-amber-600 font-medium">Refund requested</span>
+                    <button
+                      type="button"
+                      onClick={() => handleApproveRefund(order._id)}
+                      disabled={isRefunding}
+                      className="px-3 py-1.5 rounded-md bg-black text-white text-sm disabled:opacity-60 cursor-pointer"
+                    >
+                      {isRefunding ? "Approving..." : "Approve refund"}
+                    </button>
+                  </>
+                ) : order.status === "Refund Success" ? (
+                  <span className="text-sm text-gray-500">Refunded</span>
+                ) : (
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    disabled={isUpdating || order.status === "Delivered"}
+                    className="border border-gray-300 rounded-md px-2 py-1.5 text-sm disabled:opacity-60"
+                  >
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {pagination && (
+        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
     </div>
   );
 }
@@ -197,7 +306,8 @@ function ProfilePanel() {
 }
 
 function ProductsPanel({ shopId }: { shopId: string }) {
-  const { data, isLoading, isError, error } = useGetShopProductsQuery(shopId);
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetShopProductsQuery({ shopId, page, limit: 12 });
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [showForm, setShowForm] = useState(false);
@@ -360,12 +470,21 @@ function ProductsPanel({ shopId }: { shopId: string }) {
           ))}
         </div>
       )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 }
 
 function EventsPanel({ shopId }: { shopId: string }) {
-  const { data, isLoading, isError, error } = useGetShopEventsQuery(shopId);
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetShopEventsQuery({ shopId, page, limit: 12 });
+
   const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
   const [deleteEvent] = useDeleteEventMutation();
   const [showForm, setShowForm] = useState(false);
@@ -541,6 +660,13 @@ function EventsPanel({ shopId }: { shopId: string }) {
             </div>
           ))}
         </div>
+      )}
+      {data?.pagination && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

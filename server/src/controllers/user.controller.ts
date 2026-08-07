@@ -13,6 +13,8 @@ import sendEmail from "../utils/sendEmail.js";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { accessTokenOptions, refreshTokenOptions } from "../utils/jwt.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
+
 
 export interface IRegistrationBody {
     name: string;
@@ -510,11 +512,17 @@ export const getUserInfo = catchAsyncErrors(
 // 12. Admin: Get All Users
 export const getAllUsersAdmin = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
-        const users = await User.find().sort({ createdAt: -1 });
+        const { page, limit } = parsePagination(req.query, 20, 100);
+
+        const [users, totalItems] = await Promise.all([
+            User.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+            User.countDocuments(),
+        ]);
 
         res.status(200).json({
             success: true,
             users,
+            pagination: buildPaginationMeta(page, limit, totalItems),
         });
     }
 );

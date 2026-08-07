@@ -4,6 +4,8 @@ import ErrorHandler from "../utils/errorhandler.js";
 import EventModel, { IEvent } from "../models/event.model.js";
 import ShopModel from "../models/shop.model.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
+
 
 type DecoratedEvent = Record<string, unknown> & {
   isActive: boolean;
@@ -109,21 +111,28 @@ export const createEvent = catchAsyncErrors(
 export const getAllEvents = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const statusFilter = req.query.status as string | undefined;
-    const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-    const limit = rawLimit ? Math.min(Math.max(rawLimit, 1), 50) : undefined;
+    const { page, limit } = parsePagination(req.query, 12, 50);
+    const now = new Date();
 
-    const events = await EventModel.find().sort({ createdAt: -1 });
-    let decorated = events.map(decorateEvent);
+    const filter: Record<string, any> = {};
+    if (statusFilter === "active") {
+      filter.start_Date = { $lte: now };
+      filter.Finish_Date = { $gte: now };
+    } else if (statusFilter === "upcoming") {
+      filter.start_Date = { $gt: now };
+    } else if (statusFilter === "expired") {
+      filter.Finish_Date = { $lt: now };
+    }
 
-    if (statusFilter === "active") decorated = decorated.filter((e) => e.isActive);
-    else if (statusFilter === "upcoming") decorated = decorated.filter((e) => e.isUpcoming);
-    else if (statusFilter === "expired") decorated = decorated.filter((e) => e.isExpired);
-
-    if (limit) decorated = decorated.slice(0, limit);
+    const [events, totalItems] = await Promise.all([
+      EventModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      EventModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
-      events: decorated,
+      events: events.map(decorateEvent),
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
@@ -147,11 +156,18 @@ export const getEventById = catchAsyncErrors(
 // get all events of a shop
 export const getShopAllEvents = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const events = await EventModel.find({ shopId: req.params.id }).sort({ createdAt: -1 });
+    const { page, limit } = parsePagination(req.query, 12, 50);
+    const filter = { shopId: req.params.id };
+
+    const [events, totalItems] = await Promise.all([
+      EventModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      EventModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       events: events.map(decorateEvent),
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
@@ -188,14 +204,18 @@ export const deleteShopEvent = catchAsyncErrors(
 
 // all events --- for admin
 export const getAdminAllEvents = catchAsyncErrors(
-  async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const events = await EventModel.find().sort({
-      createdAt: -1,
-    });
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { page, limit } = parsePagination(req.query, 20, 100);
+
+    const [events, totalItems] = await Promise.all([
+      EventModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      EventModel.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       events: events.map(decorateEvent),
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

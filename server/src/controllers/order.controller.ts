@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import CouponCodeModel from "../models/couponCode.model.js";
 import EventModel from "../models/event.model.js";
@@ -6,6 +7,7 @@ import OrderModel, { IOrder, IShippingAddress } from "../models/order.model.js";
 import ProductModel from "../models/product.model.js";
 import ShopModel from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
+import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 
 interface ICartItem {
@@ -31,9 +33,7 @@ export const createOrder = catchAsyncErrors(
       return next(new ErrorHandler("Please login to place an order", 401));
     }
 
-    // group cart items by shopId
     const shopItemsMap = new Map<string, ICartItem[]>();
-
     for (const item of cart) {
       const shopId = item.shopId;
       if (!shopItemsMap.has(shopId)) {
@@ -44,58 +44,89 @@ export const createOrder = catchAsyncErrors(
 
     const coupon = couponCode ? await CouponCodeModel.findOne({ name: couponCode }) : null;
 
-    // create an order for each shop
+    const session = await mongoose.startSession();
     const orders: IOrder[] = [];
 
-    for (const [shopId, items] of shopItemsMap) {
-      // Derive totalPrice server-side from trusted product prices instead
-      // of trusting the client-supplied amount, and validate stock.
-      let subtotal = 0;
-      for (const item of items) {
-        const isEvent = item.kind === "event";
-        const purchasable = isEvent
-          ? await EventModel.findById(item._id)
-          : await ProductModel.findById(item._id);
-        if (!purchasable) {
-          return next(
-            new ErrorHandler(
-              `${isEvent ? "Event" : "Product"} not found with this id: ${item._id}`,
-              400
-            )
+    try {
+      await session.withTransaction(async () => {
+        // Pass 1: atomically reserve stock (and bump sold_out) for every
+        // item across every shop. If any reservation fails because stock
+        // dropped below the requested qty, throw to abort the whole
+        // transaction — nothing else needs to be manually rolled back.
+        for (const [, items] of shopItemsMap) {
+          for (const item of items) {
+            const isEvent = item.kind === "event";
+            const Model = (isEvent ? EventModel : ProductModel) as unknown as mongoose.Model<any>;
+
+            const reserved = await Model.findOneAndUpdate(
+              { _id: item._id, stock: { $gte: item.qty } },
+              { $inc: { stock: -item.qty, sold_out: item.qty } },
+              { session, new: true }
+            );
+
+            if (!reserved) {
+              const existing = await Model.findById(item._id).session(session);
+              if (!existing) {
+                throw new ErrorHandler(
+                  `${isEvent ? "Event" : "Product"} not found with this id: ${item._id}`,
+                  400
+                );
+              }
+              throw new ErrorHandler(
+                `Only ${existing.stock} unit(s) of "${existing.name}" left in stock`,
+                400
+              );
+            }
+          }
+        }
+
+        // Pass 2: stock is now safely reserved for every shop, so compute
+        // pricing and create each shop's order inside the same transaction.
+        // Either every shop's order is created, or none are.
+        for (const [shopId, items] of shopItemsMap) {
+          let subtotal = 0;
+          for (const item of items) {
+            const isEvent = item.kind === "event";
+            const purchasable = (isEvent
+              ? await EventModel.findById(item._id).session(session)
+              : await ProductModel.findById(item._id).session(session)) as any;
+            subtotal += purchasable.discountPrice * item.qty;
+          }
+
+          let totalPrice = subtotal;
+          let appliedCoupon: { name: string; discountAmount: number } | undefined;
+
+          if (coupon && String(coupon.shopId) === String(shopId)) {
+            const productIds = items.map((item) => String(item._id));
+            const result = calculateCouponDiscount(coupon, subtotal, productIds);
+            if (result.valid) {
+              totalPrice = Math.max(subtotal - result.discountAmount, 0);
+              appliedCoupon = { name: coupon.name, discountAmount: result.discountAmount };
+            }
+          }
+
+          const createdOrders = await OrderModel.create(
+            [
+              {
+                cart: items,
+                shippingAddress,
+                user: req.user,
+                totalPrice,
+                paymentInfo: paymentInfo || { type: "Cash On Delivery", status: "Pending" },
+                coupon: appliedCoupon,
+              },
+            ],
+            { session }
           );
+          const order = createdOrders[0];
+          if (!order) {
+            throw new ErrorHandler("Failed to create order", 500);
+          }
+          orders.push(order as IOrder);
         }
-        if (purchasable.stock < item.qty) {
-          return next(
-            new ErrorHandler(
-              `Only ${purchasable.stock} unit(s) of "${purchasable.name}" left in stock`,
-              400
-            )
-          );
-        }
-        subtotal += purchasable.discountPrice * item.qty;
-      }
-
-      let totalPrice = subtotal;
-      let appliedCoupon: { name: string; discountAmount: number } | undefined;
-
-      if (coupon && String(coupon.shopId) === String(shopId)) {
-        const productIds = items.map((item) => String(item._id));
-        const result = calculateCouponDiscount(coupon, subtotal, productIds);
-        if (result.valid) {
-          totalPrice = Math.max(subtotal - result.discountAmount, 0);
-          appliedCoupon = { name: coupon.name, discountAmount: result.discountAmount };
-        }
-      }
-
-      const order = await OrderModel.create({
-        cart: items,
-        shippingAddress,
-        user: req.user,
-        totalPrice,
-        paymentInfo: paymentInfo || { type: "Cash On Delivery", status: "Pending" },
-        coupon: appliedCoupon,
       });
-      orders.push(order);
+    } finally {
+      await session.endSession();
     }
 
     res.status(201).json({
@@ -116,13 +147,18 @@ export const getAllOrdersUser = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to view these orders", 403));
     }
 
-    const orders = await OrderModel.find({ "user._id": req.user._id }).sort({
-      createdAt: -1,
-    });
+    const { page, limit } = parsePagination(req.query, 10, 50);
+    const filter = { "user._id": req.user._id };
+
+    const [orders, totalItems] = await Promise.all([
+      OrderModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      OrderModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       orders,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
@@ -138,18 +174,22 @@ export const getSellerAllOrders = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to view these orders", 403));
     }
 
-    const orders = await OrderModel.find({
-      "cart.shopId": req.seller._id,
-    }).sort({
-      createdAt: -1,
-    });
+    const { page, limit } = parsePagination(req.query, 10, 50);
+    const filter = { "cart.shopId": req.seller._id };
+
+    const [orders, totalItems] = await Promise.all([
+      OrderModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      OrderModel.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       orders,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
+
 
 // get a single order --- accessible by the order's buyer, an involved seller, or an admin
 export const getOrderById = catchAsyncErrors(
@@ -198,31 +238,8 @@ export const updateOrderStatus = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to update this order", 403));
     }
 
-    const decrementStock = async (id: string, qty: number, kind?: string): Promise<void> => {
-      const doc = kind === "event" ? await EventModel.findById(id) : await ProductModel.findById(id);
-      if (doc) {
-        doc.stock -= qty;
-        doc.sold_out = (doc.sold_out || 0) + qty;
-        await doc.save({ validateBeforeSave: false });
-      }
-    };
-
-    const creditSeller = async (amount: number): Promise<void> => {
-      if (sellerId) {
-        const seller = await ShopModel.findById(sellerId);
-        if (seller) {
-          seller.availableBalance = (seller.availableBalance || 0) + amount;
-          await seller.save();
-        }
-      }
-    };
-
-    if (req.body.status === "Transferred to delivery partner") {
-      for (const item of cartItems) {
-        await decrementStock(item._id, item.qty, item.kind);
-      }
-    }
-
+    // Stock is now reserved atomically at order-creation time (createOrder),
+    // so no further decrement happens on this status transition.
     order.status = req.body.status;
 
     if (req.body.status === "Delivered") {
@@ -231,7 +248,11 @@ export const updateOrderStatus = catchAsyncErrors(
         order.paymentInfo.status = "Succeeded";
       }
       const serviceCharge = order.totalPrice * 0.1;
-      await creditSeller(order.totalPrice - serviceCharge);
+      const netAmount = order.totalPrice - serviceCharge;
+
+      // Atomic $inc avoids losing concurrent credits under a
+      // read-modify-write race when a seller processes many deliveries at once.
+      await ShopModel.findByIdAndUpdate(sellerId, { $inc: { availableBalance: netAmount } });
     }
 
     await order.save({ validateBeforeSave: false });
@@ -304,33 +325,33 @@ export const orderRefundSuccess = catchAsyncErrors(
       message: "Order Refund successfull!",
     });
 
+    // Atomic restock — avoids the same read-modify-write race as the stock
+    // reservation/crediting above.
     const restock = async (id: string, qty: number, kind?: string): Promise<void> => {
-      const doc = kind === "event" ? await EventModel.findById(id) : await ProductModel.findById(id);
-      if (doc) {
-        doc.stock += qty;
-        doc.sold_out = Math.max((doc.sold_out || 0) - qty, 0);
-        await doc.save({ validateBeforeSave: false });
-      }
+      const Model = (kind === "event" ? EventModel : ProductModel) as unknown as mongoose.Model<any>;
+      await Model.findByIdAndUpdate(id, { $inc: { stock: qty, sold_out: -qty } });
     };
 
     for (const item of cartItems) {
       await restock(item._id, item.qty, item.kind);
     }
-
   }
 );
 
 // all orders --- for admin
 export const getAdminAllOrders = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const orders = await OrderModel.find().sort({
-      deliveredAt: -1,
-      createdAt: -1,
-    });
+    const { page, limit } = parsePagination(req.query, 20, 100);
+
+    const [orders, totalItems] = await Promise.all([
+      OrderModel.find().sort({ deliveredAt: -1, createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      OrderModel.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       orders,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );
