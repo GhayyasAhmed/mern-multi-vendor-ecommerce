@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { RxAvatar } from "react-icons/rx";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import ProtectedRoute from "./ProtectedRoute";
@@ -80,6 +82,7 @@ function ProfileTab() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const {
     register: registerProfile,
@@ -141,13 +144,31 @@ function ProfileTab() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      {/* Updated Avatar Upload UI matching RegisterForm */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Profile photo</label>
-        <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-            <Image src={user.avatar?.url || "/placeholder.png"} alt={user.name} fill className="object-cover" />
-          </div>
-          <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={isSavingAvatar} className="text-sm" />
+        <label className="block text-sm font-medium text-gray-700">Profile photo</label>
+        <div className="mt-2 flex items-center">
+          <span className="inline-block h-16 w-16 rounded-full overflow-hidden border border-gray-300 relative">
+            {user.avatar?.url ? (
+              <Image src={user.avatar.url} alt={user.name} fill className="h-full w-full object-cover" />
+            ) : (
+              <RxAvatar className="h-full w-full text-gray-400" />
+            )}
+          </span>
+          <label
+            htmlFor="account-avatar-file-input"
+            className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+          >
+            <span>{isSavingAvatar ? "Uploading..." : "Upload a file"}</span>
+            <input
+              id="account-avatar-file-input"
+              type="file"
+              accept=".jpg,.jpeg,.png,image/*"
+              onChange={handleAvatarChange}
+              disabled={isSavingAvatar}
+              className="sr-only"
+            />
+          </label>
         </div>
         {avatarError && <p className="mt-1 text-sm text-red-600">{avatarError}</p>}
       </div>
@@ -180,7 +201,20 @@ function ProfileTab() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Confirm with password</label>
-          <input type="password" className={`${styles.input} mt-1`} {...registerEmail("password")} />
+          <div className="relative mt-1">
+            <input
+              type={showEmailPassword ? "text" : "password"}
+              className={`${styles.input} pr-10`}
+              {...registerEmail("password")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowEmailPassword(!showEmailPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+            >
+              {showEmailPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+            </button>
+          </div>
           {emailErrors.password && <p className="mt-1 text-sm text-red-600">{emailErrors.password.message}</p>}
         </div>
         {emailError && <p className="text-sm text-red-600">{emailError}</p>}
@@ -352,6 +386,11 @@ function SecurityTab() {
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // States for password visibility
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -375,21 +414,67 @@ function SecurityTab() {
     <div className="max-w-2xl">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6" noValidate>
         <h2 className="text-lg font-semibold text-[#333]">Change password</h2>
+
+        {/* Current Password Field with Eye Icon */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Current password</label>
-          <input type="password" className={`${styles.input} mt-1`} {...register("oldPassword")} />
+          <div className="relative mt-1">
+            <input
+              type={showOldPassword ? "text" : "password"}
+              className={`${styles.input} pr-10`}
+              {...register("oldPassword")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowOldPassword(!showOldPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+            >
+              {showOldPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+            </button>
+          </div>
           {errors.oldPassword && <p className="mt-1 text-sm text-red-600">{errors.oldPassword.message}</p>}
         </div>
+
+        {/* New Password Field with Eye Icon */}
         <div>
           <label className="block text-sm font-medium text-gray-700">New password</label>
-          <input type="password" className={`${styles.input} mt-1`} {...register("newPassword")} />
+          <div className="relative mt-1">
+            <input
+              type={showNewPassword ? "text" : "password"}
+              className={`${styles.input} pr-10`}
+              {...register("newPassword")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+            >
+              {showNewPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+            </button>
+          </div>
           {errors.newPassword && <p className="mt-1 text-sm text-red-600">{errors.newPassword.message}</p>}
         </div>
+
+        {/* Confirm New Password Field with Eye Icon */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Confirm new password</label>
-          <input type="password" className={`${styles.input} mt-1`} {...register("confirmPassword")} />
+          <div className="relative mt-1">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              className={`${styles.input} pr-10`}
+              {...register("confirmPassword")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+            >
+              {showConfirmPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+            </button>
+          </div>
           {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
         </div>
+
         {formError && <p className="text-sm text-red-600">{formError}</p>}
         {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
         <button type="submit" disabled={isLoading} className={`${styles.submit_button} disabled:opacity-60`}>

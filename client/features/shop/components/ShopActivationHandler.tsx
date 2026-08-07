@@ -75,7 +75,7 @@ export default function ShopActivationHandler({ token }: { token: string }) {
           href="/seller/login"
           className="text-sm text-[#3957db] hover:underline"
         >
-          Continue to seller login
+          Continue
         </Link>
       )}
       {status === "error" && (

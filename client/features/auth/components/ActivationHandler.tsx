@@ -75,7 +75,7 @@ export default function ActivationHandler({ token }: { token: string }) {
       </p>
       {status === "success" && (
         <Link href="/login" className="text-sm text-[#3957db] hover:underline">
-          Continue to login
+          Continue
         </Link>
       )}
       {status === "error" && (

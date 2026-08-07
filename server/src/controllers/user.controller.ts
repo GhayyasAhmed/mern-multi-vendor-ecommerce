@@ -215,7 +215,7 @@ export const loginUser = catchAsyncErrors(
         const user = await User.findOne({ email }).select("+password");
 
         if (!user) {
-            return next(new ErrorHandler("User doesn't exist!", 400));
+            return next(new ErrorHandler("Invalid email or password", 401));
         }
 
         const isPasswordValid = await user.comparePassword(password);

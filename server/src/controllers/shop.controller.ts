@@ -97,7 +97,7 @@ export const createShop = catchAsyncErrors(
     const { activationToken, expireMinutes } = await createActivationToken(sellerData);
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const activationUrl = `${frontendUrl}/activation/${activationToken}`;
+    const activationUrl = `${frontendUrl}/seller/activation/${activationToken}`;
     await redis.set(
       `pending_signup:shop:${email}`,
       JSON.stringify(sellerData),
@@ -195,7 +195,7 @@ export const resendActivation = catchAsyncErrors(
     await trackPendingUpload(pendingSeller.avatar.public_id, Date.now() + PENDING_SIGNUP_TTL_SECONDS * 1000);
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const activationUrl = `${frontendUrl}/activation/${activationToken}`;
+    const activationUrl = `${frontendUrl}/seller/activation/${activationToken}`;
 
     try {
       await sendEmail({
@@ -228,7 +228,7 @@ export const loginShop = catchAsyncErrors(
     const shop = await Shop.findOne({ email }).select("+password");
 
     if (!shop) {
-      return next(new ErrorHandler("User/Shop doesn't exist!", 400));
+      return next(new ErrorHandler("Invalid email or password", 401));
     }
 
     const isPasswordValid = await shop.comparePassword(password);

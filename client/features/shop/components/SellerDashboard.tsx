@@ -1,28 +1,50 @@
 "use client";
 
+import InboxPanel from "@/components/Inbox/InboxPanel";
+import NotificationBell from "@/components/Layout/NotificationBell";
 import Pagination from "@/components/ui/Pagination";
+import { PRODUCT_CATEGORIES } from "@/constants";
 import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
+import {
+  useCreateCouponCodeMutation,
+  useDeleteCouponCodeMutation,
+  useGetShopCouponsQuery,
+} from "@/features/coupons/couponApiSlice";
+import type { IEvent } from "@/features/events/eventApiSlice";
 import {
   useCreateEventMutation,
   useDeleteEventMutation,
   useGetShopEventsQuery,
+  useUpdateEventMutation,
 } from "@/features/events/eventApiSlice";
 import {
   useGetSellerOrdersQuery,
-  useUpdateOrderStatusMutation,
   useOrderRefundSuccessMutation,
+  useUpdateOrderStatusMutation,
 } from "@/features/orders/orderApiSlice";
 import {
   useCreateProductMutation,
   useDeleteProductMutation,
   useGetShopProductsQuery,
+  useUpdateProductMutation,
 } from "@/features/products/productApiSlice";
+import {
+  useDeleteWithdrawMethodMutation,
+  useUpdatePaymentMethodsMutation,
+  WithdrawMethodInput,
+} from "@/features/shop/shopApiSlice";
+import {
+  useCreateWithdrawRequestMutation,
+  useGetMyWithdrawRequestsQuery,
+} from "@/features/withdraw/withdrawApiSlice";
 import styles from "@/styles/styles";
+import type { IProduct, IShop } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
+import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
 import {
   useUpdateSellerInfoMutation,
@@ -35,27 +57,6 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
-import InboxPanel from "@/components/Inbox/InboxPanel";
-import { PRODUCT_CATEGORIES } from "@/constants";
-import { useUpdateProductMutation } from "@/features/products/productApiSlice";
-import { useUpdateEventMutation } from "@/features/events/eventApiSlice";
-import type { IProduct, IShop } from "@/types";
-import type { IEvent } from "@/features/events/eventApiSlice";
-import {
-  useGetMyWithdrawRequestsQuery,
-  useCreateWithdrawRequestMutation,
-} from "@/features/withdraw/withdrawApiSlice";
-import {
-  useUpdatePaymentMethodsMutation,
-  useDeleteWithdrawMethodMutation,
-  WithdrawMethodInput,
-} from "@/features/shop/shopApiSlice";
-import {
-  useGetShopCouponsQuery,
-  useCreateCouponCodeMutation,
-  useDeleteCouponCodeMutation,
-} from "@/features/coupons/couponApiSlice";
-import NotificationBell from "@/components/Layout/NotificationBell";
 
 type Tab =
   | "profile"
@@ -657,22 +658,28 @@ function ProfilePanel() {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Shop logo
         </label>
-        <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-            <Image
-              src={seller.avatar?.url || "/placeholder.png"}
-              alt={seller.name}
-              fill
-              className="object-cover"
+        <div className="mt-2 flex items-center">
+          <span className="inline-block w-16 h-16 rounded-full overflow-hidden border border-gray-300 relative">
+            {seller.avatar?.url ? (
+              <Image src={seller.avatar.url} alt={seller.name} fill className="h-full w-full object-cover" />
+            ) : (
+              <RxAvatar className="h-full w-full text-gray-400" />
+            )}
+          </span>
+          <label
+            htmlFor="seller-account-avatar-file-input"
+            className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+          >
+            <span>{isSavingAvatar ? "Uploading..." : "Upload a file"}</span>
+            <input
+              id="seller-account-avatar-file-input"
+              type="file"
+              accept=".jpg,.jpeg,.png,image/*"
+              onChange={handleAvatarChange}
+              disabled={isSavingAvatar}
+              className="sr-only"
             />
-          </div>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            disabled={isSavingAvatar}
-            className="text-sm"
-          />
+          </label>
         </div>
         {avatarError && (
           <p className="mt-1 text-sm text-red-600">{avatarError}</p>
@@ -1607,7 +1614,8 @@ function CouponsPanel() {
                 <p className="font-medium">{c.name}</p>
                 <p className="text-sm text-[#00000082]">
                   {c.value}% off
-                  {c.minAmount ? ` &middot; min $${c.minAmount}` : ""}
+                  {c.minAmount ? ` min $${c.minAmount}` : ""}
+                  {c.maxAmount ? ` max $${c.maxAmount}` : ""}
                 </p>
               </div>
               <button
