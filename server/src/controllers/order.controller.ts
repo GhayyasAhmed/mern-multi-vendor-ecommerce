@@ -9,6 +9,7 @@ import ShopModel from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
+import { stripe } from "../config/stripe.js";
 
 interface ICartItem {
   _id: string;
@@ -25,12 +26,40 @@ export const createOrder = catchAsyncErrors(
     const { cart, shippingAddress, paymentInfo, couponCode } = req.body as {
       cart: ICartItem[];
       shippingAddress: IShippingAddress;
-      paymentInfo?: { id?: string; status?: string; type?: string };
+      paymentInfo?: { id?: string; type?: string };
       couponCode?: string;
     };
 
     if (!req.user) {
       return next(new ErrorHandler("Please login to place an order", 401));
+    }
+
+    // Payment status is NEVER accepted from the client — only Stripe's
+    // webhook (stripeWebhook in payment.controller.ts) is authoritative for
+    // flipping it to "Succeeded"/"Failed". For card payments, the
+    // PaymentIntent's existence is also verified here so a fabricated id
+    // can't be attached to an order.
+    let resolvedPaymentInfo: { id?: string; type: string; status: string };
+    if (paymentInfo?.type === "Card") {
+      if (!paymentInfo.id) {
+        return next(new ErrorHandler("A payment reference is required for card payments", 400));
+      }
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentInfo.id);
+      } catch {
+        return next(new ErrorHandler("Could not verify this payment with Stripe", 400));
+      }
+      if (!paymentIntent || paymentIntent.status === "canceled") {
+        return next(new ErrorHandler("This payment is invalid or was canceled", 400));
+      }
+      resolvedPaymentInfo = {
+        id: paymentIntent.id,
+        type: "Card",
+        status: paymentIntent.status === "succeeded" ? "Succeeded" : "Pending",
+      };
+    } else {
+      resolvedPaymentInfo = { type: "Cash On Delivery", status: "Pending" };
     }
 
     const shopItemsMap = new Map<string, ICartItem[]>();
@@ -112,7 +141,7 @@ export const createOrder = catchAsyncErrors(
                 shippingAddress,
                 user: req.user,
                 totalPrice,
-                paymentInfo: paymentInfo || { type: "Cash On Delivery", status: "Pending" },
+                paymentInfo: resolvedPaymentInfo,
                 coupon: appliedCoupon,
               },
             ],

@@ -6,7 +6,10 @@ import ShopModel from "../models/shop.model.js";
 import sendEmail from "../utils/sendEmail.js";
 import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
-// create withdraw request --- only for seller
+// create withdraw request --- only for seller. The balance deduction is a
+// single atomic findOneAndUpdate (reserve-then-create) so two concurrent
+// requests from the same seller can never both succeed against the same
+// funds, and can never drive availableBalance negative.
 export const createWithdrawRequest = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { amount } = req.body;
@@ -16,32 +19,80 @@ export const createWithdrawRequest = catchAsyncErrors(
       return next(new ErrorHandler("Seller not found in request", 400));
     }
 
-    const data = {
-      seller,
-      amount,
-    };
-
-    await sendEmail({
-      email: seller.email,
-      subject: "Withdraw Request",
-      message: `Hello ${seller.name}, Your withdraw request of ${amount}$ is processing. It will take 3days to 7days to processing! `,
-    });
-
-    const withdraw = await WithdrawModel.create(data);
-
-    const shop = await ShopModel.findById(seller._id);
-
-    if (!shop) {
-      return next(new ErrorHandler("Shop not found", 404));
+    if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+      return next(new ErrorHandler("Please provide a valid withdrawal amount", 400));
     }
 
-    shop.availableBalance = (shop.availableBalance || 0) - amount;
+    const shop = await ShopModel.findOneAndUpdate(
+      { _id: seller._id, availableBalance: { $gte: amount } },
+      { $inc: { availableBalance: -amount } },
+      { new: true }
+    );
 
-    await shop.save();
+    if (!shop) {
+      const existingShop = await ShopModel.findById(seller._id).select("availableBalance");
+      if (!existingShop) {
+        return next(new ErrorHandler("Shop not found", 404));
+      }
+      return next(
+        new ErrorHandler(
+          `Insufficient balance. Available balance is $${(existingShop.availableBalance || 0).toFixed(2)}`,
+          400
+        )
+      );
+    }
+
+    let withdraw;
+    try {
+      withdraw = await WithdrawModel.create({
+        shopId: shop._id,
+        seller,
+        amount,
+      });
+    } catch (error) {
+      // Compensate the reservation if the withdraw record couldn't be created
+      await ShopModel.findByIdAndUpdate(shop._id, { $inc: { availableBalance: amount } });
+      throw error;
+    }
+
+    try {
+      await sendEmail({
+        email: seller.email,
+        subject: "Withdraw Request",
+        message: `Hello ${seller.name}, Your withdraw request of $${amount} is processing. It will take 3 to 7 days to process!`,
+      });
+    } catch {
+      // Best-effort notification; the withdraw request itself already succeeded
+    }
 
     res.status(201).json({
       success: true,
       withdraw,
+    });
+  }
+);
+
+// get withdraw requests belonging to the authenticated seller's own shop
+export const getMyWithdrawRequests = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const seller = req.seller;
+
+    if (!seller) {
+      return next(new ErrorHandler("Seller not found in request", 400));
+    }
+
+    const { page, limit } = parsePagination(req.query, 20, 100);
+    const filter = { shopId: seller._id };
+
+    const [withdraws, totalItems] = await Promise.all([
+      WithdrawModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      WithdrawModel.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      withdraws,
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   }
 );

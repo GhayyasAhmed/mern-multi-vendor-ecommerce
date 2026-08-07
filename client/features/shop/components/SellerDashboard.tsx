@@ -21,7 +21,7 @@ import styles from "@/styles/styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
 import { useUpdateSellerInfoMutation, useUpdateShopAvatarMutation } from "../shopApiSlice";
@@ -38,8 +38,9 @@ import { useUpdateProductMutation } from "@/features/products/productApiSlice";
 import { useUpdateEventMutation } from "@/features/events/eventApiSlice";
 import type { IProduct } from "@/types";
 import type { IEvent } from "@/features/events/eventApiSlice";
+import { useGetMyWithdrawRequestsQuery, useCreateWithdrawRequestMutation } from "@/features/withdraw/withdrawApiSlice";
 
-type Tab = "profile" | "products" | "events" | "orders" | "messages";
+type Tab = "profile" | "products" | "events" | "orders" | "payouts" | "messages";
 
 
 const ORDER_STATUSES = [
@@ -82,7 +83,7 @@ export default function SellerDashboard() {
 
       <div className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b mb-6">
-          {(["profile", "products", "events", "orders", "messages"] as Tab[]).map((t) => (
+          {(["profile", "products", "events", "orders", "payouts", "messages"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -100,6 +101,7 @@ export default function SellerDashboard() {
         {tab === "products" && <ProductsPanel shopId={seller._id} />}
         {tab === "events" && <EventsPanel shopId={seller._id} />}
         {tab === "orders" && <OrdersPanel shopId={seller._id} />}
+        {tab === "payouts" && <PayoutsPanel availableBalance={seller.availableBalance} />}
         {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
       </div>
     </div>
@@ -204,6 +206,113 @@ function OrdersPanel({ shopId }: { shopId: string }) {
 function MessagesPanel({ sellerId }: { sellerId: string }) {
   return <InboxPanel role="seller" identityId={sellerId} />;
 }
+
+const WITHDRAW_STATUS_STYLES: Record<string, string> = {
+  Processing: "bg-amber-100 text-amber-700",
+  succeed: "bg-green-100 text-green-700",
+};
+
+function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error } = useGetMyWithdrawRequestsQuery({ page, limit: 10 });
+  const [createWithdrawRequest, { isLoading: isRequesting }] = useCreateWithdrawRequestMutation();
+  const [amount, setAmount] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const withdraws = data?.withdraws ?? [];
+  const pagination = data?.pagination;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setSuccessMessage(null);
+
+    const numericAmount = Number(amount);
+    if (!numericAmount || numericAmount <= 0) {
+      setFormError("Please enter a valid amount");
+      return;
+    }
+    if (numericAmount > availableBalance) {
+      setFormError(`You can withdraw at most $${availableBalance.toFixed(2)}`);
+      return;
+    }
+
+    try {
+      await createWithdrawRequest({ amount: numericAmount }).unwrap();
+      setSuccessMessage("Withdrawal request submitted.");
+      setAmount("");
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not submit withdrawal request."));
+    }
+  };
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-[#333] mb-1">Request a payout</h2>
+        <p className="text-sm text-[#00000082] mb-4">
+          Available balance: <span className="font-semibold">${availableBalance.toFixed(2)}</span>
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={`${styles.input} sm:max-w-40`}
+          />
+          <button
+            type="submit"
+            disabled={isRequesting}
+            className={`${styles.submit_button} sm:w-auto disabled:opacity-60`}
+          >
+            <span className="text-white font-[Poppins]">{isRequesting ? "Requesting..." : "Request withdrawal"}</span>
+          </button>
+        </form>
+        {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
+        {successMessage && <p className="mt-2 text-sm text-green-700">{successMessage}</p>}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold text-[#333] mb-4">Withdrawal history</h2>
+        {isLoading ? (
+          <p className="text-[15px] text-[#00000082] py-4">Loading withdrawal requests...</p>
+        ) : isError ? (
+          <p className="text-[15px] text-red-500 py-4">{getErrorMessage(error, "Could not load withdrawal requests.")}</p>
+        ) : withdraws.length === 0 ? (
+          <p className="text-[15px] text-[#00000082] py-4">You haven&apos;t requested any withdrawals yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {withdraws.map((withdraw) => (
+              <div key={withdraw._id} className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+                <div>
+                  <p className="font-medium">${withdraw.amount.toFixed(2)}</p>
+                  <p className="text-xs text-[#00000082]">
+                    Requested {new Date(withdraw.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    WITHDRAW_STATUS_STYLES[withdraw.status] || "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {withdraw.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {pagination && (
+        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
+    </div>
+  );
+}
+
 
 function ProfilePanel() {
   const { seller } = useCurrentSeller();

@@ -59,6 +59,8 @@ app.use((req, res, next) => {
     return writeLimiter(req, res, next);
 });
 
+app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }))
+
 // Reduced global body limit from 50mb to 10mb to mitigate DoS / excessive memory parsing attacks
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
@@ -70,7 +72,10 @@ app.use(cookieParser());
 // cross-site — bearer-token clients are not CSRF-exposed.
 app.use((req, res, next) => {
     const safeMethods = ["GET", "HEAD", "OPTIONS"];
-    if (safeMethods.includes(req.method) || req.headers.authorization) {
+    // The Stripe webhook is a server-to-server call with no browser Origin
+    // header; it is authenticated via Stripe's signature instead (see
+    // stripeWebhook), not the Origin check below.
+    if (safeMethods.includes(req.method) || req.headers.authorization || req.path === "/api/v1/payment/webhook") {
         return next();
     }
     const origin = req.headers.origin;

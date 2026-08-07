@@ -258,11 +258,13 @@ const createOrderSchema = z.object({
   body: z.object({
     cart: z.array(cartItemSchema).min(1, 'Cart cannot be empty'),
     shippingAddress: shippingAddressSchema,
+    // `status` is intentionally NOT accepted here — payment status is only
+    // ever derived server-side (see order.controller.ts createOrder and the
+    // Stripe webhook in payment.controller.ts).
     paymentInfo: z
       .object({
         id: z.string().optional(),
-        status: z.string().optional(),
-        type: z.string().optional(),
+        type: z.enum(['Cash On Delivery', 'Card']).optional(),
       })
       .optional(),
     couponCode: z.string().optional(),
@@ -396,4 +398,17 @@ const createMessageSchema = z.object({
 
 export const MessageValidations = {
   createMessageSchema,
+};
+
+
+const createWithdrawRequestSchema = z.object({
+  body: z.object({
+    amount: z
+      .number({ message: 'A valid withdrawal amount is required' })
+      .positive('Withdrawal amount must be greater than zero'),
+  }),
+});
+
+export const WithdrawValidations = {
+  createWithdrawRequestSchema,
 };

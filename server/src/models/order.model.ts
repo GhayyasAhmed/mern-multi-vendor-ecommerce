@@ -86,6 +86,7 @@ const orderSchema = new Schema<IOrder>(
 
 orderSchema.index({ "user._id": 1 });
 orderSchema.index({ "cart.shopId": 1 });
+orderSchema.index({ "paymentInfo.id": 1 });
 
 const OrderModel: Model<IOrder> = mongoose.model<IOrder>("Order", orderSchema);
 

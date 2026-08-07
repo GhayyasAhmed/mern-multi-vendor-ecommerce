@@ -2,17 +2,24 @@ import express from "express";
 import {
   createWithdrawRequest,
   getAllWithdrawRequests,
+  getMyWithdrawRequests,
   updateWithdrawRequest,
 } from "../controllers/withdraw.controller.js";
-import { isAuthenticated, isSeller, authorizeRoles } from"../middlewares/auth.js";
+import { isAuthenticated, isSeller, authorizeRoles } from "../middlewares/auth.js";
+import validate from "../middlewares/validate.js";
+import { WithdrawValidations } from "../utils/validators.js";
 
 const withdrawRouter = express.Router();
 
 withdrawRouter.post(
   "/create-withdraw-request",
   isSeller,
+  validate(WithdrawValidations.createWithdrawRequestSchema),
   createWithdrawRequest
 );
+
+withdrawRouter.get("/get-my-withdraw-requests", isSeller, getMyWithdrawRequests);
+
 
 withdrawRouter.get(
   "/get-all-withdraw-request",

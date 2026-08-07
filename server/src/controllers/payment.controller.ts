@@ -2,17 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import Stripe from "stripe";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
-
-// Ensure Stripe Secret Key is defined
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeSecretKey) {
-  throw new Error("STRIPE_SECRET_KEY is missing from environment variables.");
-}
-
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2026-07-29.dahlia"
-});
-
+import { stripe } from "../config/stripe.js";
+import OrderModel from "../models/order.model.js";
 interface ProcessPaymentBody {
   amount: number;
   currency?: string;
@@ -39,6 +30,7 @@ export const processPayment = catchAsyncErrors(
     const myPayment = await stripe.paymentIntents.create({
       amount: Math.round(amount), // Ensure amount is an integer representing smallest currency unit
       currency: paymentCurrency.toLowerCase(),
+      automatic_payment_methods: { enabled: true },
       metadata: {
         company: companyName,
       },
@@ -47,6 +39,7 @@ export const processPayment = catchAsyncErrors(
     res.status(200).json({
       success: true,
       client_secret: myPayment.client_secret,
+      paymentIntentId: myPayment.id,
     });
   }
 );
@@ -67,5 +60,46 @@ export const getStripeApiKey = catchAsyncErrors(
     res.status(200).json({
       stripeApikey: stripeApiKey,
     });
+  }
+);
+
+
+export const stripeWebhook = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const signature = req.headers["stripe-signature"];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      return next(new ErrorHandler("Stripe webhook secret is not configured on the server.", 500));
+    }
+
+    if (!signature || Array.isArray(signature)) {
+      return next(new ErrorHandler("Missing or invalid Stripe signature header.", 400));
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    } catch (error) {
+      return next(
+        new ErrorHandler(`Webhook signature verification failed: ${(error as Error).message}`, 400)
+      );
+    }
+
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      await OrderModel.updateMany(
+        { "paymentInfo.id": paymentIntent.id },
+        { $set: { "paymentInfo.status": "Succeeded", paidAt: new Date() } }
+      );
+    } else if (event.type === "payment_intent.payment_failed") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      await OrderModel.updateMany(
+        { "paymentInfo.id": paymentIntent.id },
+        { $set: { "paymentInfo.status": "Failed" } }
+      );
+    }
+
+    res.status(200).json({ received: true });
   }
 );
