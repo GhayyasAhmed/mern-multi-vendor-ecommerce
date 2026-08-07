@@ -33,6 +33,11 @@ import {
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
 import InboxPanel from "@/components/Inbox/InboxPanel";
+import { PRODUCT_CATEGORIES } from "@/constants";
+import { useUpdateProductMutation } from "@/features/products/productApiSlice";
+import { useUpdateEventMutation } from "@/features/events/eventApiSlice";
+import type { IProduct } from "@/types";
+import type { IEvent } from "@/features/events/eventApiSlice";
 
 type Tab = "profile" | "products" | "events" | "orders" | "messages";
 
@@ -309,8 +314,10 @@ function ProductsPanel({ shopId }: { shopId: string }) {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetShopProductsQuery({ shopId, page, limit: 12 });
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -332,29 +339,69 @@ function ProductsPanel({ shopId }: { shopId: string }) {
     }
   };
 
+  const openCreateForm = () => {
+    setEditingProduct(null);
+    reset({ name: "", description: "", tags: "", originalPrice: "", discountPrice: "", stock: "" } as ProductFormValues);
+    setImages([]);
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (product: IProduct) => {
+    setEditingProduct(product);
+    reset({
+      name: product.name,
+      description: product.description,
+      category: product.category as ProductFormValues["category"],
+      tags: product.tags || "",
+      originalPrice: product.originalPrice ? String(product.originalPrice) : "",
+      discountPrice: String(product.discountPrice),
+      stock: String(product.stock),
+    });
+    setImages([]);
+    setFormError(null);
+    setShowForm(true);
+  };
+
   const onSubmit = async (values: ProductFormValues) => {
     setFormError(null);
-    if (images.length === 0) {
+    if (!editingProduct && images.length === 0) {
       setFormError("Please add at least one product image");
       return;
     }
     try {
-      await createProduct({
-        name: values.name,
-        description: values.description,
-        category: values.category,
-        tags: values.tags || undefined,
-        originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
-        discountPrice: Number(values.discountPrice),
-        stock: Number(values.stock),
-        images,
-        shopId,
-      }).unwrap();
+      if (editingProduct) {
+        await updateProduct({
+          id: editingProduct._id,
+          shopId,
+          name: values.name,
+          description: values.description,
+          category: values.category,
+          tags: values.tags || undefined,
+          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          discountPrice: Number(values.discountPrice),
+          stock: Number(values.stock),
+          ...(images.length > 0 ? { images } : {}),
+        }).unwrap();
+      } else {
+        await createProduct({
+          name: values.name,
+          description: values.description,
+          category: values.category,
+          tags: values.tags || undefined,
+          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          discountPrice: Number(values.discountPrice),
+          stock: Number(values.stock),
+          images,
+          shopId,
+        }).unwrap();
+      }
       reset();
       setImages([]);
+      setEditingProduct(null);
       setShowForm(false);
     } catch (err) {
-      setFormError(getErrorMessage(err, "Could not create product."));
+      setFormError(getErrorMessage(err, editingProduct ? "Could not update product." : "Could not create product."));
     }
   };
 
@@ -374,7 +421,7 @@ function ProductsPanel({ shopId }: { shopId: string }) {
         <h2 className="text-lg font-semibold text-[#333]">Your products</h2>
         <button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
           className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
         >
           {showForm ? "Cancel" : "Add product"}
@@ -383,6 +430,9 @@ function ProductsPanel({ shopId }: { shopId: string }) {
 
       {showForm && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6" noValidate>
+          {editingProduct && (
+            <p className="text-sm text-[#3957db] font-medium">Editing &quot;{editingProduct.name}&quot;</p>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700">Name</label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
@@ -396,7 +446,16 @@ function ProductsPanel({ shopId }: { shopId: string }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
-              <input className={`${styles.input} mt-1`} {...register("category")} />
+              <select className={`${styles.input} mt-1`} defaultValue="" {...register("category")}>
+                <option value="" disabled>
+                  Select a category
+                </option>
+                {PRODUCT_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
               {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
             </div>
             <div>
@@ -421,14 +480,27 @@ function ProductsPanel({ shopId }: { shopId: string }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Images</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Images{" "}
+              {editingProduct && (
+                <span className="font-normal text-gray-400">(leave empty to keep current images)</span>
+              )}
+            </label>
             <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="mt-1 text-sm" />
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-          <button type="submit" disabled={isCreating} className={`${styles.submit_button} disabled:opacity-60`}>
-            <span className="text-white font-[Poppins]">{isCreating ? "Creating..." : "Create product"}</span>
+          <button type="submit" disabled={isCreating || isUpdating} className={`${styles.submit_button} disabled:opacity-60`}>
+            <span className="text-white font-[Poppins]">
+              {editingProduct
+                ? isUpdating
+                  ? "Saving..."
+                  : "Save changes"
+                : isCreating
+                  ? "Creating..."
+                  : "Create product"}
+            </span>
           </button>
         </form>
       )}
@@ -459,13 +531,22 @@ function ProductsPanel({ shopId }: { shopId: string }) {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDelete(product._id)}
-                className="text-sm text-red-600 hover:underline cursor-pointer"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => openEditForm(product)}
+                  className="text-sm text-[#3957db] hover:underline cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(product._id)}
+                  className="text-sm text-red-600 hover:underline cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -486,8 +567,10 @@ function EventsPanel({ shopId }: { shopId: string }) {
   const { data, isLoading, isError, error } = useGetShopEventsQuery({ shopId, page, limit: 12 });
 
   const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
+  const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
   const [deleteEvent] = useDeleteEventMutation();
   const [showForm, setShowForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<IEvent | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -509,31 +592,84 @@ function EventsPanel({ shopId }: { shopId: string }) {
     }
   };
 
+  const openCreateForm = () => {
+    setEditingEvent(null);
+    reset({
+      name: "",
+      description: "",
+      tags: "",
+      originalPrice: "",
+      discountPrice: "",
+      stock: "",
+      start_Date: "",
+      Finish_Date: "",
+    } as EventFormValues);
+    setImages([]);
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (event: IEvent) => {
+    setEditingEvent(event);
+    reset({
+      name: event.name,
+      description: event.description,
+      category: event.category as EventFormValues["category"],
+      tags: event.tags || "",
+      originalPrice: event.originalPrice ? String(event.originalPrice) : "",
+      discountPrice: String(event.discountPrice),
+      stock: String(event.stock),
+      start_Date: event.start_Date ? event.start_Date.slice(0, 10) : "",
+      Finish_Date: event.Finish_Date ? event.Finish_Date.slice(0, 10) : "",
+    });
+    setImages([]);
+    setFormError(null);
+    setShowForm(true);
+  };
+
   const onSubmit = async (values: EventFormValues) => {
     setFormError(null);
-    if (images.length === 0) {
+    if (!editingEvent && images.length === 0) {
       setFormError("Please add at least one event image");
       return;
     }
     try {
-      await createEvent({
-        name: values.name,
-        description: values.description,
-        category: values.category,
-        tags: values.tags || undefined,
-        originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
-        discountPrice: Number(values.discountPrice),
-        stock: Number(values.stock),
-        start_Date: values.start_Date,
-        Finish_Date: values.Finish_Date,
-        images,
-        shopId,
-      }).unwrap();
+      if (editingEvent) {
+        await updateEvent({
+          id: editingEvent._id,
+          shopId,
+          name: values.name,
+          description: values.description,
+          category: values.category,
+          tags: values.tags || undefined,
+          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          discountPrice: Number(values.discountPrice),
+          stock: Number(values.stock),
+          start_Date: values.start_Date,
+          Finish_Date: values.Finish_Date,
+          ...(images.length > 0 ? { images } : {}),
+        }).unwrap();
+      } else {
+        await createEvent({
+          name: values.name,
+          description: values.description,
+          category: values.category,
+          tags: values.tags || undefined,
+          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          discountPrice: Number(values.discountPrice),
+          stock: Number(values.stock),
+          start_Date: values.start_Date,
+          Finish_Date: values.Finish_Date,
+          images,
+          shopId,
+        }).unwrap();
+      }
       reset();
       setImages([]);
+      setEditingEvent(null);
       setShowForm(false);
     } catch (err) {
-      setFormError(getErrorMessage(err, "Could not create event."));
+      setFormError(getErrorMessage(err, editingEvent ? "Could not update event." : "Could not create event."));
     }
   };
 
@@ -553,7 +689,7 @@ function EventsPanel({ shopId }: { shopId: string }) {
         <h2 className="text-lg font-semibold text-[#333]">Your events</h2>
         <button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
           className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
         >
           {showForm ? "Cancel" : "Add event"}
@@ -562,6 +698,9 @@ function EventsPanel({ shopId }: { shopId: string }) {
 
       {showForm && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6" noValidate>
+          {editingEvent && (
+            <p className="text-sm text-[#3957db] font-medium">Editing &quot;{editingEvent.name}&quot;</p>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700">Name</label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
@@ -575,7 +714,16 @@ function EventsPanel({ shopId }: { shopId: string }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
-              <input className={`${styles.input} mt-1`} {...register("category")} />
+              <select className={`${styles.input} mt-1`} defaultValue="" {...register("category")}>
+                <option value="" disabled>
+                  Select a category
+                </option>
+                {PRODUCT_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
               {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
             </div>
             <div>
@@ -612,14 +760,27 @@ function EventsPanel({ shopId }: { shopId: string }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Images</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Images{" "}
+              {editingEvent && (
+                <span className="font-normal text-gray-400">(leave empty to keep current images)</span>
+              )}
+            </label>
             <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="mt-1 text-sm" />
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-          <button type="submit" disabled={isCreating} className={`${styles.submit_button} disabled:opacity-60`}>
-            <span className="text-white font-[Poppins]">{isCreating ? "Creating..." : "Create event"}</span>
+          <button type="submit" disabled={isCreating || isUpdating} className={`${styles.submit_button} disabled:opacity-60`}>
+            <span className="text-white font-[Poppins]">
+              {editingEvent
+                ? isUpdating
+                  ? "Saving..."
+                  : "Save changes"
+                : isCreating
+                  ? "Creating..."
+                  : "Create event"}
+            </span>
           </button>
         </form>
       )}
@@ -650,13 +811,22 @@ function EventsPanel({ shopId }: { shopId: string }) {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDelete(event._id)}
-                className="text-sm text-red-600 hover:underline cursor-pointer"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => openEditForm(event)}
+                  className="text-sm text-[#3957db] hover:underline cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(event._id)}
+                  className="text-sm text-red-600 hover:underline cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

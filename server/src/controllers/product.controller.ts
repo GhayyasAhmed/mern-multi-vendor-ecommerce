@@ -145,6 +145,134 @@ export const deleteProduct = catchAsyncErrors(
   }
 );
 
+// update product --- only the owning seller may update; images are only
+// re-uploaded/replaced if new ones are provided, avoiding needless
+// Cloudinary churn on a text-only edit and preserving the product's _id
+// (so historical orders/reviews stay valid instead of a delete+recreate)
+export const updateProduct = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const product = await ProductModel.findById(req.params.id);
+
+    if (!product) {
+      return next(new ErrorHandler("Product is not found with this id", 404));
+    }
+
+    if (String(product.shopId) !== String(req.seller?._id)) {
+      return next(new ErrorHandler("You are not authorized to update this product", 403));
+    }
+
+    const { name, description, category, tags, originalPrice, discountPrice, stock, images } = req.body;
+
+    if (name !== undefined) product.name = name;
+    if (description !== undefined) product.description = description;
+    if (category !== undefined) product.category = category;
+    if (tags !== undefined) product.tags = tags;
+    if (originalPrice !== undefined) product.originalPrice = originalPrice;
+    if (discountPrice !== undefined) product.discountPrice = discountPrice;
+    if (stock !== undefined) product.stock = stock;
+
+    if (images !== undefined) {
+      let newImages: string[] = [];
+      if (typeof images === "string") {
+        newImages.push(images);
+      } else if (Array.isArray(images)) {
+        newImages = images;
+      }
+      const validImages = newImages.filter((img): img is string => Boolean(img));
+
+      const uploadResults = await Promise.allSettled(
+        validImages.map((image) => uploadToCloudinary(image, "products"))
+      );
+
+      const failedUpload = uploadResults.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected"
+      );
+
+      if (failedUpload) {
+        const uploaded = uploadResults.filter(
+          (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof uploadToCloudinary>>> =>
+            result.status === "fulfilled"
+        );
+        await Promise.all(uploaded.map((res) => deleteFromCloudinary(res.value.public_id)));
+        throw failedUpload.reason;
+      }
+
+      const newImagesLinks: Array<{ public_id: string; url: string }> = [];
+      for (const result of uploadResults) {
+        if (result.status === "fulfilled") {
+          newImagesLinks.push({ public_id: result.value.public_id, url: result.value.secure_url });
+        }
+      }
+
+      const oldImages = product.images || [];
+      product.images = newImagesLinks;
+
+      try {
+        await product.save();
+      } catch (error) {
+        await Promise.all(newImagesLinks.map((img) => deleteFromCloudinary(img.public_id)));
+        throw error;
+      }
+
+      await Promise.all(
+        oldImages
+          .map((img) => img?.public_id)
+          .filter((publicId): publicId is string => Boolean(publicId))
+          .map((publicId) => deleteFromCloudinary(publicId))
+      );
+    } else {
+      await product.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      product,
+    });
+  }
+);
+
+// batch stock/price check used to revalidate a client's (localStorage)
+// cart against current data before checkout, across both products and events
+export const checkAvailability = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { items } = req.body as { items: Array<{ _id: string; kind?: "product" | "event" }> };
+
+    const results = await Promise.all(
+      items.map(async (item) => {
+        const Model = (item.kind === "event" ? EventModel : ProductModel) as unknown as {
+          findById: (id: string) => any;
+        };
+        const doc = await Model.findById(item._id).select("name stock discountPrice");
+
+        if (!doc) {
+          return {
+            _id: item._id,
+            kind: item.kind || "product",
+            exists: false,
+            stock: 0,
+            discountPrice: 0,
+            name: null,
+          };
+        }
+
+        return {
+          _id: item._id,
+          kind: item.kind || "product",
+          exists: true,
+          stock: doc.stock,
+          discountPrice: doc.discountPrice,
+          name: doc.name,
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      items: results,
+    });
+  }
+);
+
 // get all products (with pagination, category filter, search, sorting)
 export const getAllProducts = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

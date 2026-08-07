@@ -6,6 +6,7 @@ import {
   getShopAllEvents,
   deleteShopEvent,
   getAdminAllEvents,
+  updateEvent,
 } from "../controllers/event.controller.js";
 import { isAuthenticated, authorizeRoles, isSeller } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -18,6 +19,12 @@ eventRouter.get("/get-all-events", getAllEvents);
 eventRouter.get("/get-event/:id", getEventById);
 eventRouter.get("/get-all-events/:id", getShopAllEvents);
 eventRouter.delete("/delete-shop-event/:id", isSeller, deleteShopEvent);
+eventRouter.put(
+  "/update-event/:id",
+  isSeller,
+  validate(EventValidations.updateEventSchema),
+  updateEvent
+);
 eventRouter.get(
   "/admin-all-events",
   isAuthenticated,

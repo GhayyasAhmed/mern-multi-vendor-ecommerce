@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { PRODUCT_CATEGORIES } from '../constants/categories.js';
 
 const createShopSchema = z.object({
   body: z.object({
@@ -156,7 +157,7 @@ const createProductSchema = z.object({
   body: z.object({
     name: z.string('Please enter your product name!'),
     description: z.string('Please enter your product description!'),
-    category: z.string('Please enter your product category!'),
+    category: z.enum(PRODUCT_CATEGORIES, { message: 'Please select a valid product category!' }),
     tags: z.string().optional(),
     originalPrice: z.number().optional(),
     discountPrice: z.number({ message: 'Please enter your product price!' }),
@@ -165,6 +166,37 @@ const createProductSchema = z.object({
     shopId: z.string().optional(),
   }),
 });
+
+const updateProductSchema = z.object({
+  params: z.object({
+    id: z.string('Product id is required'),
+  }),
+  body: z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+    category: z.enum(PRODUCT_CATEGORIES, { message: 'Please select a valid product category!' }).optional(),
+    tags: z.string().optional(),
+    originalPrice: z.number().optional(),
+    discountPrice: z.number().optional(),
+    stock: z.number().optional(),
+    images: imageListValidation.optional(),
+  }),
+});
+
+const checkAvailabilitySchema = z.object({
+  body: z.object({
+    items: z
+      .array(
+        z.object({
+          _id: z.string('Product id is required'),
+          kind: z.enum(['product', 'event']).optional(),
+        })
+      )
+      .min(1, 'At least one item is required')
+      .max(100, 'Too many items'),
+  }),
+});
+
 
 const createReviewSchema = z.object({
   body: z.object({
@@ -179,6 +211,8 @@ const createReviewSchema = z.object({
 export const ProductValidations = {
   createProductSchema,
   createReviewSchema,
+  updateProductSchema,
+  checkAvailabilitySchema,
 };
 
 export const UserValidations = {
@@ -277,7 +311,7 @@ const createEventSchema = z.object({
     .object({
       name: z.string('Please enter your event product name!'),
       description: z.string('Please enter your event product description!'),
-      category: z.string('Please enter your event product category!'),
+      category: z.enum(PRODUCT_CATEGORIES, { message: 'Please select a valid product category!' }),
       start_Date: z.union([z.string(), z.date()], { message: 'Please provide a start date' }),
       Finish_Date: z.union([z.string(), z.date()], { message: 'Please provide a finish date' }),
       tags: z.string().optional(),
@@ -293,8 +327,33 @@ const createEventSchema = z.object({
     }),
 });
 
+const updateEventSchema = z.object({
+  params: z.object({
+    id: z.string('Event id is required'),
+  }),
+  body: z
+    .object({
+      name: z.string().optional(),
+      description: z.string().optional(),
+      category: z.enum(PRODUCT_CATEGORIES, { message: 'Please select a valid product category!' }).optional(),
+      start_Date: z.union([z.string(), z.date()]).optional(),
+      Finish_Date: z.union([z.string(), z.date()]).optional(),
+      tags: z.string().optional(),
+      originalPrice: z.number().optional(),
+      discountPrice: z.number().optional(),
+      stock: z.number().optional(),
+      images: imageListValidation.optional(),
+    })
+    .refine(
+      (data) =>
+        !data.start_Date || !data.Finish_Date || new Date(data.Finish_Date) > new Date(data.start_Date),
+      { message: 'Finish date must be strictly after start date', path: ['Finish_Date'] }
+    ),
+});
+
 export const EventValidations = {
   createEventSchema,
+  updateEventSchema,
 };
 
 const createConversationSchema = z.object({

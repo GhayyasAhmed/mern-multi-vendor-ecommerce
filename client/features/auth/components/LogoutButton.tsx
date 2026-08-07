@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useLogoutUserMutation } from "../authApiSlice";
 import { getErrorMessage } from "../utils";
 import { disconnectSocket } from "@/lib/socket";
+import { useAppDispatch } from "@/store/hooks";
+import { switchUser } from "@/features/cart/cartSlice";
 
 interface LogoutButtonProps {
   className?: string;
@@ -12,7 +14,8 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({ className, onLoggedOut }: LogoutButtonProps) {
-  const router = useRouter();
+const router = useRouter();
+  const dispatch = useAppDispatch();
   const [logoutUser, { isLoading }] = useLogoutUserMutation();
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +24,9 @@ export default function LogoutButton({ className, onLoggedOut }: LogoutButtonPro
     try {
       await logoutUser().unwrap();
       disconnectSocket();
+      // Immediately drop back to the guest-scoped cart so this account's
+      // items never remain visible/checkable by whoever uses the device next.
+      dispatch(switchUser({ userId: null }));
       onLoggedOut?.();
       router.push("/login");
       router.refresh();

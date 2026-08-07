@@ -19,29 +19,35 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   hydrated: boolean;
+   userId: string | null;
 }
 
-const CART_STORAGE_KEY = "mve_cart_v1";
+const CART_STORAGE_PREFIX = "mve_cart_v1";
+
+function getCartStorageKey(userId: string | null): string {
+  return userId ? `${CART_STORAGE_PREFIX}_u_${userId}` : `${CART_STORAGE_PREFIX}_guest`;
+}
 
 const initialState: CartState = {
   items: [],
   hydrated: false,
+  userId: null,
 };
 
-function readFromStorage(): CartItem[] {
+function readFromStorage(userId: string | null): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getCartStorageKey(userId));
     return raw ? (JSON.parse(raw) as CartItem[]) : [];
   } catch {
     return [];
   }
 }
 
-function writeToStorage(items: CartItem[]): void {
+function writeToStorage(userId: string | null, items: CartItem[]): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    window.localStorage.setItem(getCartStorageKey(userId), JSON.stringify(items));
   } catch {
     // storage unavailable (private mode, quota) — cart still works in-memory
   }
@@ -70,8 +76,21 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+    // Initial guest-scoped load on app mount, before identity is known.
     hydrate(state) {
-      state.items = readFromStorage();
+      state.items = readFromStorage(state.userId);
+      state.hydrated = true;
+    },
+    // Called whenever the authenticated identity changes (login, logout,
+    // or switching to a different account on the same device). Each
+    // mutation below already writes under the previous userId's key, so
+    // this just swaps in the new identity's own cart.
+    switchUser(state, action: PayloadAction<{ userId: string | null }>) {
+      if (state.userId === action.payload.userId) {
+        return;
+      }
+      state.userId = action.payload.userId;
+      state.items = readFromStorage(state.userId);
       state.hydrated = true;
     },
     addItem(state, action: PayloadAction<{ item: CartItem }>) {
@@ -84,11 +103,11 @@ const cartSlice = createSlice({
         const cap = item.stock > 0 ? item.stock : item.qty;
         state.items.push({ ...item, qty: Math.min(item.qty, cap) });
       }
-      writeToStorage(state.items);
+      writeToStorage(state.userId, state.items);
     },
     removeItem(state, action: PayloadAction<{ productId: string }>) {
       state.items = state.items.filter((i) => i.productId !== action.payload.productId);
-      writeToStorage(state.items);
+      writeToStorage(state.userId, state.items);
     },
     updateQty(state, action: PayloadAction<{ productId: string; qty: number }>) {
       const item = state.items.find((i) => i.productId === action.payload.productId);
@@ -96,16 +115,47 @@ const cartSlice = createSlice({
         const maxQty = item.stock > 0 ? item.stock : action.payload.qty;
         item.qty = Math.min(Math.max(action.payload.qty, 1), maxQty);
       }
-      writeToStorage(state.items);
+      writeToStorage(state.userId, state.items);
+    },
+    // Applies freshly-fetched stock/price for one cart line (used after a
+    // checkAvailability revalidation), clamping qty to the new stock.
+    syncItemAvailability(
+      state,
+      action: PayloadAction<{ productId: string; stock: number; price?: number; missing?: boolean }>
+    ) {
+      const { productId, stock, price, missing } = action.payload;
+      if (missing) {
+        state.items = state.items.filter((i) => i.productId !== productId);
+        writeToStorage(state.userId, state.items);
+        return;
+      }
+      const item = state.items.find((i) => i.productId === productId);
+      if (item) {
+        item.stock = stock;
+        if (price !== undefined) item.price = price;
+        if (stock > 0) {
+          item.qty = Math.min(item.qty, stock);
+        }
+      }
+      writeToStorage(state.userId, state.items);
     },
     clearCart(state) {
       state.items = [];
-      writeToStorage(state.items);
+      writeToStorage(state.userId, state.items);
     },
   },
 });
 
-export const { hydrate, addItem, removeItem, updateQty, clearCart } = cartSlice.actions;
+export const {
+  hydrate,
+  switchUser,
+  addItem,
+  removeItem,
+  updateQty,
+  syncItemAvailability,
+  clearCart,
+} = cartSlice.actions;
+
 export default cartSlice.reducer;
 
 export const selectCartItems = (state: { cart: CartState }) => state.cart.items;

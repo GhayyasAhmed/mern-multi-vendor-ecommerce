@@ -8,6 +8,8 @@ import {
   getRelatedProducts,
   createNewReview,
   getAdminAllProducts,
+  updateProduct,
+  checkAvailability,
 } from "../controllers/product.controller.js";
 import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -23,6 +25,17 @@ productRouter.post(
 );
 productRouter.get("/get-all-products-shop/:id", getAllProductsShop);
 productRouter.delete("/delete-shop-product/:id", isSeller, deleteProduct);
+productRouter.put(
+  "/update-product/:id",
+  isSeller,
+  validate(ProductValidations.updateProductSchema),
+  updateProduct
+);
+productRouter.post(
+  "/check-availability",
+  validate(ProductValidations.checkAvailabilitySchema),
+  checkAvailability
+);
 productRouter.get("/get-all-products", getAllProducts);
 productRouter.get("/get-product/:id", getProductById);
 productRouter.get("/get-related-products/:id", getRelatedProducts);

@@ -107,6 +107,93 @@ export const createEvent = catchAsyncErrors(
   }
 );
 
+// update event --- only the owning seller may update; preserves _id so
+// past orders/analytics referencing this event stay valid
+export const updateEvent = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const event = await EventModel.findById(req.params.id);
+
+    if (!event) {
+      return next(new ErrorHandler("Event is not found with this id", 404));
+    }
+
+    if (String(event.shopId) !== String(req.seller?._id)) {
+      return next(new ErrorHandler("You are not authorized to update this event", 403));
+    }
+
+    const { name, description, category, tags, originalPrice, discountPrice, stock, start_Date, Finish_Date, images } =
+      req.body;
+
+    if (name !== undefined) event.name = name;
+    if (description !== undefined) event.description = description;
+    if (category !== undefined) event.category = category;
+    if (tags !== undefined) event.tags = tags;
+    if (originalPrice !== undefined) event.originalPrice = originalPrice;
+    if (discountPrice !== undefined) event.discountPrice = discountPrice;
+    if (stock !== undefined) event.stock = stock;
+    if (start_Date !== undefined) event.start_Date = new Date(start_Date);
+    if (Finish_Date !== undefined) event.Finish_Date = new Date(Finish_Date);
+
+    if (images !== undefined) {
+      let newImages: string[] = [];
+      if (typeof images === "string") {
+        newImages.push(images);
+      } else if (Array.isArray(images)) {
+        newImages = images;
+      }
+      const validImages = newImages.filter((img): img is string => Boolean(img));
+
+      const uploadResults = await Promise.allSettled(
+        validImages.map((image) => uploadToCloudinary(image, "events"))
+      );
+
+      const failedUpload = uploadResults.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected"
+      );
+
+      if (failedUpload) {
+        const uploaded = uploadResults.filter(
+          (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof uploadToCloudinary>>> =>
+            result.status === "fulfilled"
+        );
+        await Promise.all(uploaded.map((res) => deleteFromCloudinary(res.value.public_id)));
+        throw failedUpload.reason;
+      }
+
+      const newImagesLinks: Array<{ public_id: string; url: string }> = [];
+      for (const result of uploadResults) {
+        if (result.status === "fulfilled") {
+          newImagesLinks.push({ public_id: result.value.public_id, url: result.value.secure_url });
+        }
+      }
+
+      const oldImages = event.images || [];
+      event.images = newImagesLinks;
+
+      try {
+        await event.save();
+      } catch (error) {
+        await Promise.all(newImagesLinks.map((img) => deleteFromCloudinary(img.public_id)));
+        throw error;
+      }
+
+      await Promise.all(
+        oldImages
+          .map((img) => img?.public_id)
+          .filter((publicId): publicId is string => Boolean(publicId))
+          .map((publicId) => deleteFromCloudinary(publicId))
+      );
+    } else {
+      await event.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      event: decorateEvent(event),
+    });
+  }
+);
+
 // get all events (public) — optional ?status=active|upcoming|expired and ?limit=
 export const getAllEvents = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

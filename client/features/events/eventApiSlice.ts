@@ -93,6 +93,26 @@ function buildEventsQueryString(params: GetAllEventsParams): string {
   return qs ? `?${qs}` : "";
 }
 
+export interface UpdateEventRequest {
+  id: string;
+  shopId: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string;
+  originalPrice?: number;
+  discountPrice?: number;
+  stock?: number;
+  start_Date?: string;
+  Finish_Date?: string;
+  images?: string[];
+}
+
+export interface UpdateEventResponse {
+  success: boolean;
+  event: IEvent;
+}
+
 export const eventApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAllEvents: builder.query<GetAllEventsResponse, GetAllEventsParams | void>({
@@ -160,6 +180,19 @@ export const eventApiSlice = apiSlice.injectEndpoints({
         { type: "Event", id: `SHOP-${shopId}` },
       ],
     }),
+
+    updateEvent: builder.mutation<UpdateEventResponse, UpdateEventRequest>({
+      query: ({ id, ...body }) => ({
+        url: `/event/update-event/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id, shopId }) => [
+        { type: "Event", id },
+        { type: "Event", id: "LIST" },
+        { type: "Event", id: `SHOP-${shopId}` },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -170,4 +203,5 @@ export const {
   useGetShopEventsQuery,
   useCreateEventMutation,
   useDeleteEventMutation,
+  useUpdateEventMutation,
 } = eventApiSlice;

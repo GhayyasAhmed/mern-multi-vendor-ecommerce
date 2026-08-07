@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { PRODUCT_CATEGORIES } from "@/constants";
 
 export const shopLoginSchema = z.object({
   email: z.string("Email is required").email("Invalid email address"),
@@ -25,7 +26,7 @@ export type ShopRegisterFormValues = z.infer<typeof shopRegisterSchema>;
 export const productFormSchema = z.object({
   name: z.string("Product name is required").min(1, "Product name is required"),
   description: z.string("Description is required").min(1, "Description is required"),
-  category: z.string("Category is required").min(1, "Category is required"),
+  category: z.enum(PRODUCT_CATEGORIES, { message: "Please select a category" }),
   tags: z.string().optional(),
   originalPrice: z.string().optional(),
   discountPrice: z.string("Price is required").min(1, "Price is required"),
@@ -37,7 +38,7 @@ export const eventFormSchema = z
   .object({
     name: z.string("Event name is required").min(1, "Event name is required"),
     description: z.string("Description is required").min(1, "Description is required"),
-    category: z.string("Category is required").min(1, "Category is required"),
+    category: z.enum(PRODUCT_CATEGORIES, { message: "Please select a category" }),
     tags: z.string().optional(),
     originalPrice: z.string().optional(),
     discountPrice: z.string("Price is required").min(1, "Price is required"),

@@ -79,6 +79,43 @@ function buildQueryString(params: GetAllProductsParams): string {
   return qs ? `?${qs}` : "";
 }
 
+export interface UpdateProductRequest {
+  id: string;
+  shopId: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string;
+  originalPrice?: number;
+  discountPrice?: number;
+  stock?: number;
+  images?: string[];
+}
+
+export interface UpdateProductResponse {
+  success: boolean;
+  product: IProduct;
+}
+
+export interface CheckAvailabilityItem {
+  _id: string;
+  kind?: "product" | "event";
+}
+
+export interface CheckAvailabilityResultItem {
+  _id: string;
+  kind: "product" | "event";
+  exists: boolean;
+  stock: number;
+  discountPrice: number;
+  name: string | null;
+}
+
+export interface CheckAvailabilityResponse {
+  success: boolean;
+  items: CheckAvailabilityResultItem[];
+}
+
 export const productApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAllProducts: builder.query<GetAllProductsResponse, GetAllProductsParams | void>({
@@ -154,7 +191,27 @@ export const productApiSlice = apiSlice.injectEndpoints({
         { type: "Product", id: `SHOP-${shopId}` },
       ],
     }),
-    
+
+    updateProduct: builder.mutation<UpdateProductResponse, UpdateProductRequest>({
+      query: ({ id, ...body }) => ({
+        url: `/product/update-product/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id, shopId }) => [
+        { type: "Product", id },
+        { type: "Product", id: "LIST" },
+        { type: "Product", id: `SHOP-${shopId}` },
+      ],
+    }),
+
+    checkAvailability: builder.mutation<CheckAvailabilityResponse, CheckAvailabilityItem[]>({
+      query: (items) => ({
+        url: "/product/check-availability",
+        method: "POST",
+        body: { items },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -167,4 +224,6 @@ export const {
   useGetShopProductsQuery,
   useCreateProductMutation,
   useDeleteProductMutation,
+  useUpdateProductMutation,
+  useCheckAvailabilityMutation,
 } = productApiSlice;
