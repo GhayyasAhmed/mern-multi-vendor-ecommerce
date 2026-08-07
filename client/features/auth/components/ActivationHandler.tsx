@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { useActivateUserMutation } from "../authApiSlice";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getErrorMessage } from "../utils";
+import {
+  useActivateUserMutation,
+  useResendActivationMutation,
+} from "../authApiSlice";
 
 type Status = "pending" | "success" | "error";
 
@@ -12,6 +15,29 @@ export default function ActivationHandler({ token }: { token: string }) {
   const [status, setStatus] = useState<Status>("pending");
   const [message, setMessage] = useState<string>("Activating your account...");
   const hasRun = useRef(false);
+
+  // add state + handler inside component, after hasRun ref declaration
+  const [resendActivation, { isLoading: isResending }] =
+    useResendActivationMutation();
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  const handleResend = async (e: FormEvent) => {
+    e.preventDefault();
+    setResendError(null);
+    setResendMessage(null);
+    try {
+      const result = await resendActivation({ email: resendEmail }).unwrap();
+      setResendMessage(
+        result.message || "A new activation link has been sent.",
+      );
+    } catch (error) {
+      setResendError(
+        getErrorMessage(error, "Could not resend activation email."),
+      );
+    }
+  };
 
   useEffect(() => {
     // Activation tokens are single-use (deleted from Redis on first use), so
@@ -27,7 +53,9 @@ export default function ActivationHandler({ token }: { token: string }) {
       })
       .catch((error) => {
         setStatus("error");
-        setMessage(getErrorMessage(error, "Activation link is invalid or has expired."));
+        setMessage(
+          getErrorMessage(error, "Activation link is invalid or has expired."),
+        );
       });
   }, [activateUser, token]);
 
@@ -51,9 +79,44 @@ export default function ActivationHandler({ token }: { token: string }) {
         </Link>
       )}
       {status === "error" && (
-        <Link href="/signup" className="text-sm text-[#3957db] hover:underline">
-          Back to sign up
-        </Link>
+        <div className="space-y-4 text-left">
+          <Link
+            href="/signup"
+            className="block text-center text-sm text-[#3957db] hover:underline"
+          >
+            Back to sign up
+          </Link>
+          <form onSubmit={handleResend} className="space-y-2 border-t pt-4">
+            <label
+              htmlFor="resend-email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Resend activation link
+            </label>
+            <input
+              id="resend-email"
+              type="email"
+              required
+              value={resendEmail}
+              onChange={(e) => setResendEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={isResending}
+              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isResending ? "Sending..." : "Resend activation email"}
+            </button>
+            {resendMessage && (
+              <p className="text-sm text-green-700">{resendMessage}</p>
+            )}
+            {resendError && (
+              <p className="text-sm text-red-600">{resendError}</p>
+            )}
+          </form>
+        </div>
       )}
     </div>
   );

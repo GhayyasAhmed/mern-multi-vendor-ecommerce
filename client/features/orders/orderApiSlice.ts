@@ -171,6 +171,17 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: (_result, _error, id) => [{ type: "Order", id }],
     }),
+
+    requestOrderRefund: builder.mutation<OrderActionResponse, { id: string }>({
+      query: ({ id }) => ({
+        url: `/order/order-refund/${id}`,
+        method: "PUT",
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Order", id },
+        { type: "Order", id: "LIST" },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -181,6 +192,7 @@ export const {
   useGetSellerOrdersQuery,
   useUpdateOrderStatusMutation,
   useOrderRefundSuccessMutation,
+  useRequestOrderRefundMutation,
   useGetOrderByIdQuery,
 } = orderApiSlice;
 

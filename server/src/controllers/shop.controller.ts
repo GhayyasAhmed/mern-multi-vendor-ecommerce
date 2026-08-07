@@ -13,6 +13,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
 import sendShopToken from "../utils/shopToken.js";
 import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
+import { trackPendingUpload, clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS } from "../utils/pendingUploads.js";
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -96,7 +97,13 @@ export const createShop = catchAsyncErrors(
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const activationUrl = `${frontendUrl}/activation/${activationToken}`;
-
+    await redis.set(
+      `pending_signup:shop:${email}`,
+      JSON.stringify(sellerData),
+      "EX",
+      PENDING_SIGNUP_TTL_SECONDS
+    );
+    await trackPendingUpload(sellerData.avatar.public_id, Date.now() + PENDING_SIGNUP_TTL_SECONDS * 1000);
     try {
       await sendEmail({
         email: sellerData.email,
@@ -109,11 +116,12 @@ export const createShop = catchAsyncErrors(
         message: `Please check your email (${sellerData.email}) to activate your shop!`,
       });
     } catch (error: any) {
-      // Compensating action: clean up Redis token and Cloudinary uploaded avatar on email failure
       await redis.del(`activation:${activationToken}`);
       if (sellerData.avatar?.public_id) {
         await deleteFromCloudinary(sellerData.avatar.public_id);
       }
+      await redis.del(`pending_signup:shop:${email}`);
+      await clearPendingUpload(sellerData.avatar.public_id);
       return next(new ErrorHandler(error.message || "Failed to send activation email", 500));
     }
   }
@@ -158,10 +166,54 @@ export const activateShop = catchAsyncErrors(
     });
 
     await redis.del(`activation:${activation_token}`);
-
+    await redis.del(`pending_signup:shop:${sellerData.email}`);
+    await clearPendingUpload(sellerData.avatar.public_id);
     await sendShopToken(seller, 201, res, "Shop activated successfully!");
   }
 );
+
+// add new exported controller
+export const resendActivation = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    const existingShop = await Shop.findOne({ email });
+    if (existingShop) {
+      return next(new ErrorHandler("This shop is already activated. Please login.", 400));
+    }
+
+    const pendingRaw = await redis.get(`pending_signup:shop:${email}`);
+    if (!pendingRaw) {
+      return next(new ErrorHandler("No pending shop signup found for this email. Please sign up again.", 404));
+    }
+
+    const pendingSeller: IShopActivationRequest = JSON.parse(pendingRaw);
+
+    const { activationToken, expireMinutes } = await createActivationToken(pendingSeller);
+
+    await trackPendingUpload(pendingSeller.avatar.public_id, Date.now() + PENDING_SIGNUP_TTL_SECONDS * 1000);
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const activationUrl = `${frontendUrl}/activation/${activationToken}`;
+
+    try {
+      await sendEmail({
+        email: pendingSeller.email,
+        subject: "Activate your Shop Account",
+        message: `Hello ${pendingSeller.name},\n\nPlease click on the link to activate your shop:\n\n${activationUrl}\n\nThis link will expire in ${expireMinutes} minutes.`,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `A new activation link has been sent to ${pendingSeller.email}`,
+      });
+    } catch (error: any) {
+      await redis.del(`activation:${activationToken}`);
+      return next(new ErrorHandler(error.message || "Failed to send activation email", 500));
+    }
+  }
+);
+
 
 // 4. Login Shop
 export const loginShop = catchAsyncErrors(

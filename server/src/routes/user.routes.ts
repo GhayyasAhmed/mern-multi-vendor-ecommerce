@@ -2,6 +2,7 @@ import express from "express";
 import {
     createUser,
     activateUser,
+    resendActivation,
     loginUser,
     getUserDetails,
     logoutUser,
@@ -23,13 +24,14 @@ import {
 } from "../controllers/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
-import { UserValidations, activationSchema } from "../utils/validators.js";
 import { authLimiter } from "../middlewares/rateLimiter.js";
+import { UserValidations, activationSchema, resendActivationSchema } from "../utils/validators.js";
 
 const userRouter = express.Router();
 
 userRouter.post("/create-user", authLimiter, validate(UserValidations.createUserSchema), createUser);
 userRouter.post("/activation", authLimiter, validate(activationSchema), activateUser);
+userRouter.post("/resend-activation", authLimiter, validate(resendActivationSchema), resendActivation);
 userRouter.post("/login-user", authLimiter, validate(UserValidations.loginUserSchema), loginUser);
 userRouter.post("/forgot-password", authLimiter, validate(UserValidations.forgotPasswordSchema), forgotPassword);
 userRouter.put("/reset-password/:token", authLimiter, validate(UserValidations.resetPasswordSchema), resetPassword);

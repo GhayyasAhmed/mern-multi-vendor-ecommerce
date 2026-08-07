@@ -241,6 +241,13 @@ const Header = ({ activeHeading }) => {
                           Admin panel
                         </Link>
                       )}
+                      <Link
+                        href="/account"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        onClick={() => setAccountMenuOpen(false)}
+                      >
+                        Account settings
+                      </Link>
                       <LogoutButton
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 disabled:opacity-60"
                         onLoggedOut={() => setAccountMenuOpen(false)}
@@ -252,7 +259,7 @@ const Header = ({ activeHeading }) => {
                 <div className="relative cursor-pointer mr-3.75">
                   <Link href="/login">
                     {/* <div className="w-7.5 h-7.5 rounded-full bg-slate-300 flex items-center justify-center font-bold text-gray-700"> */}
-                      <CgProfile size={30} color="rgb(255 255 255 / 83%)" />
+                    <CgProfile size={30} color="rgb(255 255 255 / 83%)" />
                     {/* </div> */}
                   </Link>
                 </div>

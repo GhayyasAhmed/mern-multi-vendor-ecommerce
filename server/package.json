@@ -11,6 +11,7 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "seed:admin": "tsx src/scripts/seedAdmin.ts",
+    "cleanup:orphaned-uploads": "tsx src/scripts/cleanupOrphanedUploads.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

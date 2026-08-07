@@ -14,7 +14,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { accessTokenOptions, refreshTokenOptions } from "../utils/jwt.js";
 import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
-
+import { trackPendingUpload, clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS } from "../utils/pendingUploads.js";
 
 export interface IRegistrationBody {
     name: string;
@@ -60,6 +60,10 @@ export const createUser = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         const { name, email, password, avatar } = req.body;
 
+        if (!avatar) {
+            return next(new ErrorHandler("Please upload a profile photo", 400));
+        }
+
         const userEmail = await User.findOne({ email });
         if (userEmail) {
             return next(new ErrorHandler("User already exists", 400));
@@ -84,6 +88,14 @@ export const createUser = catchAsyncErrors(
 
         const { activationToken, expireMinutes } = await createActivationToken(user);
 
+        await redis.set(
+            `pending_signup:user:${email}`,
+            JSON.stringify(user),
+            "EX",
+            PENDING_SIGNUP_TTL_SECONDS
+        );
+        await trackPendingUpload(user.avatar.public_id, Date.now() + PENDING_SIGNUP_TTL_SECONDS * 1000);
+
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
         const activationUrl = `${frontendUrl}/activation/${activationToken}`;
 
@@ -100,6 +112,8 @@ export const createUser = catchAsyncErrors(
             });
         } catch (error: any) {
             await redis.del(`activation:${activationToken}`);
+            await redis.del(`pending_signup:user:${email}`);
+            await clearPendingUpload(user.avatar.public_id);
             return next(new ErrorHandler(error.message, 500));
         }
     }
@@ -141,8 +155,51 @@ export const activateUser = catchAsyncErrors(
         });
 
         await redis.del(`activation:${activation_token}`);
-
+        await redis.del(`pending_signup:user:${user.email}`);
+        await clearPendingUpload(user.avatar.public_id);
         sendToken(newUser, 201, res, "Account activated successfully!");
+    }
+);
+
+// add new exported controller
+export const resendActivation = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const { email } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return next(new ErrorHandler("This account is already activated. Please login.", 400));
+        }
+
+        const pendingRaw = await redis.get(`pending_signup:user:${email}`);
+        if (!pendingRaw) {
+            return next(new ErrorHandler("No pending signup found for this email. Please sign up again.", 404));
+        }
+
+        const pendingUser: IActivationRequest = JSON.parse(pendingRaw);
+
+        const { activationToken, expireMinutes } = await createActivationToken(pendingUser);
+
+        await trackPendingUpload(pendingUser.avatar.public_id, Date.now() + PENDING_SIGNUP_TTL_SECONDS * 1000);
+
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const activationUrl = `${frontendUrl}/activation/${activationToken}`;
+
+        try {
+            await sendEmail({
+                email: pendingUser.email,
+                subject: "Activate your account",
+                message: `Hello ${pendingUser.name},\n\nPlease click the link below to activate your account:\n\n${activationUrl}\n\nThis link will expire in ${expireMinutes} minutes.`,
+            });
+
+            res.status(200).json({
+                success: true,
+                message: `A new activation link has been sent to ${pendingUser.email}`,
+            });
+        } catch (error: any) {
+            await redis.del(`activation:${activationToken}`);
+            return next(new ErrorHandler(error.message || "Failed to send activation email", 500));
+        }
     }
 );
 

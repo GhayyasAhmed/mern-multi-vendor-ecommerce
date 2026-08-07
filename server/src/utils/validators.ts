@@ -65,12 +65,19 @@ export const activationSchema = z.object({
   }),
 });
 
+// add near activationSchema
+export const resendActivationSchema = z.object({
+  body: z.object({
+    email: z.string('Email is required').email('Invalid email address'),
+  }),
+});
+
 const createUserSchema = z.object({
   body: z.object({
     name: z.string('Name is required'),
     email: z.string('Email is required').email('Invalid email address'),
     password: z.string('Password is required').min(8, 'Password must be at least 8 characters'),
-    avatar: z.string().optional(),
+    avatar: z.string('Please upload a profile photo').min(1, 'Please upload a profile photo'),
   }),
 });
 

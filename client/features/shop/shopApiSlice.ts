@@ -6,6 +6,10 @@ export interface ApiSuccessMessage {
     message: string;
 }
 
+export interface ResendShopActivationRequest {
+    email: string;
+}
+
 export interface CreateShopRequest {
     name: string;
     email: string;
@@ -71,6 +75,10 @@ export const shopApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ["Shop"],
         }),
 
+        resendShopActivation: builder.mutation<ApiSuccessMessage, ResendShopActivationRequest>({
+            query: (body) => ({ url: "/shop/resend-activation", method: "POST", body }),
+        }),
+
         loginShop: builder.mutation<ShopAuthResponse, LoginShopRequest>({
             query: (body) => ({ url: "/shop/login-shop", method: "POST", body }),
             invalidatesTags: ["Shop"],
@@ -107,6 +115,7 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 export const {
     useCreateShopMutation,
     useActivateShopMutation,
+    useResendShopActivationMutation,
     useLoginShopMutation,
     useGetSellerDetailsQuery,
     useLazyGetSellerDetailsQuery,

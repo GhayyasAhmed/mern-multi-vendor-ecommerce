@@ -6,6 +6,10 @@ export interface ApiSuccessMessage {
     message: string;
 }
 
+export interface ResendActivationRequest {
+    email: string;
+}
+
 export interface RegisterUserRequest {
     name: string;
     email: string;
@@ -43,6 +47,43 @@ export interface ResetPasswordRequest {
     confirmPassword: string;
 }
 
+
+// add interfaces
+export interface UpdateUserProfileRequest {
+    name?: string;
+    phoneNumber?: number;
+}
+
+export interface UpdateUserEmailRequest {
+    email: string;
+    password: string;
+}
+
+export interface UpdateUserAvatarRequest {
+    avatar: string;
+}
+
+export interface UpdateUserAddressRequest {
+    _id?: string;
+    country?: string;
+    city?: string;
+    address1?: string;
+    address2?: string;
+    zipCode?: number;
+    addressType: string;
+}
+
+export interface UpdateUserPasswordRequest {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export interface UpdateUserResponse {
+    success: boolean;
+    user: IUser;
+}
+
 export const authApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         registerUser: builder.mutation<ApiSuccessMessage, RegisterUserRequest>({
@@ -60,6 +101,14 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 body,
             }),
             invalidatesTags: ["User"],
+        }),
+
+        resendActivation: builder.mutation<ApiSuccessMessage, ResendActivationRequest>({
+            query: (body) => ({
+                url: "/user/resend-activation",
+                method: "POST",
+                body,
+            }),
         }),
 
         loginUser: builder.mutation<AuthUserResponse, LoginUserRequest>({
@@ -102,6 +151,36 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+
+        // add endpoints inside injectEndpoints
+        updateUserProfile: builder.mutation<UpdateUserResponse, UpdateUserProfileRequest>({
+            query: (body) => ({ url: "/user/update-user-profile", method: "PUT", body }),
+            invalidatesTags: ["User"],
+        }),
+
+        updateUserEmail: builder.mutation<UpdateUserResponse, UpdateUserEmailRequest>({
+            query: (body) => ({ url: "/user/update-user-email", method: "PUT", body }),
+            invalidatesTags: ["User"],
+        }),
+
+        updateUserAvatar: builder.mutation<UpdateUserResponse, UpdateUserAvatarRequest>({
+            query: (body) => ({ url: "/user/update-avatar", method: "PUT", body }),
+            invalidatesTags: ["User"],
+        }),
+
+        updateUserAddress: builder.mutation<UpdateUserResponse, UpdateUserAddressRequest>({
+            query: (body) => ({ url: "/user/update-user-addresses", method: "PUT", body }),
+            invalidatesTags: ["User"],
+        }),
+
+        deleteUserAddress: builder.mutation<UpdateUserResponse, string>({
+            query: (id) => ({ url: `/user/delete-user-address/${id}`, method: "DELETE" }),
+            invalidatesTags: ["User"],
+        }),
+
+        updateUserPassword: builder.mutation<ApiSuccessMessage, UpdateUserPasswordRequest>({
+            query: (body) => ({ url: "/user/update-user-password", method: "PUT", body }),
+        }),
     }),
     overrideExisting: false,
 });
@@ -109,10 +188,17 @@ export const authApiSlice = apiSlice.injectEndpoints({
 export const {
     useRegisterUserMutation,
     useActivateUserMutation,
+    useResendActivationMutation,
     useLoginUserMutation,
     useGetUserDetailsQuery,
     useLazyGetUserDetailsQuery,
     useLogoutUserMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,
+    useUpdateUserProfileMutation,
+    useUpdateUserEmailMutation,
+    useUpdateUserAvatarMutation,
+    useUpdateUserAddressMutation,
+    useDeleteUserAddressMutation,
+    useUpdateUserPasswordMutation,
 } = authApiSlice;

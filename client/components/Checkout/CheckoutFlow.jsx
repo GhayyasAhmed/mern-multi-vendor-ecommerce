@@ -15,6 +15,8 @@ import { clearCart, selectCartGroupedByShop, selectCartItems, selectCartSubtotal
 import { useCreateOrderMutation } from "@/features/orders/orderApiSlice";
 import { useValidateCouponMutation } from "@/features/coupons/couponApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useUpdateUserAddressMutation } from "@/features/auth/authApiSlice";
 
 const shippingSchema = z.object({
   address1: z.string("Address is required").min(3, "Please enter your street address"),
@@ -36,6 +38,14 @@ function CheckoutContent() {
   const [couponError, setCouponError] = useState(null);
   const [couponAppliedFor, setCouponAppliedFor] = useState(null);
   const [formError, setFormError] = useState(null);
+  const { user } = useCurrentUser();
+  const savedAddresses = user?.addresses ?? [];
+  const [selectedAddressId, setSelectedAddressId] = useState("new");
+  const [saveAddress, setSaveAddress] = useState(false);
+
+  const [placedOrders, setPlacedOrders] = useState(null)
+
+  const [updateUserAddress] = useUpdateUserAddressMutation();
 
   const [validateCoupon, { isLoading: isValidatingCoupon }] = useValidateCouponMutation();
   const [createOrder, { isLoading: isPlacingOrder }] = useCreateOrderMutation();
@@ -43,6 +53,7 @@ function CheckoutContent() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(shippingSchema),
@@ -80,6 +91,19 @@ function CheckoutContent() {
     setCouponError(lastError);
   };
 
+  // add handler, after handleApplyCoupon
+  const handleSelectSavedAddress = (id) => {
+    setSelectedAddressId(id);
+    if (id === "new") return;
+    const address = savedAddresses.find((a) => a._id === id);
+    if (!address) return;
+    setValue("address1", address.address1 || "");
+    setValue("address2", address.address2 || "");
+    setValue("city", address.city || "");
+    setValue("country", address.country || "");
+    setValue("zipCode", address.zipCode ? String(address.zipCode) : "");
+  };
+
   const onSubmit = async (values) => {
     setFormError(null);
 
@@ -110,17 +134,68 @@ function CheckoutContent() {
         couponCode: couponAppliedFor ? couponInput.trim() : undefined,
       }).unwrap();
 
+      if (saveAddress && selectedAddressId === "new") {
+        try {
+          await updateUserAddress({
+            addressType: "Home",
+            address1: values.address1,
+            address2: values.address2,
+            city: values.city,
+            country: values.country,
+            zipCode: values.zipCode ? Number(values.zipCode) : undefined,
+          }).unwrap();
+        } catch {
+          // best-effort: order already placed successfully; address save failure shouldn't block checkout
+        }
+      }
+
       dispatch(clearCart());
       setCouponInput("");
       setAppliedDiscount(0);
       setCouponAppliedFor(null);
 
-      const firstOrderId = result.orders?.[0]?._id;
-      router.push(firstOrderId ? `/orders/${firstOrderId}` : "/orders");
+      const orders = result.orders || [];
+      if (orders.length > 1) {
+        setPlacedOrders(orders);
+      } else {
+        const firstOrderId = orders[0]?._id;
+        router.push(firstOrderId ? `/orders/${firstOrderId}` : "/orders");
+      }
     } catch (error) {
       setFormError(getErrorMessage(error, "Could not place your order. Please try again."));
     }
   };
+
+  if (placedOrders) {
+    return (
+      <div>
+        <Header activeHeading={0} />
+        <div className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4 text-center px-4">
+          <p className="text-[20px] font-semibold text-[#333]">Your order has been placed!</p>
+          <p className="text-[15px] text-[#00000082]">
+            Since your cart included items from {placedOrders.length} different shops, we created {placedOrders.length} separate orders.
+          </p>
+          <div className="w-full max-w-md space-y-3">
+            {placedOrders.map((order, index) => (
+              <Link
+                key={order._id}
+                href={`/orders/${order._id}`}
+                className="block rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition text-left"
+              >
+                <p className="text-sm text-[#00000082]">Order {index + 1} of {placedOrders.length}</p>
+                <p className="font-medium text-[#3957db]">#{order._id.slice(-8).toUpperCase()}</p>
+                <p className="text-sm text-[#00000082]">${order.totalPrice.toFixed(2)}</p>
+              </Link>
+            ))}
+          </div>
+          <Link href="/orders" className="text-[#3957db] hover:underline">
+            View all my orders
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -155,6 +230,23 @@ function CheckoutContent() {
           >
             <h2 className="text-lg font-semibold text-[#333]">Shipping address</h2>
 
+            {savedAddresses.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Use a saved address</label>
+                <select
+                  className={`${styles.input} mt-1`}
+                  value={selectedAddressId}
+                  onChange={(e) => handleSelectSavedAddress(e.target.value)}
+                >
+                  <option value="new">Enter a new address</option>
+                  {savedAddresses.map((address) => (
+                    <option key={address._id} value={address._id}>
+                      {address.addressType}: {[address.address1, address.city].filter(Boolean).join(", ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700">Street address</label>
               <input className={`${styles.input} mt-1`} {...register("address1")} />
@@ -184,6 +276,15 @@ function CheckoutContent() {
               <input className={`${styles.input} mt-1`} {...register("country")} />
               {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>}
             </div>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={saveAddress}
+                onChange={(e) => setSaveAddress(e.target.checked)}
+              />
+              Save this address to my account
+            </label>
 
             {formError && (
               <p role="alert" className="text-sm text-red-600">

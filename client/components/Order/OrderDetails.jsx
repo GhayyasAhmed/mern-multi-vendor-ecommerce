@@ -1,13 +1,13 @@
 "use client";
-
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import styles from "@/styles/styles";
-import { useGetOrderByIdQuery } from "@/features/orders/orderApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
+import { useGetOrderByIdQuery, useRequestOrderRefundMutation } from "@/features/orders/orderApiSlice";
 
 function OrderDetailsContent({ orderId }) {
   const { data, isLoading, isError, error } = useGetOrderByIdQuery(orderId, {
@@ -15,6 +15,20 @@ function OrderDetailsContent({ orderId }) {
   });
 
   const order = data?.order;
+
+  const [requestRefund, { isLoading: isRequestingRefund }] = useRequestOrderRefundMutation();
+  const [refundError, setRefundError] = useState(null);
+  const [refundSuccess, setRefundSuccess] = useState(false);
+
+  const handleRequestRefund = async () => {
+    setRefundError(null);
+    try {
+      await requestRefund({ id: order._id }).unwrap();
+      setRefundSuccess(true);
+    } catch (error) {
+      setRefundError(getErrorMessage(error, "Could not request a refund. Please try again."));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -68,6 +82,36 @@ function OrderDetailsContent({ orderId }) {
               </p>
             </div>
           </div>
+
+          {order.status === "Delivered" && (
+            <div className="mt-4 pt-4 border-t">
+              {refundSuccess ? (
+                <p className="text-sm text-amber-600 font-medium">Refund requested. We&apos;ll review it shortly.</p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleRequestRefund}
+                    disabled={isRequestingRefund}
+                    className="px-4 py-2 rounded-md bg-black text-white text-sm disabled:opacity-60 cursor-pointer"
+                  >
+                    {isRequestingRefund ? "Requesting..." : "Request refund"}
+                  </button>
+                  {refundError && <p className="mt-2 text-sm text-red-600">{refundError}</p>}
+                </>
+              )}
+            </div>
+          )}
+          {order.status === "Processing Refund" && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-amber-600 font-medium">Refund requested. Awaiting seller approval.</p>
+            </div>
+          )}
+          {order.status === "Refund Success" && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-gray-500 font-medium">This order has been refunded.</p>
+            </div>
+          )}
         </div>
 
         <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
