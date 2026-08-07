@@ -21,6 +21,7 @@ export interface IUser {
   phoneNumber?: number;
   addresses?: IAddress[];
   avatar?: IAvatar;
+  wishlist?: string[];
   createdAt?: string;
   updatedAt?: string;
 }

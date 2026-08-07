@@ -1,10 +1,13 @@
 "use client";
 import ProductDetailsCard from "@/components/Route/ProductDetailsCard/ProductDetailsCard";
 import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   AiFillHeart,
@@ -16,16 +19,34 @@ import {
 } from "react-icons/ai";
 
 const ProductCard = ({ data }) => {
-  const [click, setClick] = useState(false);
   const [open, setOpen] = useState(false);
 
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const outOfStock = (data?.stock ?? 0) <= 0;
+  const isWishlisted = Boolean(data?._id && user?.wishlist?.includes(data._id));
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
     if (outOfStock || !data) return;
     dispatch(addItem({ item: productToCartItem(data, 1) }));
+  };
+
+  const handleWishlistToggle = (e) => {
+    e.stopPropagation();
+    if (!data?._id) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (isWishlisted) {
+      removeFromWishlist(data._id);
+    } else {
+      addToWishlist(data._id);
+    }
   };
 
   // const productName = data?.name ? data.name.replace(/\s+/g, "-") : "";
@@ -34,11 +55,11 @@ const ProductCard = ({ data }) => {
     <>
       <div className="w-full h-92.5 bg-white rounded-lg shadow-sm p-3 relative cursor-pointer">
         <div className="flex justify-end">
-          {click ? (
+          {isWishlisted ? (
             <AiFillHeart
               size={22}
               className="cursor-pointer absolute right-2 top-5"
-              onClick={() => setClick(!click)}
+              onClick={handleWishlistToggle}
               color="red"
               title="Remove from wishlist"
             />
@@ -46,7 +67,7 @@ const ProductCard = ({ data }) => {
             <AiOutlineHeart
               size={22}
               className="cursor-pointer absolute right-2 top-5"
-              onClick={() => setClick(!click)}
+              onClick={handleWishlistToggle}
               color="#333"
               title="Add to wishlist"
             />

@@ -1,6 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { IProduct } from "@/types";
 
+export type CartItemKind = "product" | "event";
+
 export interface CartItem {
   productId: string;
   name: string;
@@ -11,6 +13,7 @@ export interface CartItem {
   stock: number;
   shopId: string;
   shopName?: string;
+  kind: CartItemKind;
 }
 
 interface CartState {
@@ -44,7 +47,11 @@ function writeToStorage(items: CartItem[]): void {
   }
 }
 
-export function productToCartItem(product: IProduct, qty: number): CartItem {
+export function productToCartItem(
+  product: IProduct,
+  qty: number,
+  kind: CartItemKind = "product"
+): CartItem {
   return {
     productId: product._id,
     name: product.name,
@@ -55,6 +62,7 @@ export function productToCartItem(product: IProduct, qty: number): CartItem {
     stock: product.stock,
     shopId: product.shopId || product.shop?._id || "",
     shopName: product.shop?.name,
+    kind,
   };
 }
 

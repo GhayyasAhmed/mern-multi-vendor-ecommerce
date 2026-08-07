@@ -9,6 +9,7 @@ import {
   useGetProductByIdQuery,
   useGetRelatedProductsQuery,
 } from "@/features/products/productApiSlice";
+import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,11 +24,12 @@ import {
 
 const ProductDetails = ({ productId }) => {
   const [count, setCount] = useState(1);
-  const [click, setClick] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const router = useRouter();
   const { user } = useCurrentUser();
   const [createConversation, { isLoading: isStartingChat }] = useCreateConversationMutation();
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
 
   const {
     data: productData,
@@ -37,6 +39,21 @@ const ProductDetails = ({ productId }) => {
   } = useGetProductByIdQuery(productId, { skip: !productId });
 
   const product = productData?.product;
+
+  const isWishlisted = Boolean(product?._id && user?.wishlist?.includes(product._id));
+
+  const handleWishlistToggle = () => {
+    if (!product?._id) return;
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/product/${productId}`)}`);
+      return;
+    }
+    if (isWishlisted) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(product._id);
+    }
+  };
 
   const { data: relatedData } = useGetRelatedProductsQuery(
     { id: productId, limit: 5 },
@@ -195,11 +212,11 @@ const ProductDetails = ({ productId }) => {
               </div>
 
               <div>
-                {click ? (
+                {isWishlisted ? (
                   <AiFillHeart
                     size={30}
                     className="cursor-pointer"
-                    onClick={() => setClick(!click)}
+                    onClick={handleWishlistToggle}
                     color="red"
                     title="Remove from wishlist"
                   />
@@ -207,7 +224,7 @@ const ProductDetails = ({ productId }) => {
                   <AiOutlineHeart
                     size={30}
                     className="cursor-pointer"
-                    onClick={() => setClick(!click)}
+                    onClick={handleWishlistToggle}
                     color="#333"
                     title="Add to wishlist"
                   />

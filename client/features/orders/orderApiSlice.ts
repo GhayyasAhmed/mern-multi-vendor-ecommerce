@@ -4,6 +4,7 @@ export interface OrderCartItem {
   _id: string;
   shopId: string;
   qty: number;
+  kind?: "product" | "event";
   name?: string;
   discountPrice?: number;
   images?: { url: string }[];
@@ -40,7 +41,7 @@ export interface IOrder {
 }
 
 export interface CreateOrderRequest {
-  cart: { _id: string; shopId: string; qty: number; name?: string; discountPrice?: number; images?: { url: string }[] }[];
+  cart: { _id: string; shopId: string; qty: number; kind?: "product" | "event"; name?: string; discountPrice?: number; images?: { url: string }[] }[];
   shippingAddress: OrderShippingAddress;
   paymentInfo?: { id?: string; status?: string; type?: string };
   couponCode?: string;

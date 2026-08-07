@@ -1,18 +1,21 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import OrderModel, { IShippingAddress, IOrder } from "../models/order.model.js";
-import ShopModel from "../models/shop.model.js";
-import ProductModel from "../models/product.model.js";
 import CouponCodeModel from "../models/couponCode.model.js";
+import EventModel from "../models/event.model.js";
+import OrderModel, { IOrder, IShippingAddress } from "../models/order.model.js";
+import ProductModel from "../models/product.model.js";
+import ShopModel from "../models/shop.model.js";
+import ErrorHandler from "../utils/errorhandler.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 
 interface ICartItem {
   _id: string;
   shopId: string;
   qty: number;
+  kind?: "product" | "event";
   [key: string]: unknown;
 }
+
 
 // create new order
 export const createOrder = catchAsyncErrors(
@@ -49,21 +52,27 @@ export const createOrder = catchAsyncErrors(
       // of trusting the client-supplied amount, and validate stock.
       let subtotal = 0;
       for (const item of items) {
-        const product = await ProductModel.findById(item._id);
-        if (!product) {
-          return next(
-            new ErrorHandler(`Product not found with this id: ${item._id}`, 400)
-          );
-        }
-        if (product.stock < item.qty) {
+        const isEvent = item.kind === "event";
+        const purchasable = isEvent
+          ? await EventModel.findById(item._id)
+          : await ProductModel.findById(item._id);
+        if (!purchasable) {
           return next(
             new ErrorHandler(
-              `Only ${product.stock} unit(s) of "${product.name}" left in stock`,
+              `${isEvent ? "Event" : "Product"} not found with this id: ${item._id}`,
               400
             )
           );
         }
-        subtotal += product.discountPrice * item.qty;
+        if (purchasable.stock < item.qty) {
+          return next(
+            new ErrorHandler(
+              `Only ${purchasable.stock} unit(s) of "${purchasable.name}" left in stock`,
+              400
+            )
+          );
+        }
+        subtotal += purchasable.discountPrice * item.qty;
       }
 
       let totalPrice = subtotal;
@@ -189,12 +198,12 @@ export const updateOrderStatus = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to update this order", 403));
     }
 
-    const decrementStock = async (id: string, qty: number): Promise<void> => {
-      const product = await ProductModel.findById(id);
-      if (product) {
-        product.stock -= qty;
-        product.sold_out = (product.sold_out || 0) + qty;
-        await product.save({ validateBeforeSave: false });
+    const decrementStock = async (id: string, qty: number, kind?: string): Promise<void> => {
+      const doc = kind === "event" ? await EventModel.findById(id) : await ProductModel.findById(id);
+      if (doc) {
+        doc.stock -= qty;
+        doc.sold_out = (doc.sold_out || 0) + qty;
+        await doc.save({ validateBeforeSave: false });
       }
     };
 
@@ -210,7 +219,7 @@ export const updateOrderStatus = catchAsyncErrors(
 
     if (req.body.status === "Transferred to delivery partner") {
       for (const item of cartItems) {
-        await decrementStock(item._id, item.qty);
+        await decrementStock(item._id, item.qty, item.kind);
       }
     }
 
@@ -295,18 +304,19 @@ export const orderRefundSuccess = catchAsyncErrors(
       message: "Order Refund successfull!",
     });
 
-    const restock = async (id: string, qty: number): Promise<void> => {
-      const product = await ProductModel.findById(id);
-      if (product) {
-        product.stock += qty;
-        product.sold_out = Math.max((product.sold_out || 0) - qty, 0);
-        await product.save({ validateBeforeSave: false });
+    const restock = async (id: string, qty: number, kind?: string): Promise<void> => {
+      const doc = kind === "event" ? await EventModel.findById(id) : await ProductModel.findById(id);
+      if (doc) {
+        doc.stock += qty;
+        doc.sold_out = Math.max((doc.sold_out || 0) - qty, 0);
+        await doc.save({ validateBeforeSave: false });
       }
     };
 
     for (const item of cartItems) {
-      await restock(item._id, item.qty);
+      await restock(item._id, item.qty, item.kind);
     }
+
   }
 );
 

@@ -28,7 +28,7 @@ const EventDetails = ({ eventId }) => {
 
   const handleAddToCart = () => {
     if (outOfStock || !event) return;
-    dispatch(addItem({ item: productToCartItem(event, count) }));
+    dispatch(addItem({ item: productToCartItem(event, count, "event") }));
   };
 
   if (isLoading) {

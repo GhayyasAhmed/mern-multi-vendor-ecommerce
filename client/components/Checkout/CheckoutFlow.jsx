@@ -94,6 +94,7 @@ function CheckoutContent() {
           _id: item.productId,
           shopId: item.shopId,
           qty: item.qty,
+          kind: item.kind,
           name: item.name,
           discountPrice: item.price,
           images: [{ url: item.image }],

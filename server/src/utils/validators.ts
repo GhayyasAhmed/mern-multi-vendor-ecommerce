@@ -198,6 +198,7 @@ const cartItemSchema = z.object({
   _id: z.string('Product id is required'),
   shopId: z.string('Shop id is required'),
   qty: z.number({ message: 'Quantity is required' }).min(1, 'Quantity must be at least 1'),
+  kind: z.enum(['product', 'event']).optional(),
   name: z.string().optional(),
   discountPrice: z.number().optional(),
   images: z.array(z.object({ url: z.string() })).optional(),

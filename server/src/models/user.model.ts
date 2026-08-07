@@ -25,6 +25,7 @@ export interface IUser extends Document {
     public_id?: string;
     url?: string;
   };
+  wishlist?: mongoose.Types.ObjectId[];
   role: string;
   resetPasswordToken?: string;
   resetPasswordTime?: Date;
@@ -83,6 +84,12 @@ const userSchema = new Schema<IUser>(
       public_id: { type: String },
       url: { type: String },
     },
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
     role: {
       type: String,
       default: "user",

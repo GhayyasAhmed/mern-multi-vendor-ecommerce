@@ -16,7 +16,10 @@ import {
     deleteUserAdmin,
     refreshAccessToken,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getWishlist,
+    addToWishlist,
+    removeFromWishlist
 } from "../controllers/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -42,6 +45,9 @@ userRouter.put("/update-user-addresses", isAuthenticated, validate(UserValidatio
 userRouter.delete("/delete-user-address/:id", isAuthenticated, deleteUserAddress);
 userRouter.put("/update-user-password", isAuthenticated, validate(UserValidations.updateUserPasswordSchema), updateUserPassword);
 userRouter.get("/user-info/:id", getUserInfo);
+userRouter.get("/wishlist", isAuthenticated, getWishlist);
+userRouter.put("/wishlist/:productId", isAuthenticated, addToWishlist);
+userRouter.delete("/wishlist/:productId", isAuthenticated, removeFromWishlist);
 
 // Admin Routes
 userRouter.get("/admin-all-users", isAuthenticated, authorizeRoles("admin"), getAllUsersAdmin);

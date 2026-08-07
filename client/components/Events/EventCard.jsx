@@ -12,7 +12,7 @@ const EventCard = ({ active = true, data }) => {
 
   const handleAddToCart = () => {
     if (outOfStock || !data) return;
-    dispatch(addItem({ item: productToCartItem(data, 1) }));
+    dispatch(addItem({ item: productToCartItem(data, 1, "event") }));
   };
 
   return (

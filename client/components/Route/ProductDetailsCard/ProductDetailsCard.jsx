@@ -1,9 +1,12 @@
 "use client";
 import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   AiFillHeart,
@@ -15,10 +18,27 @@ import {
 
 const ProductDetailsCard = ({ setOpen, data }) => {
   const [count, setCount] = useState(1);
-  const [click, setClick] = useState(false);
 
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const outOfStock = (data?.stock ?? 0) <= 0;
+  const isWishlisted = Boolean(data?._id && user?.wishlist?.includes(data._id));
+
+  const handleWishlistToggle = () => {
+    if (!data?._id) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (isWishlisted) {
+      removeFromWishlist(data._id);
+    } else {
+      addToWishlist(data._id);
+    }
+  };
 
   const handleAddToCart = () => {
     if (outOfStock || !data) return;
@@ -137,11 +157,11 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                 </div>
 
                 <div>
-                  {click ? (
+                  {isWishlisted ? (
                     <AiFillHeart
                       size={30}
                       className="cursor-pointer"
-                      onClick={() => setClick(!click)}
+                      onClick={handleWishlistToggle}
                       color="red"
                       title="Remove from wishlist"
                     />
@@ -149,7 +169,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                     <AiOutlineHeart
                       size={30}
                       className="cursor-pointer"
-                      onClick={() => setClick(!click)}
+                      onClick={handleWishlistToggle}
                       color="#333"
                       title="Add to wishlist"
                     />

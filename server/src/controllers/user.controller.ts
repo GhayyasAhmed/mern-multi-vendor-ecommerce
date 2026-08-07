@@ -632,3 +632,70 @@ export const resetPassword = catchAsyncErrors(
         });
     }
 );
+
+// 16. Get Wishlist (populated products)
+export const getWishlist = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const user = await User.findById(req.user._id).populate("wishlist");
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            products: user.wishlist || [],
+        });
+    }
+);
+
+// 17. Add Product to Wishlist
+export const addToWishlist = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const { productId } = req.params;
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return next(new ErrorHandler("Product not found", 404));
+        }
+
+        await User.updateOne(
+            { _id: req.user._id },
+            { $addToSet: { wishlist: productId } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Added to wishlist",
+        });
+    }
+);
+
+// 18. Remove Product from Wishlist
+export const removeFromWishlist = catchAsyncErrors(
+    async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user?._id) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const { productId } = req.params;
+
+        await User.updateOne(
+            { _id: req.user._id },
+            { $pull: { wishlist: productId } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Removed from wishlist",
+        });
+    }
+);
