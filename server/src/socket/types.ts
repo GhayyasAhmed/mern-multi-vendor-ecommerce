@@ -70,3 +70,20 @@ export type AppSocket = SocketIOSocket<
   InterServerEvents,
   SocketData
 >;
+
+export interface NotificationPayload {
+  _id: string;
+  type: string;
+  message: string;
+  link?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ServerToClientEvents {
+  getUsers: (onlineUserIds: string[]) => void;
+  getMessage: (message: SocketMessage) => void;
+  messageSeen: (payload: MessageSeenPayload) => void;
+  getLastMessage: (payload: UpdateLastMessagePayload) => void;
+  notification: (payload: NotificationPayload) => void;
+}

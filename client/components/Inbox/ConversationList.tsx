@@ -10,6 +10,7 @@ interface ConversationListProps {
   activeConversationId: string | null;
   role: "user" | "seller";
   onSelect: (conversationId: string) => void;
+  onlineUserIds: string[];
 }
 
 export default function ConversationList({
@@ -19,17 +20,24 @@ export default function ConversationList({
   activeConversationId,
   role,
   onSelect,
+  onlineUserIds,
 }: ConversationListProps) {
   if (isLoading) {
-    return <p className="p-4 text-sm text-[#00000082]">Loading conversations...</p>;
+    return (
+      <p className="p-4 text-sm text-[#00000082]">Loading conversations...</p>
+    );
   }
 
   if (isError) {
-    return <p className="p-4 text-sm text-red-500">Could not load conversations.</p>;
+    return (
+      <p className="p-4 text-sm text-red-500">Could not load conversations.</p>
+    );
   }
 
   if (conversations.length === 0) {
-    return <p className="p-4 text-sm text-[#00000082]">No conversations yet.</p>;
+    return (
+      <p className="p-4 text-sm text-[#00000082]">No conversations yet.</p>
+    );
   }
 
   return (
@@ -37,6 +45,7 @@ export default function ConversationList({
       {conversations.map((conversation) => {
         const peer = role === "user" ? conversation.seller : conversation.user;
         const isActive = conversation._id === activeConversationId;
+        const isOnline = peer?.id ? onlineUserIds.includes(peer.id) : false;
 
         return (
           <li key={conversation._id}>
@@ -49,12 +58,22 @@ export default function ConversationList({
             >
               <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
                 {peer?.avatar ? (
-                  <Image src={peer.avatar} alt={peer.name || "User"} fill className="object-cover" />
+                  <Image
+                    src={peer.avatar}
+                    alt={peer.name || "User"}
+                    fill
+                    className="object-cover"
+                  />
                 ) : null}
+                {isOnline && (
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium text-sm truncate">{peer?.name || "Unknown"}</p>
+                  <p className="font-medium text-sm truncate">
+                    {peer?.name || "Unknown"}
+                  </p>
                   {conversation.unreadCount > 0 && (
                     <span className="shrink-0 rounded-full bg-[#3bc177] text-white text-[11px] px-1.5 py-0.5 leading-none">
                       {conversation.unreadCount}

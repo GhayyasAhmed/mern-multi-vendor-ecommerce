@@ -21,6 +21,7 @@ import {
   AiOutlineMessage,
   AiOutlineShoppingCart,
 } from "react-icons/ai";
+import ProductReviews from "./ProductReviews";
 
 const ProductDetails = ({ productId }) => {
   const [count, setCount] = useState(1);
@@ -242,6 +243,8 @@ const ProductDetails = ({ productId }) => {
             </button>
           </div>
         </div>
+
+        <ProductReviews product={product} productId={productId} />
 
         {relatedProducts.length > 0 && (
           <div className="mt-16">

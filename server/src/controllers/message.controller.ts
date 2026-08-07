@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import MessageModel, { IMessageImage } from "../models/message.model.js";
 import ConversationModel from "../models/conversation.model.js";
 import { uploadToCloudinary } from "../config/cloudinary.js";
+import { createNotification } from "../utils/notifications.js";
 
 const getIdentityId = (req: Request): string | undefined => {
   if (req.user?._id) return String(req.user._id);
@@ -69,6 +70,18 @@ export const createNewMessage = catchAsyncErrors(
 
     await conversation.save();
 
+    for (const memberId of memberIds) {
+      if (memberId === identityId) continue;
+      const receiverRole = memberId === conversation.userId ? "user" : "seller";
+      createNotification(
+        memberId,
+        receiverRole,
+        "new_message",
+        text?.trim() ? `New message: "${text.trim().slice(0, 60)}"` : "You received a new image message.",
+        `/inbox?conversation=${String(conversation._id)}`
+      ).catch(() => { });
+    }
+
     res.status(201).json({
       success: true,
       message,
@@ -115,7 +128,7 @@ export const getAllMessages = catchAsyncErrors(
     const descPage = await MessageModel.find(filter).sort({ createdAt: -1 }).limit(limit);
     const messages = [...descPage].reverse();
     const hasMore = descPage.length === limit;
-    const nextCursor = messages.length > 0 ? messages[0].createdAt.toISOString() : null;
+    const nextCursor = messages.length > 0 && messages[0]?.createdAt ? messages[0].createdAt.toISOString() : null;
 
     // Only mark-as-seen / clear the unread badge on the initial (most recent) page.
     if (!before) {

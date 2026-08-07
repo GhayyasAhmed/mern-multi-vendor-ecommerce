@@ -16,6 +16,7 @@ export const createCouponCode = catchAsyncErrors(
 
     const isCouponCodeExists = await CouponCodeModel.findOne({
       name: req.body.name,
+      shopId: String(sellerId),
     });
 
     if (isCouponCodeExists) {
@@ -79,16 +80,19 @@ export const deleteCouponCode = catchAsyncErrors(
 // get coupon code by its name (simple public lookup, no discount calculation)
 export const getCouponValueByName = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const couponCode = await CouponCodeModel.findOne({ name: req.params.name });
+    const { shopId } = req.query as { shopId?: string };
+
+    if (!shopId) {
+      return next(new ErrorHandler("shopId is required to look up a coupon", 400));
+    }
+
+    const couponCode = await CouponCodeModel.findOne({ name: req.params.name, shopId });
 
     if (!couponCode) {
       return next(new ErrorHandler("Coupon code doesn't exist!", 404));
     }
 
-    res.status(200).json({
-      success: true,
-      couponCode,
-    });
+    res.status(200).json({ success: true, couponCode });
   }
 );
 

@@ -30,6 +30,10 @@ export const createProduct = catchAsyncErrors(
       return next(new ErrorHandler("Shop not found", 404));
     }
 
+    if (shop.status !== "active") {
+      return next(new ErrorHandler("Your shop must be approved by an admin before you can list products", 403));
+    }
+
     let images: string[] = [];
 
     if (typeof req.body.images === "string") {
@@ -365,46 +369,54 @@ export const getRelatedProducts = catchAsyncErrors(
 // review for a product
 export const createNewReview = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { user, rating, comment, productId, orderId } = req.body;
+    const { rating, comment, productId, orderId } = req.body;
 
     if (!req.user?._id) {
       return next(new ErrorHandler("User authentication required", 401));
     }
 
-    const product = await ProductModel.findById(productId);
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return next(new ErrorHandler("Order not found with this id", 404));
+    }
 
+    const buyerId = (order.user as { _id?: unknown })?._id;
+    if (String(buyerId) !== String(req.user._id)) {
+      return next(new ErrorHandler("You are not authorized to review this order", 403));
+    }
+
+    if (order.status !== "Delivered") {
+      return next(new ErrorHandler("You can only review products from delivered orders", 400));
+    }
+
+    const cartItems = order.cart as Array<{ _id: string }>;
+    const purchasedThisProduct = cartItems.some((item) => String(item._id) === String(productId));
+    if (!purchasedThisProduct) {
+      return next(new ErrorHandler("This product was not part of the specified order", 400));
+    }
+
+    const product = await ProductModel.findById(productId);
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
 
-    const review: IReview = {
-      user,
-      rating,
-      comment,
-      productId,
-    };
-
+    const reviewer = { _id: req.user._id, name: req.user.name, avatar: req.user.avatar };
+    const review: IReview = { user: reviewer, rating, comment, productId };
     const reviewsList = product.reviews || [];
 
-    const isReviewed = reviewsList.find((rev: IReview) => {
-      const revUserId =
-        typeof rev.user === "object" && rev.user !== null && "_id" in rev.user
-          ? String((rev.user as { _id: unknown })._id)
-          : String(rev.user);
-      return revUserId === String(req.user?._id);
-    });
+    const getRevUserId = (rev: IReview) =>
+      typeof rev.user === "object" && rev.user !== null && "_id" in rev.user
+        ? String((rev.user as { _id: unknown })._id)
+        : String(rev.user);
+
+    const isReviewed = reviewsList.find((rev: IReview) => getRevUserId(rev) === String(req.user?._id));
 
     if (isReviewed) {
       reviewsList.forEach((rev: IReview) => {
-        const revUserId =
-          typeof rev.user === "object" && rev.user !== null && "_id" in rev.user
-            ? String((rev.user as { _id: unknown })._id)
-            : String(rev.user);
-
-        if (revUserId === String(req.user?._id)) {
+        if (getRevUserId(rev) === String(req.user?._id)) {
           rev.rating = rating;
           rev.comment = comment;
-          rev.user = user;
+          rev.user = reviewer;
         }
       });
     } else {
@@ -412,12 +424,8 @@ export const createNewReview = catchAsyncErrors(
     }
 
     product.reviews = reviewsList;
-
     let avg = 0;
-    product.reviews.forEach((rev: IReview) => {
-      avg += rev.rating;
-    });
-
+    product.reviews.forEach((rev: IReview) => { avg += rev.rating; });
     product.ratings = product.reviews.length > 0 ? avg / product.reviews.length : 0;
 
     await product.save({ validateBeforeSave: false });
@@ -428,9 +436,37 @@ export const createNewReview = catchAsyncErrors(
       { arrayFilters: [{ "elem._id": productId }], new: true }
     );
 
+    res.status(200).json({ success: true, message: "Reviewed successfully!" });
+  }
+);
+
+// add new export
+export const getReviewEligibility = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user?._id) {
+      return next(new ErrorHandler("Please login to check review eligibility", 401));
+    }
+
+    const productId = req.params.id;
+
+    const deliveredOrder = await OrderModel.findOne({
+      "user._id": req.user._id,
+      status: "Delivered",
+      "cart._id": productId,
+    }).sort({ deliveredAt: -1 });
+
+    const product = await ProductModel.findById(productId).select("reviews");
+    const getRevUserId = (rev: IReview) =>
+      typeof rev.user === "object" && rev.user !== null && "_id" in rev.user
+        ? String((rev.user as { _id: unknown })._id)
+        : String(rev.user);
+    const existingReview = product?.reviews?.find((rev: IReview) => getRevUserId(rev) === String(req.user?._id));
+
     res.status(200).json({
       success: true,
-      message: "Reviewed successfully!",
+      canReview: Boolean(deliveredOrder),
+      orderId: deliveredOrder ? String(deliveredOrder._id) : null,
+      existingReview: existingReview ? { rating: existingReview.rating, comment: existingReview.comment } : null,
     });
   }
 );

@@ -24,7 +24,10 @@ import Link from "next/link";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
-import { useUpdateSellerInfoMutation, useUpdateShopAvatarMutation } from "../shopApiSlice";
+import {
+  useUpdateSellerInfoMutation,
+  useUpdateShopAvatarMutation,
+} from "../shopApiSlice";
 import {
   eventFormSchema,
   productFormSchema,
@@ -36,12 +39,32 @@ import InboxPanel from "@/components/Inbox/InboxPanel";
 import { PRODUCT_CATEGORIES } from "@/constants";
 import { useUpdateProductMutation } from "@/features/products/productApiSlice";
 import { useUpdateEventMutation } from "@/features/events/eventApiSlice";
-import type { IProduct } from "@/types";
+import type { IProduct, IShop } from "@/types";
 import type { IEvent } from "@/features/events/eventApiSlice";
-import { useGetMyWithdrawRequestsQuery, useCreateWithdrawRequestMutation } from "@/features/withdraw/withdrawApiSlice";
+import {
+  useGetMyWithdrawRequestsQuery,
+  useCreateWithdrawRequestMutation,
+} from "@/features/withdraw/withdrawApiSlice";
+import {
+  useUpdatePaymentMethodsMutation,
+  useDeleteWithdrawMethodMutation,
+  WithdrawMethodInput,
+} from "@/features/shop/shopApiSlice";
+import {
+  useGetShopCouponsQuery,
+  useCreateCouponCodeMutation,
+  useDeleteCouponCodeMutation,
+} from "@/features/coupons/couponApiSlice";
+import NotificationBell from "@/components/Layout/NotificationBell";
 
-type Tab = "profile" | "products" | "events" | "orders" | "payouts" | "messages";
-
+type Tab =
+  | "profile"
+  | "products"
+  | "events"
+  | "orders"
+  | "payouts"
+  | "coupons"
+  | "messages";
 
 const ORDER_STATUSES = [
   "Processing",
@@ -49,7 +72,7 @@ const ORDER_STATUSES = [
   "Shipped",
   "On the way",
   "Delivered",
-]
+];
 
 export default function SellerDashboard() {
   const { seller } = useCurrentSeller();
@@ -63,33 +86,65 @@ export default function SellerDashboard() {
         <div className="w-11/12 mx-auto py-6 flex flex-col md:flex-row items-center md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="relative w-15 h-15 rounded-full overflow-hidden border-2 border-white shrink-0">
-              <Image src={seller.avatar?.url || "/placeholder.png"} alt={seller.name} fill className="object-cover" />
+              <Image
+                src={seller.avatar?.url || "/placeholder.png"}
+                alt={seller.name}
+                fill
+                className="object-cover"
+              />
             </div>
             <div>
               <h1 className="text-xl font-semibold">{seller.name}</h1>
-              <Link href={`/shop/preview/${seller._id}`} className="text-sm text-white/80 hover:underline">
+              <Link
+                href={`/shop/preview/${seller._id}`}
+                className="text-sm text-white/80 hover:underline"
+              >
                 View public shop page
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <p className="text-sm">
-              Balance: <span className="font-semibold">${(seller.availableBalance || 0).toFixed(2)}</span>
+              Balance:{" "}
+              <span className="font-semibold">
+                ${(seller.availableBalance || 0).toFixed(2)}
+              </span>
             </p>
+            <NotificationBell enabled={true} iconColor="#ffffff" />
             <ShopLogoutButton className="text-sm font-medium text-white hover:text-red-200" />
           </div>
         </div>
       </div>
 
+      {seller.status !== "active" && (
+        <div className="w-11/12 mx-auto mt-4 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3">
+          {seller.status === "pending"
+            ? "Your shop is awaiting admin approval. You can't create products or events until it's approved."
+            : "Your shop has been suspended. Listing management is disabled."}
+        </div>
+      )}
+
       <div className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b mb-6">
-          {(["profile", "products", "events", "orders", "payouts", "messages"] as Tab[]).map((t) => (
+          {(
+            [
+              "profile",
+              "products",
+              "events",
+              "orders",
+              "payouts",
+              "coupons",
+              "messages",
+            ] as Tab[]
+          ).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
               className={`pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
-                tab === t ? "border-b-2 border-[#3957db] text-[#3957db]" : "text-gray-500"
+                tab === t
+                  ? "border-b-2 border-[#3957db] text-[#3957db]"
+                  : "text-gray-500"
               }`}
             >
               {t}
@@ -98,11 +153,14 @@ export default function SellerDashboard() {
         </div>
 
         {tab === "profile" && <ProfilePanel />}
-        {tab === "products" && <ProductsPanel shopId={seller._id} />}
-        {tab === "events" && <EventsPanel shopId={seller._id} />}
+        {tab === "products" && <ProductsPanel seller={seller} shopId={seller._id} />}
+        {tab === "events" && <EventsPanel seller={seller} shopId={seller._id} />}
         {tab === "orders" && <OrdersPanel shopId={seller._id} />}
-        {tab === "payouts" && <PayoutsPanel availableBalance={seller.availableBalance} />}
+        {tab === "payouts" && (
+          <PayoutsPanel availableBalance={seller.availableBalance} />
+        )}
         {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
+        {tab === "coupons" && <CouponsPanel />}
       </div>
     </div>
   );
@@ -110,9 +168,15 @@ export default function SellerDashboard() {
 
 function OrdersPanel({ shopId }: { shopId: string }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useGetSellerOrdersQuery({ id: shopId, page, limit: 10 });
-  const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
-  const [approveRefund, { isLoading: isRefunding }] = useOrderRefundSuccessMutation();
+  const { data, isLoading, isError, error } = useGetSellerOrdersQuery({
+    id: shopId,
+    page,
+    limit: 10,
+  });
+  const [updateOrderStatus, { isLoading: isUpdating }] =
+    useUpdateOrderStatusMutation();
+  const [approveRefund, { isLoading: isRefunding }] =
+    useOrderRefundSuccessMutation();
   const [actionError, setActionError] = useState<string | null>(null);
 
   const orders = data?.orders ?? [];
@@ -139,23 +203,32 @@ function OrdersPanel({ shopId }: { shopId: string }) {
   return (
     <div>
       <h2 className="text-lg font-semibold text-[#333] mb-4">Orders</h2>
-      {actionError && <p className="text-sm text-red-600 mb-3">{actionError}</p>}
+      {actionError && (
+        <p className="text-sm text-red-600 mb-3">{actionError}</p>
+      )}
 
       {isLoading ? (
         <p className="text-[15px] text-[#00000082] py-8">Loading orders...</p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">{getErrorMessage(error, "Could not load orders.")}</p>
+        <p className="text-[15px] text-red-500 py-8">
+          {getErrorMessage(error, "Could not load orders.")}
+        </p>
       ) : orders.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">No orders for your shop yet.</p>
+        <p className="text-[15px] text-[#00000082] py-8">
+          No orders for your shop yet.
+        </p>
       ) : (
         <div className="space-y-3">
           {orders.map((order) => (
             <div key={order._id} className="bg-white rounded-lg shadow-sm p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Order #{order._id.slice(-8).toUpperCase()}</p>
+                  <p className="text-sm font-medium">
+                    Order #{order._id.slice(-8).toUpperCase()}
+                  </p>
                   <p className="text-xs text-[#00000082]">
-                    Placed {new Date(order.createdAt).toLocaleString()} &middot; {order.cart.length} item(s)
+                    Placed {new Date(order.createdAt).toLocaleString()} &middot;{" "}
+                    {order.cart.length} item(s)
                   </p>
                 </div>
                 <p className="font-semibold">${order.totalPrice.toFixed(2)}</p>
@@ -164,7 +237,9 @@ function OrdersPanel({ shopId }: { shopId: string }) {
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {order.status === "Processing Refund" ? (
                   <>
-                    <span className="text-sm text-amber-600 font-medium">Refund requested</span>
+                    <span className="text-sm text-amber-600 font-medium">
+                      Refund requested
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleApproveRefund(order._id)}
@@ -179,7 +254,9 @@ function OrdersPanel({ shopId }: { shopId: string }) {
                 ) : (
                   <select
                     value={order.status}
-                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    onChange={(e) =>
+                      handleStatusChange(order._id, e.target.value)
+                    }
                     disabled={isUpdating || order.status === "Delivered"}
                     className="border border-gray-300 rounded-md px-2 py-1.5 text-sm disabled:opacity-60"
                   >
@@ -197,7 +274,11 @@ function OrdersPanel({ shopId }: { shopId: string }) {
       )}
 
       {pagination && (
-        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={setPage} />
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );
@@ -213,9 +294,14 @@ const WITHDRAW_STATUS_STYLES: Record<string, string> = {
 };
 
 function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
+  const { seller } = useCurrentSeller();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useGetMyWithdrawRequestsQuery({ page, limit: 10 });
-  const [createWithdrawRequest, { isLoading: isRequesting }] = useCreateWithdrawRequestMutation();
+  const { data, isLoading, isError, error } = useGetMyWithdrawRequestsQuery({
+    page,
+    limit: 10,
+  });
+  const [createWithdrawRequest, { isLoading: isRequesting }] =
+    useCreateWithdrawRequestMutation();
   const [amount, setAmount] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -243,18 +329,32 @@ function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
       setSuccessMessage("Withdrawal request submitted.");
       setAmount("");
     } catch (err) {
-      setFormError(getErrorMessage(err, "Could not submit withdrawal request."));
+      setFormError(
+        getErrorMessage(err, "Could not submit withdrawal request."),
+      );
     }
   };
 
   return (
     <div className="max-w-2xl space-y-6">
+      {seller?.withdrawMethod && (
+        <BankDetailsForm withdrawMethod={seller.withdrawMethod} />
+      )}
+      {!seller?.withdrawMethod && (
+        <BankDetailsForm withdrawMethod={undefined} />
+      )}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-[#333] mb-1">Request a payout</h2>
+        <h2 className="text-lg font-semibold text-[#333] mb-1">
+          Request a payout
+        </h2>
         <p className="text-sm text-[#00000082] mb-4">
-          Available balance: <span className="font-semibold">${availableBalance.toFixed(2)}</span>
+          Available balance:{" "}
+          <span className="font-semibold">${availableBalance.toFixed(2)}</span>
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col sm:flex-row gap-3"
+        >
           <input
             type="number"
             min="0.01"
@@ -269,34 +369,51 @@ function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
             disabled={isRequesting}
             className={`${styles.submit_button} sm:w-auto disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">{isRequesting ? "Requesting..." : "Request withdrawal"}</span>
+            <span className="text-white font-[Poppins]">
+              {isRequesting ? "Requesting..." : "Request withdrawal"}
+            </span>
           </button>
         </form>
         {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
-        {successMessage && <p className="mt-2 text-sm text-green-700">{successMessage}</p>}
+        {successMessage && (
+          <p className="mt-2 text-sm text-green-700">{successMessage}</p>
+        )}
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-[#333] mb-4">Withdrawal history</h2>
+        <h2 className="text-lg font-semibold text-[#333] mb-4">
+          Withdrawal history
+        </h2>
         {isLoading ? (
-          <p className="text-[15px] text-[#00000082] py-4">Loading withdrawal requests...</p>
+          <p className="text-[15px] text-[#00000082] py-4">
+            Loading withdrawal requests...
+          </p>
         ) : isError ? (
-          <p className="text-[15px] text-red-500 py-4">{getErrorMessage(error, "Could not load withdrawal requests.")}</p>
+          <p className="text-[15px] text-red-500 py-4">
+            {getErrorMessage(error, "Could not load withdrawal requests.")}
+          </p>
         ) : withdraws.length === 0 ? (
-          <p className="text-[15px] text-[#00000082] py-4">You haven&apos;t requested any withdrawals yet.</p>
+          <p className="text-[15px] text-[#00000082] py-4">
+            You haven&apos;t requested any withdrawals yet.
+          </p>
         ) : (
           <div className="space-y-3">
             {withdraws.map((withdraw) => (
-              <div key={withdraw._id} className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+              <div
+                key={withdraw._id}
+                className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+              >
                 <div>
                   <p className="font-medium">${withdraw.amount.toFixed(2)}</p>
                   <p className="text-xs text-[#00000082]">
-                    Requested {new Date(withdraw.createdAt).toLocaleDateString()}
+                    Requested{" "}
+                    {new Date(withdraw.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                    WITHDRAW_STATUS_STYLES[withdraw.status] || "bg-gray-100 text-gray-700"
+                    WITHDRAW_STATUS_STYLES[withdraw.status] ||
+                    "bg-gray-100 text-gray-700"
                   }`}
                 >
                   {withdraw.status}
@@ -307,17 +424,173 @@ function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
         )}
       </div>
       {pagination && (
-        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={setPage} />
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );
 }
 
+function BankDetailsForm({
+  withdrawMethod,
+}: {
+  withdrawMethod?: WithdrawMethodInput;
+}) {
+  const [updatePaymentMethods, { isLoading: isSaving }] =
+    useUpdatePaymentMethodsMutation();
+  const [deleteWithdrawMethod, { isLoading: isDeleting }] =
+    useDeleteWithdrawMethodMutation();
+  const [editing, setEditing] = useState(!withdrawMethod);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    withdrawMethodName: "",
+    bankName: "",
+    bankCountry: "",
+    bankSwiftCode: "",
+    bankAccountNumber: "",
+    bankHolderName: "",
+    bankAddress: "",
+  });
+
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setSuccessMessage(null);
+    try {
+      await updatePaymentMethods({ withdrawMethod: form }).unwrap();
+      setSuccessMessage("Bank details saved.");
+      setEditing(false);
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not save bank details."));
+    }
+  };
+
+  const handleRemove = async () => {
+    try {
+      await deleteWithdrawMethod().unwrap();
+      setEditing(true);
+    } catch {
+      // best-effort
+    }
+  };
+
+  if (!editing && withdrawMethod) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-[#333] mb-2">
+          Payout bank account
+        </h2>
+        <p className="text-sm text-[#00000082]">
+          {withdrawMethod.bankHolderName} &middot; {withdrawMethod.bankName}
+        </p>
+        <p className="text-sm text-[#00000082]">
+          Account: {withdrawMethod.bankAccountNumber}
+        </p>
+        <div className="flex gap-4 mt-3">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-sm text-[#3957db] hover:underline cursor-pointer"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={handleRemove}
+            className="text-sm text-red-600 hover:underline cursor-pointer disabled:opacity-60"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-lg shadow-sm p-6 space-y-3"
+    >
+      <h2 className="text-lg font-semibold text-[#333]">Payout bank account</h2>
+      <input
+        required
+        placeholder="Withdraw method name"
+        className={`${styles.input}`}
+        value={form.withdrawMethodName}
+        onChange={handleChange("withdrawMethodName")}
+      />
+      <input
+        required
+        placeholder="Bank name"
+        className={`${styles.input}`}
+        value={form.bankName}
+        onChange={handleChange("bankName")}
+      />
+      <input
+        required
+        placeholder="Bank country"
+        className={`${styles.input}`}
+        value={form.bankCountry}
+        onChange={handleChange("bankCountry")}
+      />
+      <input
+        placeholder="SWIFT code (optional)"
+        className={`${styles.input}`}
+        value={form.bankSwiftCode}
+        onChange={handleChange("bankSwiftCode")}
+      />
+      <input
+        required
+        placeholder="Account number"
+        className={`${styles.input}`}
+        value={form.bankAccountNumber}
+        onChange={handleChange("bankAccountNumber")}
+      />
+      <input
+        required
+        placeholder="Account holder name"
+        className={`${styles.input}`}
+        value={form.bankHolderName}
+        onChange={handleChange("bankHolderName")}
+      />
+      <input
+        placeholder="Bank address (optional)"
+        className={`${styles.input}`}
+        value={form.bankAddress}
+        onChange={handleChange("bankAddress")}
+      />
+      {formError && <p className="text-sm text-red-600">{formError}</p>}
+      {successMessage && (
+        <p className="text-sm text-green-700">{successMessage}</p>
+      )}
+      <button
+        type="submit"
+        disabled={isSaving}
+        className={`${styles.submit_button} disabled:opacity-60`}
+      >
+        <span className="text-white font-[Poppins]">
+          {isSaving ? "Saving..." : "Save bank details"}
+        </span>
+      </button>
+    </form>
+  );
+}
 
 function ProfilePanel() {
   const { seller } = useCurrentSeller();
-  const [updateSellerInfo, { isLoading: isSavingInfo }] = useUpdateSellerInfoMutation();
-  const [updateShopAvatar, { isLoading: isSavingAvatar }] = useUpdateShopAvatarMutation();
+  const [updateSellerInfo, { isLoading: isSavingInfo }] =
+    useUpdateSellerInfoMutation();
+  const [updateShopAvatar, { isLoading: isSavingAvatar }] =
+    useUpdateShopAvatarMutation();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -346,7 +619,9 @@ function ProfilePanel() {
         name: values.name,
         description: values.description,
         address: values.address,
-        phoneNumber: values.phoneNumber ? Number(values.phoneNumber) : undefined,
+        phoneNumber: values.phoneNumber
+          ? Number(values.phoneNumber)
+          : undefined,
         zipCode: values.zipCode ? Number(values.zipCode) : undefined,
       }).unwrap();
       setSuccessMessage("Shop information updated successfully.");
@@ -363,7 +638,12 @@ function ProfilePanel() {
       const base64 = await readFileAsBase64(file);
       await updateShopAvatar({ avatar: base64 }).unwrap();
     } catch (err) {
-      setAvatarError(getErrorMessage(err, "Could not update avatar. Please try a different image."));
+      setAvatarError(
+        getErrorMessage(
+          err,
+          "Could not update avatar. Please try a different image.",
+        ),
+      );
     } finally {
       e.target.value = "";
     }
@@ -374,54 +654,105 @@ function ProfilePanel() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Shop logo</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Shop logo
+        </label>
         <div className="flex items-center gap-4">
           <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-            <Image src={seller.avatar?.url || "/placeholder.png"} alt={seller.name} fill className="object-cover" />
+            <Image
+              src={seller.avatar?.url || "/placeholder.png"}
+              alt={seller.name}
+              fill
+              className="object-cover"
+            />
           </div>
-          <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={isSavingAvatar} className="text-sm" />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            disabled={isSavingAvatar}
+            className="text-sm"
+          />
         </div>
-        {avatarError && <p className="mt-1 text-sm text-red-600">{avatarError}</p>}
+        {avatarError && (
+          <p className="mt-1 text-sm text-red-600">{avatarError}</p>
+        )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6" noValidate>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 bg-white rounded-lg shadow-sm p-6"
+        noValidate
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700">Shop name</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Shop name
+          </label>
           <input className={`${styles.input} mt-1`} {...register("name")} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea rows={3} className={`${styles.input} mt-1`} {...register("description")} />
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            rows={3}
+            className={`${styles.input} mt-1`}
+            {...register("description")}
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Address</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Address
+          </label>
           <input className={`${styles.input} mt-1`} {...register("address")} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phone number</label>
-            <input className={`${styles.input} mt-1`} {...register("phoneNumber")} />
+            <label className="block text-sm font-medium text-gray-700">
+              Phone number
+            </label>
+            <input
+              className={`${styles.input} mt-1`}
+              {...register("phoneNumber")}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Zip code</label>
-            <input className={`${styles.input} mt-1`} {...register("zipCode")} />
+            <label className="block text-sm font-medium text-gray-700">
+              Zip code
+            </label>
+            <input
+              className={`${styles.input} mt-1`}
+              {...register("zipCode")}
+            />
           </div>
         </div>
 
         {formError && <p className="text-sm text-red-600">{formError}</p>}
-        {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
+        {successMessage && (
+          <p className="text-sm text-green-700">{successMessage}</p>
+        )}
 
-        <button type="submit" disabled={isSavingInfo} className={`${styles.submit_button} disabled:opacity-60`}>
-          <span className="text-white font-[Poppins]">{isSavingInfo ? "Saving..." : "Save changes"}</span>
+        <button
+          type="submit"
+          disabled={isSavingInfo}
+          className={`${styles.submit_button} disabled:opacity-60`}
+        >
+          <span className="text-white font-[Poppins]">
+            {isSavingInfo ? "Saving..." : "Save changes"}
+          </span>
         </button>
       </form>
     </div>
   );
 }
 
-function ProductsPanel({ shopId }: { shopId: string }) {
+function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useGetShopProductsQuery({ shopId, page, limit: 12 });
+  const { data, isLoading, isError, error } = useGetShopProductsQuery({
+    shopId,
+    page,
+    limit: 12,
+  });
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
@@ -441,7 +772,9 @@ function ProductsPanel({ shopId }: { shopId: string }) {
     const files = Array.from(e.target.files || []);
     setFormError(null);
     try {
-      const encoded = await Promise.all(files.map((file) => readFileAsBase64(file)));
+      const encoded = await Promise.all(
+        files.map((file) => readFileAsBase64(file)),
+      );
       setImages(encoded);
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not read one or more images."));
@@ -450,7 +783,14 @@ function ProductsPanel({ shopId }: { shopId: string }) {
 
   const openCreateForm = () => {
     setEditingProduct(null);
-    reset({ name: "", description: "", tags: "", originalPrice: "", discountPrice: "", stock: "" } as ProductFormValues);
+    reset({
+      name: "",
+      description: "",
+      tags: "",
+      originalPrice: "",
+      discountPrice: "",
+      stock: "",
+    } as ProductFormValues);
     setImages([]);
     setFormError(null);
     setShowForm(true);
@@ -487,7 +827,9 @@ function ProductsPanel({ shopId }: { shopId: string }) {
           description: values.description,
           category: values.category,
           tags: values.tags || undefined,
-          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          originalPrice: values.originalPrice
+            ? Number(values.originalPrice)
+            : undefined,
           discountPrice: Number(values.discountPrice),
           stock: Number(values.stock),
           ...(images.length > 0 ? { images } : {}),
@@ -498,7 +840,9 @@ function ProductsPanel({ shopId }: { shopId: string }) {
           description: values.description,
           category: values.category,
           tags: values.tags || undefined,
-          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          originalPrice: values.originalPrice
+            ? Number(values.originalPrice)
+            : undefined,
           discountPrice: Number(values.discountPrice),
           stock: Number(values.stock),
           images,
@@ -510,7 +854,14 @@ function ProductsPanel({ shopId }: { shopId: string }) {
       setEditingProduct(null);
       setShowForm(false);
     } catch (err) {
-      setFormError(getErrorMessage(err, editingProduct ? "Could not update product." : "Could not create product."));
+      setFormError(
+        getErrorMessage(
+          err,
+          editingProduct
+            ? "Could not update product."
+            : "Could not create product.",
+        ),
+      );
     }
   };
 
@@ -530,32 +881,59 @@ function ProductsPanel({ shopId }: { shopId: string }) {
         <h2 className="text-lg font-semibold text-[#333]">Your products</h2>
         <button
           type="button"
+          disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
+          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add product"}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6"
+          noValidate
+        >
           {editingProduct && (
-            <p className="text-sm text-[#3957db] font-medium">Editing &quot;{editingProduct.name}&quot;</p>
+            <p className="text-sm text-[#3957db] font-medium">
+              Editing &quot;{editingProduct.name}&quot;
+            </p>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea rows={3} className={`${styles.input} mt-1`} {...register("description")} />
-            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
+            <label className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              className={`${styles.input} mt-1`}
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.description.message}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <select className={`${styles.input} mt-1`} defaultValue="" {...register("category")}>
+              <label className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <select
+                className={`${styles.input} mt-1`}
+                defaultValue=""
+                {...register("category")}
+              >
                 <option value="" disabled>
                   Select a category
                 </option>
@@ -565,42 +943,83 @@ function ProductsPanel({ shopId }: { shopId: string }) {
                   </option>
                 ))}
               </select>
-              {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
+              {errors.category && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.category.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Tags (optional)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Tags (optional)
+              </label>
               <input className={`${styles.input} mt-1`} {...register("tags")} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Original price</label>
-              <input className={`${styles.input} mt-1`} {...register("originalPrice")} />
+              <label className="block text-sm font-medium text-gray-700">
+                Original price
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("originalPrice")}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Discount price</label>
-              <input className={`${styles.input} mt-1`} {...register("discountPrice")} />
-              {errors.discountPrice && <p className="mt-1 text-sm text-red-600">{errors.discountPrice.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                Discount price
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("discountPrice")}
+              />
+              {errors.discountPrice && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.discountPrice.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Stock</label>
-              <input className={`${styles.input} mt-1`} {...register("stock")} />
-              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                Stock
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("stock")}
+              />
+              {errors.stock && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.stock.message}
+                </p>
+              )}
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Images{" "}
               {editingProduct && (
-                <span className="font-normal text-gray-400">(leave empty to keep current images)</span>
+                <span className="font-normal text-gray-400">
+                  (leave empty to keep current images)
+                </span>
               )}
             </label>
-            <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="mt-1 text-sm" />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImagesChange}
+              className="mt-1 text-sm"
+            />
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-          <button type="submit" disabled={isCreating || isUpdating} className={`${styles.submit_button} disabled:opacity-60`}>
+          <button
+            type="submit"
+            disabled={isCreating || isUpdating}
+            className={`${styles.submit_button} disabled:opacity-60`}
+          >
             <span className="text-white font-[Poppins]">
               {editingProduct
                 ? isUpdating
@@ -617,13 +1036,20 @@ function ProductsPanel({ shopId }: { shopId: string }) {
       {isLoading ? (
         <p className="text-[15px] text-[#00000082] py-8">Loading products...</p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">{getErrorMessage(error, "Could not load products.")}</p>
+        <p className="text-[15px] text-red-500 py-8">
+          {getErrorMessage(error, "Could not load products.")}
+        </p>
       ) : products.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">You haven&apos;t added any products yet.</p>
+        <p className="text-[15px] text-[#00000082] py-8">
+          You haven&apos;t added any products yet.
+        </p>
       ) : (
         <div className="space-y-3">
           {products.map((product) => (
-            <div key={product._id} className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+            <div
+              key={product._id}
+              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+            >
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 shrink-0">
                   <Image
@@ -671,9 +1097,13 @@ function ProductsPanel({ shopId }: { shopId: string }) {
   );
 }
 
-function EventsPanel({ shopId }: { shopId: string }) {
+function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useGetShopEventsQuery({ shopId, page, limit: 12 });
+  const { data, isLoading, isError, error } = useGetShopEventsQuery({
+    shopId,
+    page,
+    limit: 12,
+  });
 
   const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
@@ -694,7 +1124,9 @@ function EventsPanel({ shopId }: { shopId: string }) {
     const files = Array.from(e.target.files || []);
     setFormError(null);
     try {
-      const encoded = await Promise.all(files.map((file) => readFileAsBase64(file)));
+      const encoded = await Promise.all(
+        files.map((file) => readFileAsBase64(file)),
+      );
       setImages(encoded);
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not read one or more images."));
@@ -751,7 +1183,9 @@ function EventsPanel({ shopId }: { shopId: string }) {
           description: values.description,
           category: values.category,
           tags: values.tags || undefined,
-          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          originalPrice: values.originalPrice
+            ? Number(values.originalPrice)
+            : undefined,
           discountPrice: Number(values.discountPrice),
           stock: Number(values.stock),
           start_Date: values.start_Date,
@@ -764,7 +1198,9 @@ function EventsPanel({ shopId }: { shopId: string }) {
           description: values.description,
           category: values.category,
           tags: values.tags || undefined,
-          originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+          originalPrice: values.originalPrice
+            ? Number(values.originalPrice)
+            : undefined,
           discountPrice: Number(values.discountPrice),
           stock: Number(values.stock),
           start_Date: values.start_Date,
@@ -778,7 +1214,12 @@ function EventsPanel({ shopId }: { shopId: string }) {
       setEditingEvent(null);
       setShowForm(false);
     } catch (err) {
-      setFormError(getErrorMessage(err, editingEvent ? "Could not update event." : "Could not create event."));
+      setFormError(
+        getErrorMessage(
+          err,
+          editingEvent ? "Could not update event." : "Could not create event.",
+        ),
+      );
     }
   };
 
@@ -798,6 +1239,7 @@ function EventsPanel({ shopId }: { shopId: string }) {
         <h2 className="text-lg font-semibold text-[#333]">Your events</h2>
         <button
           type="button"
+          disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
           className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
         >
@@ -806,24 +1248,50 @@ function EventsPanel({ shopId }: { shopId: string }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6"
+          noValidate
+        >
           {editingEvent && (
-            <p className="text-sm text-[#3957db] font-medium">Editing &quot;{editingEvent.name}&quot;</p>
+            <p className="text-sm text-[#3957db] font-medium">
+              Editing &quot;{editingEvent.name}&quot;
+            </p>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea rows={3} className={`${styles.input} mt-1`} {...register("description")} />
-            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
+            <label className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              className={`${styles.input} mt-1`}
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.description.message}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <select className={`${styles.input} mt-1`} defaultValue="" {...register("category")}>
+              <label className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <select
+                className={`${styles.input} mt-1`}
+                defaultValue=""
+                {...register("category")}
+              >
                 <option value="" disabled>
                   Select a category
                 </option>
@@ -833,54 +1301,115 @@ function EventsPanel({ shopId }: { shopId: string }) {
                   </option>
                 ))}
               </select>
-              {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
+              {errors.category && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.category.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Tags (optional)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Tags (optional)
+              </label>
               <input className={`${styles.input} mt-1`} {...register("tags")} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Start date</label>
-              <input type="date" className={`${styles.input} mt-1`} {...register("start_Date")} />
-              {errors.start_Date && <p className="mt-1 text-sm text-red-600">{errors.start_Date.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                Start date
+              </label>
+              <input
+                type="date"
+                className={`${styles.input} mt-1`}
+                {...register("start_Date")}
+              />
+              {errors.start_Date && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.start_Date.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">End date</label>
-              <input type="date" className={`${styles.input} mt-1`} {...register("Finish_Date")} />
-              {errors.Finish_Date && <p className="mt-1 text-sm text-red-600">{errors.Finish_Date.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                End date
+              </label>
+              <input
+                type="date"
+                className={`${styles.input} mt-1`}
+                {...register("Finish_Date")}
+              />
+              {errors.Finish_Date && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.Finish_Date.message}
+                </p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Original price</label>
-              <input className={`${styles.input} mt-1`} {...register("originalPrice")} />
+              <label className="block text-sm font-medium text-gray-700">
+                Original price
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("originalPrice")}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Discount price</label>
-              <input className={`${styles.input} mt-1`} {...register("discountPrice")} />
-              {errors.discountPrice && <p className="mt-1 text-sm text-red-600">{errors.discountPrice.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                Discount price
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("discountPrice")}
+              />
+              {errors.discountPrice && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.discountPrice.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Stock</label>
-              <input className={`${styles.input} mt-1`} {...register("stock")} />
-              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">
+                Stock
+              </label>
+              <input
+                className={`${styles.input} mt-1`}
+                {...register("stock")}
+              />
+              {errors.stock && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.stock.message}
+                </p>
+              )}
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Images{" "}
               {editingEvent && (
-                <span className="font-normal text-gray-400">(leave empty to keep current images)</span>
+                <span className="font-normal text-gray-400">
+                  (leave empty to keep current images)
+                </span>
               )}
             </label>
-            <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="mt-1 text-sm" />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImagesChange}
+              className="mt-1 text-sm"
+            />
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-          <button type="submit" disabled={isCreating || isUpdating} className={`${styles.submit_button} disabled:opacity-60`}>
+          <button
+            type="submit"
+            disabled={isCreating || isUpdating}
+            className={`${styles.submit_button} disabled:opacity-60`}
+          >
             <span className="text-white font-[Poppins]">
               {editingEvent
                 ? isUpdating
@@ -897,13 +1426,20 @@ function EventsPanel({ shopId }: { shopId: string }) {
       {isLoading ? (
         <p className="text-[15px] text-[#00000082] py-8">Loading events...</p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">{getErrorMessage(error, "Could not load events.")}</p>
+        <p className="text-[15px] text-red-500 py-8">
+          {getErrorMessage(error, "Could not load events.")}
+        </p>
       ) : events.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">You haven&apos;t created any events yet.</p>
+        <p className="text-[15px] text-[#00000082] py-8">
+          You haven&apos;t created any events yet.
+        </p>
       ) : (
         <div className="space-y-3">
           {events.map((event) => (
-            <div key={event._id} className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+            <div
+              key={event._id}
+              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+            >
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 shrink-0">
                   <Image
@@ -916,7 +1452,12 @@ function EventsPanel({ shopId }: { shopId: string }) {
                 <div>
                   <p className="font-medium">{event.name}</p>
                   <p className="text-sm text-[#00000082]">
-                    ${event.discountPrice} &middot; {event.isActive ? "Active" : event.isUpcoming ? "Upcoming" : "Expired"}
+                    ${event.discountPrice} &middot;{" "}
+                    {event.isActive
+                      ? "Active"
+                      : event.isUpcoming
+                        ? "Upcoming"
+                        : "Expired"}
                   </p>
                 </div>
               </div>
@@ -946,6 +1487,139 @@ function EventsPanel({ shopId }: { shopId: string }) {
           totalPages={data.pagination.totalPages}
           onPageChange={setPage}
         />
+      )}
+    </div>
+  );
+}
+
+function CouponsPanel() {
+  const { data, isLoading, isError } = useGetShopCouponsQuery();
+  const [createCouponCode, { isLoading: isCreating }] =
+    useCreateCouponCodeMutation();
+  const [deleteCouponCode] = useDeleteCouponCodeMutation();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    value: "",
+    minAmount: "",
+    maxAmount: "",
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const coupons = data?.couponCodes ?? [];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    try {
+      await createCouponCode({
+        name: form.name,
+        value: Number(form.value),
+        minAmount: form.minAmount ? Number(form.minAmount) : undefined,
+        maxAmount: form.maxAmount ? Number(form.maxAmount) : undefined,
+      }).unwrap();
+      setForm({ name: "", value: "", minAmount: "", maxAmount: "" });
+      setShowForm(false);
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not create coupon."));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCouponCode(id).unwrap();
+    } catch {
+      // list stays as-is
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-[#333]">Coupons</h2>
+        <button
+          type="button"
+          onClick={() => setShowForm((v) => !v)}
+          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
+        >
+          {showForm ? "Cancel" : "Add coupon"}
+        </button>
+      </div>
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3 bg-white rounded-lg shadow-sm p-6 mb-6"
+        >
+          <input
+            required
+            placeholder="Coupon code (e.g. SAVE10)"
+            className={`${styles.input}`}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <input
+            required
+            placeholder="Discount % (1-100)"
+            className={`${styles.input}`}
+            value={form.value}
+            onChange={(e) => setForm({ ...form, value: e.target.value })}
+          />
+          <input
+            placeholder="Minimum order amount (optional)"
+            className={`${styles.input}`}
+            value={form.minAmount}
+            onChange={(e) => setForm({ ...form, minAmount: e.target.value })}
+          />
+          <input
+            placeholder="Maximum order amount (optional)"
+            className={`${styles.input}`}
+            value={form.maxAmount}
+            onChange={(e) => setForm({ ...form, maxAmount: e.target.value })}
+          />
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <button
+            type="submit"
+            disabled={isCreating}
+            className={`${styles.submit_button} disabled:opacity-60`}
+          >
+            <span className="text-white font-[Poppins]">
+              {isCreating ? "Creating..." : "Create coupon"}
+            </span>
+          </button>
+        </form>
+      )}
+      {isLoading ? (
+        <p className="text-[15px] text-[#00000082] py-8">Loading coupons...</p>
+      ) : isError ? (
+        <p className="text-[15px] text-red-500 py-8">Could not load coupons.</p>
+      ) : coupons.length === 0 ? (
+        <p className="text-[15px] text-[#00000082] py-8">
+          You haven&apos;t created any coupons yet.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {coupons.map((c) => (
+            <div
+              key={c._id}
+              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+            >
+              <div>
+                <p className="font-medium">{c.name}</p>
+                <p className="text-sm text-[#00000082]">
+                  {c.value}% off
+                  {c.minAmount ? ` &middot; min $${c.minAmount}` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDelete(c._id)}
+                className="text-sm text-red-600 hover:underline cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

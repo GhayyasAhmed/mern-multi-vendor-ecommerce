@@ -5,6 +5,7 @@ import { socketAuthMiddleware } from "./auth.js";
 import { registerPresenceHandlers } from "./handlers/presence.js";
 import { registerChatHandlers } from "./handlers/chat.js";
 import type { AppSocketServer } from "./types.js";
+import { setSocketServer } from "./emitter.js";
 
 export function initSocketServer(httpServer: HttpServer): AppSocketServer {
   const io: AppSocketServer = new SocketIOServer(httpServer, {
@@ -13,6 +14,8 @@ export function initSocketServer(httpServer: HttpServer): AppSocketServer {
       credentials: true,
     },
   });
+
+  setSocketServer(io);
 
   io.use(socketAuthMiddleware);
 

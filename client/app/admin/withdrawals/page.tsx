@@ -1,12 +1,22 @@
 "use client";
 import { useState } from "react";
-import { useGetAllWithdrawsAdminQuery, useUpdateWithdrawAdminMutation } from "@/features/admin/adminApiSlice";
+import {
+  useGetAllWithdrawsAdminQuery,
+  useRejectWithdrawAdminMutation,
+  useUpdateWithdrawAdminMutation,
+} from "@/features/admin/adminApiSlice";
 import Pagination from "@/components/ui/Pagination";
 
 export default function AdminWithdrawalsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useGetAllWithdrawsAdminQuery({ page, limit: 20 });
-  const [updateWithdraw, { isLoading: isUpdating }] = useUpdateWithdrawAdminMutation();
+  const { data, isLoading, isError } = useGetAllWithdrawsAdminQuery({
+    page,
+    limit: 20,
+  });
+  const [updateWithdraw, { isLoading: isUpdating }] =
+    useUpdateWithdrawAdminMutation();
+  const [rejectWithdraw, { isLoading: isRejecting }] =
+    useRejectWithdrawAdminMutation();
   const withdraws = data?.withdraws ?? [];
 
   const handleApprove = async (id: string, sellerId: string) => {
@@ -17,13 +27,28 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
+  const handleReject = async (id: string) => {
+    const reason =
+      window.prompt("Reason for rejecting this withdrawal (optional):") ??
+      undefined;
+    try {
+      await rejectWithdraw({ id, reason }).unwrap();
+    } catch {
+      // list stays as-is on failure
+    }
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Withdrawal requests</h1>
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading withdrawal requests...</p>
+        <p className="text-sm text-[#00000082]">
+          Loading withdrawal requests...
+        </p>
       ) : isError ? (
-        <p className="text-sm text-red-500">Could not load withdrawal requests.</p>
+        <p className="text-sm text-red-500">
+          Could not load withdrawal requests.
+        </p>
       ) : withdraws.length === 0 ? (
         <p className="text-sm text-[#00000082]">No withdrawal requests.</p>
       ) : (
@@ -41,20 +66,36 @@ export default function AdminWithdrawalsPage() {
             <tbody>
               {withdraws.map((withdraw) => (
                 <tr key={withdraw._id} className="border-t">
-                  <td className="px-4 py-3">{withdraw.seller?.name || withdraw.seller?._id}</td>
+                  <td className="px-4 py-3">
+                    {withdraw.seller?.name || withdraw.seller?._id}
+                  </td>
                   <td className="px-4 py-3">${withdraw.amount.toFixed(2)}</td>
                   <td className="px-4 py-3">{withdraw.status}</td>
-                  <td className="px-4 py-3">{new Date(withdraw.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    {new Date(withdraw.createdAt).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {withdraw.status === "Processing" && (
-                      <button
-                        type="button"
-                        disabled={isUpdating}
-                        onClick={() => handleApprove(withdraw._id, withdraw.seller._id)}
-                        className="text-[#3957db] hover:underline disabled:opacity-60 cursor-pointer"
-                      >
-                        Mark as paid
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          disabled={isUpdating}
+                          onClick={() =>
+                            handleApprove(withdraw._id, withdraw.seller._id)
+                          }
+                          className="text-[#3957db] hover:underline disabled:opacity-60 cursor-pointer"
+                        >
+                          Mark as paid
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isRejecting}
+                          onClick={() => handleReject(withdraw._id)}
+                          className="ml-3 text-red-600 hover:underline disabled:opacity-60 cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>

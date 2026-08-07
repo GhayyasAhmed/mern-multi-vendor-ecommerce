@@ -1,15 +1,15 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import WithdrawModel from "../models/withdraw.model.js";
 import ShopModel from "../models/shop.model.js";
+import WithdrawModel from "../models/withdraw.model.js";
+import ErrorHandler from "../utils/errorhandler.js";
+import { createNotification } from "../utils/notifications.js";
+import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import sendEmail from "../utils/sendEmail.js";
-import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
 
-// create withdraw request --- only for seller. The balance deduction is a
-// single atomic findOneAndUpdate (reserve-then-create) so two concurrent
-// requests from the same seller can never both succeed against the same
-// funds, and can never drive availableBalance negative.
+
+// replace entire createWithdrawRequest export with:
 export const createWithdrawRequest = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { amount } = req.body;
@@ -18,41 +18,32 @@ export const createWithdrawRequest = catchAsyncErrors(
     if (!seller) {
       return next(new ErrorHandler("Seller not found in request", 400));
     }
-
     if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
       return next(new ErrorHandler("Please provide a valid withdrawal amount", 400));
     }
 
-    const shop = await ShopModel.findOneAndUpdate(
-      { _id: seller._id, availableBalance: { $gte: amount } },
-      { $inc: { availableBalance: -amount } },
-      { new: true }
-    );
+    const session = await mongoose.startSession();
+    let withdraw: any;
 
-    if (!shop) {
-      const existingShop = await ShopModel.findById(seller._id).select("availableBalance");
-      if (!existingShop) {
-        return next(new ErrorHandler("Shop not found", 404));
-      }
-      return next(
-        new ErrorHandler(
-          `Insufficient balance. Available balance is $${(existingShop.availableBalance || 0).toFixed(2)}`,
-          400
-        )
-      );
-    }
-
-    let withdraw;
     try {
-      withdraw = await WithdrawModel.create({
-        shopId: shop._id,
-        seller,
-        amount,
+      await session.withTransaction(async () => {
+        const shop = await ShopModel.findOneAndUpdate(
+          { _id: seller._id, availableBalance: { $gte: amount } },
+          { $inc: { availableBalance: -amount } },
+          { new: true, session }
+        );
+
+        if (!shop) {
+          const existingShop = await ShopModel.findById(seller._id).select("availableBalance").session(session);
+          const available = existingShop?.availableBalance ?? 0;
+          throw new ErrorHandler(`Insufficient balance. Available balance is $${available.toFixed(2)}`, 400);
+        }
+
+        const createdWithdraws = await WithdrawModel.create([{ shopId: shop._id, seller, amount }], { session });
+        withdraw = createdWithdraws[0];
       });
-    } catch (error) {
-      // Compensate the reservation if the withdraw record couldn't be created
-      await ShopModel.findByIdAndUpdate(shop._id, { $inc: { availableBalance: amount } });
-      throw error;
+    } finally {
+      await session.endSession();
     }
 
     try {
@@ -62,13 +53,10 @@ export const createWithdrawRequest = catchAsyncErrors(
         message: `Hello ${seller.name}, Your withdraw request of $${amount} is processing. It will take 3 to 7 days to process!`,
       });
     } catch {
-      // Best-effort notification; the withdraw request itself already succeeded
+      // best-effort notification
     }
 
-    res.status(201).json({
-      success: true,
-      withdraw,
-    });
+    res.status(201).json({ success: true, withdraw });
   }
 );
 
@@ -155,6 +143,14 @@ export const updateWithdrawRequest = catchAsyncErrors(
 
     await seller.save();
 
+    createNotification(
+      String(seller._id),
+      "seller",
+      "withdraw_approved",
+      `Your withdrawal request of $${withdraw.amount} has been approved and is on its way.`,
+      "/seller/dashboard?tab=payouts"
+    ).catch(() => { });
+
     await sendEmail({
       email: seller.email,
       subject: "Payment confirmation",
@@ -167,3 +163,51 @@ export const updateWithdrawRequest = catchAsyncErrors(
     });
   }
 );
+
+// add new export
+export const rejectWithdrawRequest = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const withdrawId = req.params.id as string;
+    const { reason } = req.body as { reason?: string };
+
+    const withdraw = await WithdrawModel.findOne({ _id: withdrawId, status: "Processing" });
+    if (!withdraw) {
+      return next(new ErrorHandler("Withdraw request not found or already resolved", 404));
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        withdraw.status = "rejected";
+        withdraw.rejectionReason = reason;
+        await withdraw.save({ session });
+        await ShopModel.findByIdAndUpdate(withdraw.shopId, { $inc: { availableBalance: withdraw.amount } }, { session });
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    const seller = await ShopModel.findById(withdraw.shopId);
+    if (seller) {
+      try {
+        await sendEmail({
+          email: seller.email,
+          subject: "Withdrawal request rejected",
+          message: `Hello ${seller.name}, your withdrawal request of $${withdraw.amount} was rejected${reason ? `: ${reason}` : "."} The amount has been returned to your available balance.`,
+        });
+      } catch {
+        // best-effort
+      }
+      createNotification(
+        String(seller._id),
+        "seller",
+        "withdraw_rejected",
+        `Your withdrawal request of $${withdraw.amount} was rejected${reason ? `: ${reason}` : "."}`,
+        "/seller/dashboard?tab=payouts"
+      ).catch(() => { });
+    }
+
+    res.status(200).json({ success: true, withdraw });
+  }
+);
+

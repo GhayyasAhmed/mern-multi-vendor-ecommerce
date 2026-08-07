@@ -67,6 +67,20 @@ export interface GetShopProductsResponse {
   pagination: ProductsPagination;
 }
 
+export interface CreateReviewRequest {
+  productId: string;
+  orderId: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface ReviewEligibilityResponse {
+  success: boolean;
+  canReview: boolean;
+  orderId: string | null;
+  existingReview: { rating: number; comment?: string } | null;
+}
+
 
 function buildQueryString(params: GetAllProductsParams): string {
   const query = new URLSearchParams();
@@ -126,9 +140,9 @@ export const productApiSlice = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),
-              { type: "Product" as const, id: "LIST" },
-            ]
+            ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),
+            { type: "Product" as const, id: "LIST" },
+          ]
           : [{ type: "Product" as const, id: "LIST" }],
     }),
 
@@ -140,7 +154,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: "Product", id }],
     }),
 
-    getRelatedProducts: builder.query<GetRelatedProductsResponse,{ id: string; limit?: number }>({
+    getRelatedProducts: builder.query<GetRelatedProductsResponse, { id: string; limit?: number }>({
       query: ({ id, limit }) => ({
         url: `/product/get-related-products/${id}${limit ? `?limit=${limit}` : ""}`,
         method: "GET",
@@ -162,9 +176,9 @@ export const productApiSlice = apiSlice.injectEndpoints({
       providesTags: (result, _error, { shopId }) =>
         result
           ? [
-              ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),
-              { type: "Product" as const, id: `SHOP-${shopId}` },
-            ]
+            ...result.products.map((p) => ({ type: "Product" as const, id: p._id })),
+            { type: "Product" as const, id: `SHOP-${shopId}` },
+          ]
           : [{ type: "Product" as const, id: `SHOP-${shopId}` }],
     }),
 
@@ -212,6 +226,16 @@ export const productApiSlice = apiSlice.injectEndpoints({
         body: { items },
       }),
     }),
+
+    createReview: builder.mutation<{ success: boolean; message: string }, CreateReviewRequest>({
+      query: (body) => ({ url: "/product/create-new-review", method: "PUT", body }),
+      invalidatesTags: (_result, _error, { productId }) => [{ type: "Product", id: productId }, { type: "Product", id: `REVIEW-${productId}` }],
+    }),
+
+    getReviewEligibility: builder.query<ReviewEligibilityResponse, string>({
+      query: (productId) => ({ url: `/product/review-eligibility/${productId}`, method: "GET" }),
+      providesTags: (_result, _error, productId) => [{ type: "Product", id: `REVIEW-${productId}` }],
+    }),
   }),
   overrideExisting: false,
 });
@@ -226,4 +250,6 @@ export const {
   useDeleteProductMutation,
   useUpdateProductMutation,
   useCheckAvailabilityMutation,
+  useCreateReviewMutation,
+  useGetReviewEligibilityQuery
 } = productApiSlice;

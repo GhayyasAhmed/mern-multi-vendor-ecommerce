@@ -10,6 +10,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 import { stripe } from "../config/stripe.js";
+import { createNotification } from "../utils/notifications.js";
 
 interface ICartItem {
   _id: string;
@@ -158,6 +159,10 @@ export const createOrder = catchAsyncErrors(
       await session.endSession();
     }
 
+    for (const [shopId] of shopItemsMap) {
+      createNotification(shopId, "seller", "new_order", "You have received a new order.", "/seller/dashboard?tab=orders").catch(() => { });
+    }
+
     res.status(201).json({
       success: true,
       orders,
@@ -285,6 +290,17 @@ export const updateOrderStatus = catchAsyncErrors(
     }
 
     await order.save({ validateBeforeSave: false });
+
+    const buyerIdForNotif = (order.user as { _id?: unknown })?._id;
+    if (buyerIdForNotif) {
+      createNotification(
+        String(buyerIdForNotif),
+        "user",
+        "order_status",
+        `Your order #${String(order._id).slice(-8).toUpperCase()} is now "${order.status}"`,
+        `/orders/${order._id}`
+      ).catch(() => { });
+    }
 
     res.status(200).json({
       success: true,

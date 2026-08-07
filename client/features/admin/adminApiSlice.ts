@@ -100,9 +100,9 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.users.map((u) => ({ type: "User" as const, id: u._id })),
-              { type: "User" as const, id: "ADMIN-LIST" },
-            ]
+            ...result.users.map((u) => ({ type: "User" as const, id: u._id })),
+            { type: "User" as const, id: "ADMIN-LIST" },
+          ]
           : [{ type: "User" as const, id: "ADMIN-LIST" }],
     }),
 
@@ -149,6 +149,20 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Withdraw", id: "LIST" }],
     }),
+
+    rejectWithdrawAdmin: builder.mutation<ApiSuccessMessage, { id: string; reason?: string }>({
+      query: ({ id, reason }) => ({
+        url: `/withdraw/reject-withdraw-request/${id}`,
+        method: "PUT",
+        body: { reason },
+      }),
+      invalidatesTags: [{ type: "Withdraw", id: "LIST" }],
+    }),
+
+    updateSellerStatusAdmin: builder.mutation<ApiSuccessMessage, { id: string; status: "pending" | "active" | "suspended" }>({
+      query: ({ id, status }) => ({ url: `/shop/admin-update-status/${id}`, method: "PUT", body: { status } }),
+      invalidatesTags: [{ type: "Shop", id: "ADMIN-LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
@@ -164,4 +178,6 @@ export const {
   useGetAllOrdersAdminQuery,
   useGetAllWithdrawsAdminQuery,
   useUpdateWithdrawAdminMutation,
+  useRejectWithdrawAdminMutation,
+  useUpdateSellerStatusAdminMutation
 } = adminApiSlice;

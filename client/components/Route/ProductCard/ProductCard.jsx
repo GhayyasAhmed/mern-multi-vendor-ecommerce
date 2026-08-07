@@ -92,14 +92,17 @@ const ProductCard = ({ data }) => {
               : data?.name}
           </h4>
 
-          <div className="flex">
-            {Array.from({ length: 5 }).map((_, index) =>
-              index < Math.round(data?.ratings || 0) ? (
-                <AiFillStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-              ) : (
-                <AiOutlineStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-              )
-            )}
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, index) =>
+                index < Math.round(data?.ratings || 0) ? (
+                  <AiFillStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
+                ) : (
+                  <AiOutlineStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
+                )
+              )}
+            </div>
+            <span className="text-[13px] text-[#00000082]">({data?.reviews?.length ?? 0})</span>
           </div>
 
           <div className="py-2 flex items-center justify-between">
@@ -128,9 +131,8 @@ const ProductCard = ({ data }) => {
           />
           <AiOutlineShoppingCart
             size={25}
-            className={`absolute right-2 top-24 ${
-              outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-            }`}
+            className={`absolute right-2 top-24 ${outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+              }`}
             onClick={handleAddToCart}
             color="#444"
             title={outOfStock ? "Out of stock" : "Add to cart"}

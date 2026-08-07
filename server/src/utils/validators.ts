@@ -50,12 +50,20 @@ const updateShopAvatarSchema = z.object({
   }),
 });
 
+const updateShopStatusSchema = z.object({
+  params: z.object({ id: z.string('Shop id is required') }),
+  body: z.object({
+    status: z.enum(['pending', 'active', 'suspended'], { message: 'Invalid shop status' }),
+  }),
+});
+
 export const ShopValidations = {
   createShopSchema,
   loginShopSchema,
   updateSellerInfoSchema,
   updatePaymentMethodsSchema,
   updateShopAvatarSchema,
+  updateShopStatusSchema,
 };
 
 // Shared by both /shop/activation and /user/activation (identical payload shape)
@@ -207,7 +215,6 @@ const checkAvailabilitySchema = z.object({
 
 const createReviewSchema = z.object({
   body: z.object({
-    user: z.union([z.string(), z.record(z.string(), z.unknown())]),
     rating: z.number({ message: 'Rating is required' }).min(1).max(5),
     comment: z.string().optional(),
     productId: z.string('Product id is required'),
@@ -412,3 +419,5 @@ const createWithdrawRequestSchema = z.object({
 export const WithdrawValidations = {
   createWithdrawRequestSchema,
 };
+
+

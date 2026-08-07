@@ -2,13 +2,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Document, Schema, model } from 'mongoose';
 import { env } from '../config/env.js';
+import { decryptSecret, maskAccountNumber } from '../utils/crypto.js';
 
 export interface IWithdrawMethod {
     withdrawMethodName: string;
     bankName: string;
     bankCountry: string;
     bankSwiftCode?: string;
-    bankAccountNumber: number | string;
+    bankAccountNumber: string;
     bankHolderName: string;
     bankAddress?: string;
 }
@@ -26,6 +27,7 @@ export interface IShop extends Document {
         url: string;
     };
     zipCode: number;
+    status: 'pending' | 'active' | 'suspended';
     withdrawMethod?: IWithdrawMethod;
     availableBalance: number;
     transaction?: Array<{
@@ -63,7 +65,7 @@ const withdrawMethodSchema = new Schema(
         bankName: { type: String, required: true },
         bankCountry: { type: String, required: true },
         bankSwiftCode: { type: String },
-        bankAccountNumber: { type: Schema.Types.Mixed, required: true },
+        bankAccountNumber: { type: String, required: true },
         bankHolderName: { type: String, required: true },
         bankAddress: { type: String },
     },
@@ -74,6 +76,14 @@ const transformShop = (_doc: any, ret: any) => {
     delete ret.password;
     delete ret.resetPasswordToken;
     delete ret.resetPasswordTime;
+    if (ret.withdrawMethod?.bankAccountNumber) {
+        try {
+            const decrypted = decryptSecret(ret.withdrawMethod.bankAccountNumber);
+            ret.withdrawMethod = { ...ret.withdrawMethod, bankAccountNumber: maskAccountNumber(decrypted) };
+        } catch {
+            ret.withdrawMethod = { ...ret.withdrawMethod, bankAccountNumber: '••••' };
+        }
+    }
     return ret;
 };
 
@@ -110,6 +120,11 @@ const shopSchema = new Schema<IShop>(
         role: {
             type: String,
             default: 'Seller',
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'active', 'suspended'],
+            default: 'pending',
         },
         avatar: {
             public_id: {

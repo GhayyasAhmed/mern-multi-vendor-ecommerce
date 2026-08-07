@@ -20,6 +20,7 @@ import shopRouter from "./routes/shop.routes.js";
 import userRouter from "./routes/user.routes.js";
 import withdrawRouter from "./routes/withdraw.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 
 const app = express();
 
@@ -99,7 +100,9 @@ app.use("/api/v1/coupon-code", couponCodeRouter);
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/withdraw", withdrawRouter);
 app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/admin", adminRouter);
+
 
 app.get("/api/v1/health-check", (req, res) => {
     const isDbConnected = mongoose.connection.readyState === 1;

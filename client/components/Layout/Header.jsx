@@ -23,6 +23,7 @@ import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
+import NotificationBell from "@/components/Layout/NotificationBell"
 
 const Header = ({ activeHeading }) => {
   const cartCount = useAppSelector(selectCartCount);
@@ -196,6 +197,10 @@ const Header = ({ activeHeading }) => {
                   {cartCount}
                 </span>
               </div>
+            </div>
+
+            <div className={`${styles.normalFlex} mr-3.75`}>
+              <NotificationBell enabled={isAuthenticated} iconColor="rgb(255 255 255 / 83%)" />
             </div>
 
             <div className={`${styles.normalFlex}`}>

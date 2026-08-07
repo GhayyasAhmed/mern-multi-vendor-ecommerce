@@ -1,17 +1,8 @@
 import express from "express";
 import {
-    createShop,
-    activateShop,
-    resendActivation,
-    loginShop,
-    getSellerDetails,
-    logoutShop,
-    getShopInfo,
-    updateShopAvatar,
-    updateSellerInfo,
-    updatePaymentMethods,
-    deleteWithdrawMethod,
-    getAllSellers, deleteSeller
+    createShop, activateShop, resendActivation, loginShop, getSellerDetails, logoutShop,
+    getShopInfo, updateShopAvatar, updateSellerInfo, updatePaymentMethods, deleteWithdrawMethod,
+    getAllSellers, deleteSeller, updateShopStatus,
 } from "../controllers/shop.controller.js";
 import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -33,5 +24,12 @@ router.put("/update-payment-methods", isSeller, validate(ShopValidations.updateP
 router.delete("/delete-withdraw-method", isSeller, deleteWithdrawMethod);
 router.get("/admin-all-sellers", isAuthenticated, authorizeRoles("admin"), getAllSellers);
 router.delete("/delete-seller/:id", isAuthenticated, authorizeRoles("admin"), deleteSeller);
+router.put(
+  "/admin-update-status/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  validate(ShopValidations.updateShopStatusSchema),
+  updateShopStatus
+);
 
 export default router;

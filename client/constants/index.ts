@@ -13,6 +13,7 @@ export const SOCKET_EVENTS = {
   UPDATE_LAST_MESSAGE: "updateLastMessage",
   GET_LAST_MESSAGE: "getLastMessage",
   GET_USERS: "getUsers",
+  NOTIFICATION: "notification",
 } as const;
 
 // Single source of truth for product/event categories, mirrored on the

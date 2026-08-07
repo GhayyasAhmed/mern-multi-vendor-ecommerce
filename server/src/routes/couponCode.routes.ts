@@ -18,7 +18,7 @@ couponCodeRouter.post(
   validate(CouponValidations.createCouponCodeSchema),
   createCouponCode
 );
-couponCodeRouter.get("/get-coupon/:id", isSeller, getShopCoupons);
+couponCodeRouter.get("/get-coupon", isSeller, getShopCoupons);
 couponCodeRouter.delete("/delete-coupon/:id", isSeller, deleteCouponCode);
 couponCodeRouter.get("/get-coupon-value/:name", getCouponValueByName);
 couponCodeRouter.post(

@@ -64,6 +64,20 @@ export interface UpdateShopResponse {
     shop: IShop;
 }
 
+export interface WithdrawMethodInput {
+    withdrawMethodName: string;
+    bankName: string;
+    bankCountry: string;
+    bankSwiftCode?: string;
+    bankAccountNumber: string;
+    bankHolderName: string;
+    bankAddress?: string;
+}
+
+export interface UpdatePaymentMethodsRequest {
+    withdrawMethod: WithdrawMethodInput;
+}
+
 export const shopApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         createShop: builder.mutation<ApiSuccessMessage, CreateShopRequest>({
@@ -108,6 +122,16 @@ export const shopApiSlice = apiSlice.injectEndpoints({
             query: (body) => ({ url: "/shop/update-shop-avatar", method: "PUT", body }),
             invalidatesTags: ["Shop"],
         }),
+
+        updatePaymentMethods: builder.mutation<UpdateShopResponse, UpdatePaymentMethodsRequest>({
+            query: (body) => ({ url: "/shop/update-payment-methods", method: "PUT", body }),
+            invalidatesTags: ["Shop"],
+        }),
+
+        deleteWithdrawMethod: builder.mutation<UpdateShopResponse, void>({
+            query: () => ({ url: "/shop/delete-withdraw-method", method: "DELETE" }),
+            invalidatesTags: ["Shop"],
+        }),
     }),
     overrideExisting: false,
 });
@@ -123,4 +147,6 @@ export const {
     useGetShopInfoQuery,
     useUpdateSellerInfoMutation,
     useUpdateShopAvatarMutation,
+    useUpdatePaymentMethodsMutation,
+    useDeleteWithdrawMethodMutation,
 } = shopApiSlice;

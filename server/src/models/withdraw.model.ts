@@ -5,6 +5,7 @@ export interface IWithdraw extends Document {
   seller: object;
   amount: number;
   status: string;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -27,6 +28,9 @@ const withdrawSchema: Schema<IWithdraw> = new mongoose.Schema(
     status: {
       type: String,
       default: "Processing",
+    },
+    rejectionReason: {
+      type: String,
     },
     updatedAt: {
       type: Date,

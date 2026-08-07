@@ -37,6 +37,16 @@ export interface IShop {
   zipCode: number;
   avatar: IAvatar;
   availableBalance: number;
+  status: "pending" | "active" | "suspended";
+  withdrawMethod?: {
+    withdrawMethodName: string;
+    bankName: string;
+    bankCountry: string;
+    bankSwiftCode?: string;
+    bankAccountNumber: string;
+    bankHolderName: string;
+    bankAddress?: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -58,9 +68,15 @@ export interface IProductImage {
   url: string;
 }
 
+export interface IProductReviewUser {
+  _id?: string;
+  name?: string;
+  avatar?: { url?: string };
+}
+
 export interface IProductReview {
   _id?: string;
-  user: Record<string, unknown> | string;
+  user: IProductReviewUser | string;
   rating: number;
   comment?: string;
   productId: string;

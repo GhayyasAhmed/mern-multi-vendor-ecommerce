@@ -13,8 +13,7 @@ export interface ICouponCode extends Document {
 const couponCodeSchema: Schema<ICouponCode> = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please enter your coupon code name!"],
-    unique: true,
+    required: [true, "Please enter your coupon code name!"]
   },
   value: {
     type: Number,
@@ -41,6 +40,7 @@ const couponCodeSchema: Schema<ICouponCode> = new mongoose.Schema({
 });
 
 couponCodeSchema.index({ shopId: 1 });
+couponCodeSchema.index({ name: 1, shopId: 1 }, { unique: true });
 
 const CouponCodeModel: Model<ICouponCode> = mongoose.model<ICouponCode>(
   "CouponCode",

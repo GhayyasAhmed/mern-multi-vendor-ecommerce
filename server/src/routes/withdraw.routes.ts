@@ -4,6 +4,7 @@ import {
   getAllWithdrawRequests,
   getMyWithdrawRequests,
   updateWithdrawRequest,
+  rejectWithdrawRequest,
 } from "../controllers/withdraw.controller.js";
 import { isAuthenticated, isSeller, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -33,6 +34,13 @@ withdrawRouter.put(
   isAuthenticated,
   authorizeRoles("admin"),
   updateWithdrawRequest
+);
+
+withdrawRouter.put(
+  "/reject-withdraw-request/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  rejectWithdrawRequest
 );
 
 export default withdrawRouter;

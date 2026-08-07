@@ -45,6 +45,10 @@ export const createEvent = catchAsyncErrors(
       return next(new ErrorHandler("Shop not found", 404));
     }
 
+    if (shop.status !== "active") {
+      return next(new ErrorHandler("Your shop must be approved by an admin before you can list events", 403));
+    }
+
     let images: string[] = [];
 
     if (typeof req.body.images === "string") {

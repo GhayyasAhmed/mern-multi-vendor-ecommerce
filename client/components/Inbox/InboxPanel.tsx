@@ -27,6 +27,7 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
   const dispatch = useAppDispatch();
   const socket = useSocket(Boolean(identityId));
   const [page, setPage] = useState(1);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
    const userConversationsQuery = useGetUserConversationsQuery(
     { id: identityId ?? "", page },
@@ -58,6 +59,13 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
     };
   }, [socket, dispatch, identityId, role]);
 
+  useEffect(() => {
+  if (!identityId) return;
+  const handleGetUsers = (ids: string[]) => setOnlineUserIds(ids);
+  socket.on(SOCKET_EVENTS.GET_USERS, handleGetUsers);
+  return () => { socket.off(SOCKET_EVENTS.GET_USERS, handleGetUsers); };
+}, [socket, identityId]);
+
   const handleSelect = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("conversation", conversationId);
@@ -74,6 +82,7 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
           activeConversationId={activeConversationId}
           role={role}
           onSelect={handleSelect}
+          onlineUserIds={onlineUserIds}
         />
         {pagination && (
           <Pagination
@@ -85,7 +94,15 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
       </div>
       <div className="w-full md:w-2/3">
         {activeConversation && identityId ? (
-          <ChatWindow conversation={activeConversation} identityId={identityId} role={role} />
+          // <ChatWindow conversation={activeConversation} 
+          // identityId={identityId} role={role} />
+           <ChatWindow 
+            conversation={activeConversation} 
+            identityId={identityId} 
+            role={role} 
+            isPeerOnline={onlineUserIds.includes(role === "user" ? activeConversation.sellerId : activeConversation.userId)} 
+           />
+
         ) : (
           <div className="flex h-full min-h-[50vh] items-center justify-center p-6 text-center">
             <p className="text-[15px] text-[#00000082]">

@@ -14,6 +14,7 @@ import sendEmail from "../utils/sendEmail.js";
 import sendShopToken from "../utils/shopToken.js";
 import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
 import { trackPendingUpload, clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS } from "../utils/pendingUploads.js";
+import { encryptSecret } from "../utils/crypto.js";
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -377,9 +378,13 @@ export const updatePaymentMethods = catchAsyncErrors(
       return next(new ErrorHandler("Shop not found", 404));
     }
 
+    const sanitizedWithdrawMethod = withdrawMethod
+      ? { ...withdrawMethod, bankAccountNumber: encryptSecret(String(withdrawMethod.bankAccountNumber)) }
+      : withdrawMethod;
+
     const shop = await Shop.findByIdAndUpdate(
       req.seller._id,
-      { withdrawMethod },
+      { withdrawMethod: sanitizedWithdrawMethod },
       { new: true, runValidators: true }
     );
 
@@ -389,10 +394,7 @@ export const updatePaymentMethods = catchAsyncErrors(
 
     await refreshSellerSession(shop);
 
-    res.status(200).json({
-      success: true,
-      shop,
-    });
+    res.status(200).json({ success: true, shop });
   }
 );
 
@@ -466,5 +468,31 @@ export const deleteSeller = catchAsyncErrors(
       success: true,
       message: "Seller deleted successfully!",
     });
+  }
+);
+
+// add new export
+export const updateShopStatus = catchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { status } = req.body as { status: "pending" | "active" | "suspended" };
+
+    const shop = await Shop.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+    if (!shop) {
+      return next(new ErrorHandler("Shop not found", 404));
+    }
+
+    await refreshSellerSession(shop);
+
+    try {
+      await sendEmail({
+        email: shop.email,
+        subject: "Your shop status has been updated",
+        message: `Hello ${shop.name}, your shop status is now "${status}".`,
+      });
+    } catch {
+      // best-effort
+    }
+
+    res.status(200).json({ success: true, shop });
   }
 );

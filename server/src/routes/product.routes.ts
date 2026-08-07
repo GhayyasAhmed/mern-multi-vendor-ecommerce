@@ -1,15 +1,8 @@
 import express from "express";
 import {
-  createProduct,
-  getAllProductsShop,
-  deleteProduct,
-  getAllProducts,
-  getProductById,
-  getRelatedProducts,
-  createNewReview,
-  getAdminAllProducts,
-  updateProduct,
-  checkAvailability,
+  createProduct, getAllProductsShop, deleteProduct, getAllProducts, getProductById,
+  getRelatedProducts, createNewReview, getAdminAllProducts, updateProduct, checkAvailability,
+  getReviewEligibility,
 } from "../controllers/product.controller.js";
 import { isSeller, isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
 import validate from "../middlewares/validate.js";
@@ -45,6 +38,7 @@ productRouter.put(
   validate(ProductValidations.createReviewSchema),
   createNewReview
 );
+productRouter.get("/review-eligibility/:id", isAuthenticated, getReviewEligibility);
 
 // admin routes
 productRouter.get(
