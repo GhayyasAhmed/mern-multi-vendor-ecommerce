@@ -1,9 +1,4 @@
-// client/components/Layout/Footer.jsx
-import {
-  footerCompanyLinks,
-  footerProductLinks,
-  footerSupportLinks,
-} from "@/static/data";
+import { footerCompanyLinks } from "@/static/data"
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -38,7 +33,7 @@ const Footer = () => {
       </div>
 
       {/* Main Footer Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:px-8 px-5 py-16 sm:text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:px-8 px-5 py-16 sm:text-center">
         <ul className="px-5 text-center sm:text-start flex flex-col sm:block items-center">
           <Image
             src="/svg-image-1.svg"
@@ -60,40 +55,10 @@ const Footer = () => {
           </div>
         </ul>
 
-        {/* Company Links */}
-        <ul className="text-center sm:text-start">
-          <h1 className="mb-1 font-semibold">Company</h1>
-          {footerProductLinks.map((link, index) => (
-            <li key={index}>
-              <Link
-                className="text-gray-400 hover:text-teal-400 duration-300 text-sm leading-6 cursor-pointer"
-                href={link.link}
-              >
-                {link.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
         {/* Shop Links */}
         <ul className="text-center sm:text-start">
           <h1 className="mb-1 font-semibold">Shop</h1>
           {footerCompanyLinks.map((link, index) => (
-            <li key={index}>
-              <Link
-                className="text-gray-400 hover:text-teal-400 duration-300 text-sm leading-6 cursor-pointer"
-                href={link.link}
-              >
-                {link.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Support Links */}
-        <ul className="text-center sm:text-start">
-          <h1 className="mb-1 font-semibold">Support</h1>
-          {footerSupportLinks.map((link, index) => (
             <li key={index}>
               <Link
                 className="text-gray-400 hover:text-teal-400 duration-300 text-sm leading-6 cursor-pointer"

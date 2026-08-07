@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "@/features/auth/components/LogoutButton";
+import { useRouter } from "next/navigation";
 
 const links = [
   { href: "/admin", label: "Overview" },
@@ -31,6 +33,26 @@ export default function AdminNav() {
           </Link>
         );
       })}
+      <div className="pt-4 mt-4 border-t border-white/20">
+        <Link
+          href="/"
+          className="block px-3 py-2 rounded-md text-sm hover:bg-white/10"
+        >
+          Back to Store
+        </Link>
+
+        <AdminLogout />
+      </div>
     </nav>
+  );
+}
+
+function AdminLogout() {
+  const router = useRouter();
+  return (
+    <LogoutButton
+      className="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/10 disabled:opacity-60"
+      onLoggedOut={() => router.push("/")}
+    />
   );
 }

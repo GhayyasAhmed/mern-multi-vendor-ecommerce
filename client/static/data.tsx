@@ -73,11 +73,7 @@ export const navItems: NavItem[] = [
   {
     title: "Events",
     url: "/events",
-  },
-  {
-    title: "FAQ",
-    url: "/faq",
-  },
+  }
 ];
 
 // Branding Data
@@ -253,26 +249,11 @@ export interface FooterLink {
   link: string;
 }
 
-export const footerProductLinks: FooterLink[] = [
-  { name: "About us", link: "/about" },
-  { name: "Careers", link: "/careers" },
-  { name: "Store Locations", link: "/locations" },
-  { name: "Our Blog", link: "/blog" },
-  { name: "Reviews", link: "/reviews" },
-];
-
 export const footerCompanyLinks: FooterLink[] = [
   { name: "Game & Video", link: "/products?category=gaming" },
   { name: "Phone & Tablets", link: "/products?category=mobile" },
   { name: "Computers & Laptop", link: "/products?category=laptops" },
   { name: "Sport Shoes", link: "/products?category=shoes" },
   { name: "Events", link: "/events" },
-];
-
-export const footerSupportLinks: FooterLink[] = [
-  { name: "FAQ", link: "/faq" },
-  { name: "Reviews", link: "/reviews" },
-  { name: "Contact Us", link: "/contact" },
-  { name: "Shipping", link: "/shipping" },
-  { name: "Live chat", link: "/chat" },
+  { name: "Best Selling", link: "/best-selling" }
 ];
