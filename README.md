@@ -189,4 +189,4 @@ Project case study --- architecture, flows, database design,security and product
 
 License
 
-Add the project's chosen license here before distributing the repositoryfor external reuse.
+MIT — see individual package.json files for the declared license per app.
