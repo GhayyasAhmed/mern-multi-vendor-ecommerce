@@ -52,6 +52,7 @@ import {
 } from "../shopApiSlice";
 import {
   eventFormSchema,
+  imageListValidation,
   productFormSchema,
   type EventFormValues,
   type ProductFormValues,
@@ -154,8 +155,12 @@ export default function SellerDashboard() {
         </div>
 
         {tab === "profile" && <ProfilePanel />}
-        {tab === "products" && <ProductsPanel seller={seller} shopId={seller._id} />}
-        {tab === "events" && <EventsPanel seller={seller} shopId={seller._id} />}
+        {tab === "products" && (
+          <ProductsPanel seller={seller} shopId={seller._id} />
+        )}
+        {tab === "events" && (
+          <EventsPanel seller={seller} shopId={seller._id} />
+        )}
         {tab === "orders" && <OrdersPanel shopId={seller._id} />}
         {tab === "payouts" && (
           <PayoutsPanel availableBalance={seller.availableBalance} />
@@ -661,7 +666,12 @@ function ProfilePanel() {
         <div className="mt-2 flex items-center">
           <span className="inline-block w-16 h-16 rounded-full overflow-hidden border border-gray-300 relative">
             {seller.avatar?.url ? (
-              <Image src={seller.avatar.url} alt={seller.name} fill className="h-full w-full object-cover" />
+              <Image
+                src={seller.avatar.url}
+                alt={seller.name}
+                fill
+                className="h-full w-full object-cover"
+              />
             ) : (
               <RxAvatar className="h-full w-full text-gray-400" />
             )}
@@ -753,7 +763,7 @@ function ProfilePanel() {
   );
 }
 
-function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
+function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetShopProductsQuery({
     shopId,
@@ -767,7 +777,6 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -778,14 +787,40 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
   const handleImagesChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setFormError(null);
+    if (files.length === 0) return;
+
+    // Check if adding new files exceeds the 8 image limit
+    if (images.length + files.length > 8) {
+      setFormError("Maximum 8 images allowed");
+      e.target.value = "";
+      return;
+    }
+
     try {
       const encoded = await Promise.all(
         files.map((file) => readFileAsBase64(file)),
       );
-      setImages(encoded);
+
+      // Append new images to the existing ones instead of replacing
+      setImages((prev) => {
+        const updated = [...prev, ...encoded];
+        if (updated.length > 8) {
+          setFormError("Maximum 8 images allowed");
+          return prev;
+        }
+        return updated;
+      });
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not read one or more images."));
+    } finally {
+      // Clear input value so selecting the same file again triggers onChange if needed
+      e.target.value = "";
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+    setFormError(null);
   };
 
   const openCreateForm = () => {
@@ -821,10 +856,19 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
 
   const onSubmit = async (values: ProductFormValues) => {
     setFormError(null);
+
+    // Validate using the backend-aligned logic
     if (!editingProduct && images.length === 0) {
-      setFormError("Please add at least one product image");
+      setFormError("At least one image is required");
       return;
     }
+
+    const imageValidationResult = imageListValidation.safeParse(images);
+    if (!imageValidationResult.success && images.length > 0) {
+      setFormError(imageValidationResult.error.issues[0].message);
+      return;
+    }
+
     try {
       if (editingProduct) {
         await updateProduct({
@@ -1003,7 +1047,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Images{" "}
               {editingProduct && (
                 <span className="font-normal text-gray-400">
@@ -1011,13 +1055,42 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
                 </span>
               )}
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImagesChange}
-              className="mt-1 text-sm"
-            />
+            <label className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-50 cursor-pointer shadow-xs transition-colors">
+              Upload Images
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImagesChange}
+                className="hidden"
+              />
+            </label>
+
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-3">
+                {images.map((img, index) => (
+                  <div
+                    key={index}
+                    className="relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 shadow-xs"
+                  >
+                    <Image
+                      src={img}
+                      alt={`Preview ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+                      title="Remove image"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
@@ -1104,7 +1177,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string, seller: IShop }) {
   );
 }
 
-function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
+function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetShopEventsQuery({
     shopId,
@@ -1130,14 +1203,37 @@ function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
   const handleImagesChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setFormError(null);
+    if (files.length === 0) return;
+
+    if (images.length + files.length > 8) {
+      setFormError("Maximum 8 images allowed");
+      e.target.value = "";
+      return;
+    }
+
     try {
       const encoded = await Promise.all(
         files.map((file) => readFileAsBase64(file)),
       );
-      setImages(encoded);
+
+      setImages((prev) => {
+        const updated = [...prev, ...encoded];
+        if (updated.length > 8) {
+          setFormError("Maximum 8 images allowed");
+          return prev;
+        }
+        return updated;
+      });
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not read one or more images."));
+    } finally {
+      e.target.value = "";
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+    setFormError(null);
   };
 
   const openCreateForm = () => {
@@ -1178,9 +1274,16 @@ function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
   const onSubmit = async (values: EventFormValues) => {
     setFormError(null);
     if (!editingEvent && images.length === 0) {
-      setFormError("Please add at least one event image");
+      setFormError("At least one image is required");
       return;
     }
+
+    const imageValidationResult = imageListValidation.safeParse(images);
+    if (!imageValidationResult.success && images.length > 0) {
+      setFormError(imageValidationResult.error.issues[0].message);
+      return;
+    }
+
     try {
       if (editingEvent) {
         await updateEvent({
@@ -1248,7 +1351,7 @@ function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
           type="button"
           disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
+          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add event"}
         </button>
@@ -1393,7 +1496,7 @@ function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Images{" "}
               {editingEvent && (
                 <span className="font-normal text-gray-400">
@@ -1401,13 +1504,42 @@ function EventsPanel({ seller, shopId }: { shopId: string, seller: IShop  }) {
                 </span>
               )}
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImagesChange}
-              className="mt-1 text-sm"
-            />
+            <label className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-50 cursor-pointer shadow-xs transition-colors">
+              Upload Images
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImagesChange}
+                className="hidden"
+              />
+            </label>
+
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-3">
+                {images.map((img, index) => (
+                  <div
+                    key={index}
+                    className="relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 shadow-xs"
+                  >
+                    <Image
+                      src={img}
+                      alt={`Preview ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+                      title="Remove image"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}

@@ -1,6 +1,11 @@
 import * as z from "zod";
 import { PRODUCT_CATEGORIES } from "@/constants";
 
+export const imageListValidation = z.union([
+  z.string(),
+  z.array(z.string()).min(1, 'At least one image is required').max(8, 'Maximum 8 images allowed'),
+]);
+
 export const shopLoginSchema = z.object({
   email: z.string("Email is required").email("Invalid email address"),
   password: z.string("Password is required").min(1, "Password is required"),
