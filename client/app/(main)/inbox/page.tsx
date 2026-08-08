@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { APP_NAME } from "@/constants";
+
 import Inbox from "@/components/Inbox/Inbox";
 
 export const metadata: Metadata = {
-  title: `Inbox | ${APP_NAME}`,
+  title: `Inbox `,
   description: "Chat with sellers about your orders and products.",
 };
 

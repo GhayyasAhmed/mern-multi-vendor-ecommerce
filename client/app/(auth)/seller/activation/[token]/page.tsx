@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import ShopActivationHandler from "@/features/shop/components/ShopActivationHandler";
 
 export const metadata: Metadata = {
-  title: `Shop activation | ${APP_NAME}`,
+  title: `Shop activation `,
   description: "Activating your shop.",
 };
 

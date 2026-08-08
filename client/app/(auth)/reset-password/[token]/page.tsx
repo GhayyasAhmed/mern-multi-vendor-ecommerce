@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
 
 export const metadata: Metadata = {
-  title: `Reset password | ${APP_NAME}`,
+  title: `Reset password `,
   description: "Set a new password for your account.",
 };
 

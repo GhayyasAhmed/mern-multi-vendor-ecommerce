@@ -82,10 +82,10 @@ const Header = ({ activeHeading }) => {
           <div>
             <Link href="/">
               <Image
-                src="/svg-image-1.svg"
+                src="/svg-image-2.svg"
                 alt="Logo"
-                width={150}
-                height={50}
+                width={250}
+                height={250}
               />
             </Link>
           </div>
@@ -297,10 +297,10 @@ const Header = ({ activeHeading }) => {
         <div>
           <Link href="/">
             <Image
-              src="/svg-image-1.svg"
+              src="/svg-image-2.svg"
               alt="Logo"
-              width={120}
-              height={40}
+              width={250}
+              height={250}
             />
           </Link>
         </div>

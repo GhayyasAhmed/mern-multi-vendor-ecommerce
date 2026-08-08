@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import ShopLoginForm from "@/features/shop/components/ShopLoginForm";
 
 export const metadata: Metadata = {
-  title: `Seller login | ${APP_NAME}`,
+  title: `Seller login `,
   description: "Login to your seller dashboard.",
 };
 

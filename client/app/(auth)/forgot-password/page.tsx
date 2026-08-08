@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: `Forgot password | ${APP_NAME}`,
+  title: `Forgot password `,
   description: "Reset your account password.",
 };
 

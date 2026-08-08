@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import CheckoutFlow from "@/components/Checkout/CheckoutFlow";
 
 export const metadata: Metadata = {
-  title: `Checkout | ${APP_NAME}`,
+  title: `Checkout `,
   description: "Review your order and complete checkout.",
 };
 

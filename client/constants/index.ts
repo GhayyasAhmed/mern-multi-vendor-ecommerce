@@ -1,4 +1,4 @@
-export const APP_NAME = "Multi Vendor Ecommerce";
+export const APP_NAME = "Mercovia";
 
 export const ROLES = {
   USER: "user",

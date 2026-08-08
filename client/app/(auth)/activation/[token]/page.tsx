@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import ActivationHandler from "@/features/auth/components/ActivationHandler";
 
 export const metadata: Metadata = {
-  title: `Account activation | ${APP_NAME}`,
+  title: `Account activation `,
   description: "Activating your account.",
 };
 

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { APP_NAME } from "@/constants";
+
 import RegisterShopForm from "@/features/shop/components/RegisterShopForm";
 
 export const metadata: Metadata = {
-  title: `Become a seller | ${APP_NAME}`,
+  title: `Become a seller `,
   description: "Create your shop and start selling.",
 };
 

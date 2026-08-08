@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { APP_NAME } from "@/constants";
+
 import LoginForm from "@/features/auth/components/LoginForm";
 
 export const metadata: Metadata = {
-  title: `Login | ${APP_NAME}`,
+  title: `Login `,
   description: "Login to your account to start shopping.",
 };
 

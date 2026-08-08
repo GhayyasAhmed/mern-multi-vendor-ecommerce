@@ -36,10 +36,10 @@ const Footer = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:px-8 px-5 py-16 sm:text-center">
         <ul className="px-5 text-center sm:text-start flex flex-col sm:block items-center">
           <Image
-            src="/svg-image-1.svg"
-            alt="ShopO Logo"
-            width={150}
-            height={50}
+            src="/svg-image-2.svg"
+            alt="Logo"
+            width={250}
+            height={250}
             className="brightness-0 invert"
           />
           <br />
@@ -73,7 +73,7 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 text-center pt-2 text-gray-400 text-sm pb-8 items-center px-4">
-        <span>© {new Date().getFullYear()} Shopo. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Mercovia. All rights reserved.</span>
         <span>Terms · Privacy Policy</span>
         <div className="flex items-center justify-center gap-2 w-full">
           {/* /footer-payment.webp was missing from public/, causing a 404.
