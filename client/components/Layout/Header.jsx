@@ -246,15 +246,20 @@ const Header = ({ activeHeading }) => {
                           Admin panel
                         </Link>
                       )}
-                      {/* {user?.role === "user" && ( */}
-                        <Link
-                          href="/orders"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
-                          onClick={() => setAccountMenuOpen(false)}
-                        >
-                          My Orders
-                        </Link>
-                      {/* )} */}
+                      <Link
+                        href="/orders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        onClick={() => setAccountMenuOpen(false)}
+                      >
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/inbox"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        onClick={() => setAccountMenuOpen(false)}
+                      >
+                        Inbox
+                      </Link>
                       <Link
                         href="/account"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
@@ -394,11 +399,42 @@ const Header = ({ activeHeading }) => {
             <br />
             <br />
             <br />
+            <br />
             {isAuthenticated ? (
               <div className="flex w-full flex-col items-center gap-2">
                 {user?.name && (
                   <span className="text-[16px] text-[#000000b7]">{user.name}</span>
                 )}
+                {user?.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="text-[16px] text-[#3957db]"
+                    onClick={() => setOpen(false)}
+                  >
+                    Admin panel
+                  </Link>
+                )}
+                <Link
+                  href="/orders"
+                  className="text-[16px] text-[#3957db]"
+                  onClick={() => setOpen(false)}
+                >
+                  My Orders
+                </Link>
+                <Link
+                  href="/inbox"
+                  className="text-[16px] text-[#3957db]"
+                  onClick={() => setOpen(false)}
+                >
+                  Inbox
+                </Link>
+                <Link
+                  href="/account"
+                  className="text-[16px] text-[#3957db]"
+                  onClick={() => setOpen(false)}
+                >
+                  Account settings
+                </Link>
                 <LogoutButton
                   className="text-[18px] text-[#000000b7] disabled:opacity-60"
                   onLoggedOut={() => setOpen(false)}

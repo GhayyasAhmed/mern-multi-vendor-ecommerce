@@ -73,12 +73,16 @@ export const createNewMessage = catchAsyncErrors(
     for (const memberId of memberIds) {
       if (memberId === identityId) continue;
       const receiverRole = memberId === conversation.userId ? "user" : "seller";
+      const link =
+        receiverRole === "seller"
+          ? `/seller/dashboard?tab=messages&conversation=${String(conversation._id)}`
+          : `/inbox?conversation=${String(conversation._id)}`;
       createNotification(
         memberId,
         receiverRole,
         "new_message",
         text?.trim() ? `New message: "${text.trim().slice(0, 60)}"` : "You received a new image message.",
-        `/inbox?conversation=${String(conversation._id)}`
+        link
       ).catch(() => { });
     }
 

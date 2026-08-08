@@ -15,6 +15,7 @@ import {
   AiOutlineMessage,
   AiOutlineShoppingCart
 } from "react-icons/ai";
+import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
 
 const ProductDetailsCard = ({ setOpen, data }) => {
   const [count, setCount] = useState(1);
@@ -24,6 +25,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   const { user } = useCurrentUser();
   const [addToWishlist] = useAddToWishlistMutation();
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
+  const [createConversation, { isLoading: isStartingChat }] = useCreateConversationMutation();
   const outOfStock = (data?.stock ?? 0) <= 0;
   const isWishlisted = Boolean(data?._id && user?.wishlist?.includes(data._id));
 
@@ -46,8 +48,22 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     setOpen(false);
   };
 
-  const handleMessageSubmit = () => {
-    // Message handler logic
+  const handleMessageSubmit = async () => {
+    if (!data?.shop?._id) return;
+
+    if (!user) {
+      setOpen(false);
+      router.push(`/login?redirect=${encodeURIComponent(`/product/${data?._id || ""}`)}`);
+      return;
+    }
+
+    try {
+      const result = await createConversation({ sellerId: data.shop._id }).unwrap();
+      setOpen(false);
+      router.push(`/inbox?conversation=${result.conversation._id}`);
+    } catch {
+      // Best-effort: the user can retry here or from the full product page.
+    }
   };
 
   const decrementCount = () => {
@@ -106,16 +122,17 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </div>
 
               <button
-                className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer"
+                className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
                 onClick={handleMessageSubmit}
+                disabled={isStartingChat}
               >
                 <span className="text-white flex items-center">
-                  Send Message <AiOutlineMessage className="ml-1" />
+                  {isStartingChat ? "Starting chat..." : "Send Message"} <AiOutlineMessage className="ml-1" />
                 </span>
               </button>
 
               <h5 className="text-[16px] text-red-500 mt-5 font-Roboto">
-                ({data?.sold_out || 0}) Sold
+                ({data?.sold_out ?? 0}) Sold
               </h5>
             </div>
 

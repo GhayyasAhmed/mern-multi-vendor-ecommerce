@@ -37,6 +37,7 @@ export interface IShop {
   zipCode: number;
   avatar: IAvatar;
   availableBalance: number;
+  owedBalance?: number;
   status: "pending" | "active" | "suspended";
   withdrawMethod?: {
     withdrawMethodName: string;

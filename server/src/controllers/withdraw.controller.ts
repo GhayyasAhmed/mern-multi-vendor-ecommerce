@@ -2,12 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ShopModel from "../models/shop.model.js";
-import WithdrawModel from "../models/withdraw.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { createNotification } from "../utils/notifications.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import sendEmail from "../utils/sendEmail.js";
-
+import WithdrawModel, { IWithdraw } from "../models/withdraw.model.js";
 
 // replace entire createWithdrawRequest export with:
 export const createWithdrawRequest = catchAsyncErrors(
@@ -106,23 +105,28 @@ export const getAllWithdrawRequests = catchAsyncErrors(
 // update withdraw request ---- admin
 export const updateWithdrawRequest = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { sellerId } = req.body;
     const withdrawId = req.params.id as string;
 
-    const withdraw = await WithdrawModel.findByIdAndUpdate(
-      withdrawId,
-      {
-        status: "succeed",
-        updatedAt: new Date(),
-      },
+    // Atomic guard: only a currently-"Processing" withdrawal can be marked
+    // paid. Prevents a duplicate admin click, or a race against
+    // rejectWithdrawRequest, from marking an already-rejected (and
+    // balance-restored) withdrawal as paid too — which would let the
+    // seller both keep the restored balance and have the payout recorded
+    // as sent.
+    const withdraw = await WithdrawModel.findOneAndUpdate(
+      { _id: withdrawId, status: "Processing" },
+      { status: "succeed", updatedAt: new Date() },
       { new: true }
     );
 
     if (!withdraw) {
-      return next(new ErrorHandler("Withdraw request not found", 404));
+      return next(new ErrorHandler("Withdraw request not found or already resolved", 404));
     }
 
-    const seller = await ShopModel.findById(sellerId);
+    // The seller is derived from the withdrawal record itself rather than
+    // a client-supplied sellerId, so this can never attribute a payout to
+    // the wrong seller's transaction history.
+    const seller = await ShopModel.findById(withdraw.shopId);
 
     if (!seller) {
       return next(new ErrorHandler("Seller not found", 404));
@@ -170,22 +174,37 @@ export const rejectWithdrawRequest = catchAsyncErrors(
     const withdrawId = req.params.id as string;
     const { reason } = req.body as { reason?: string };
 
-    const withdraw = await WithdrawModel.findOne({ _id: withdrawId, status: "Processing" });
-    if (!withdraw) {
-      return next(new ErrorHandler("Withdraw request not found or already resolved", 404));
-    }
-
     const session = await mongoose.startSession();
+    let resolvedWithdraw: IWithdraw | null = null;
+
     try {
       await session.withTransaction(async () => {
-        withdraw.status = "rejected";
-        withdraw.rejectionReason = reason;
-        await withdraw.save({ session });
-        await ShopModel.findByIdAndUpdate(withdraw.shopId, { $inc: { availableBalance: withdraw.amount } }, { session });
+        // Atomic guard, mirroring updateWithdrawRequest above: only a
+        // currently-"Processing" withdrawal can be rejected, so this can
+        // never race against (or trail) an approval of the same request.
+        const updated = await WithdrawModel.findOneAndUpdate(
+          { _id: withdrawId, status: "Processing" },
+          { $set: { status: "rejected", rejectionReason: reason } },
+          { new: true, session }
+        );
+
+        if (!updated) {
+          throw new ErrorHandler("Withdraw request not found or already resolved", 404);
+        }
+
+        await ShopModel.findByIdAndUpdate(
+          updated.shopId,
+          { $inc: { availableBalance: updated.amount } },
+          { session }
+        );
+
+        resolvedWithdraw = updated;
       });
     } finally {
       await session.endSession();
     }
+
+    const withdraw = resolvedWithdraw as unknown as IWithdraw;
 
     const seller = await ShopModel.findById(withdraw.shopId);
     if (seller) {
@@ -210,4 +229,3 @@ export const rejectWithdrawRequest = catchAsyncErrors(
     res.status(200).json({ success: true, withdraw });
   }
 );
-

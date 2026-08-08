@@ -30,6 +30,7 @@ export interface IShop extends Document {
     status: 'pending' | 'active' | 'suspended';
     withdrawMethod?: IWithdrawMethod;
     availableBalance: number;
+    owedBalance: number;
     transaction?: Array<{
         amount: number;
         status: string;
@@ -145,6 +146,10 @@ const shopSchema = new Schema<IShop>(
             default: null,
         },
         availableBalance: {
+            type: Number,
+            default: 0,
+        },
+        owedBalance: {
             type: Number,
             default: 0,
         },

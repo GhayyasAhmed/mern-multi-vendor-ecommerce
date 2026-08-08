@@ -28,6 +28,7 @@ export interface IOrder extends Document {
   status: string;
   paymentInfo?: IPaymentInfo;
   coupon?: IOrderCoupon;
+  sellerCreditedAmount?: number;
   paidAt?: Date;
   deliveredAt?: Date;
   createdAt?: Date;
@@ -70,6 +71,9 @@ const orderSchema = new Schema<IOrder>(
     coupon: {
       name: { type: String },
       discountAmount: { type: Number },
+    },
+    sellerCreditedAmount: {
+      type: Number,
     },
     paidAt: {
       type: Date,

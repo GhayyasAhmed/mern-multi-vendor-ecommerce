@@ -253,16 +253,17 @@ export const getOrderById = catchAsyncErrors(
 );
 
 // update order status for seller
+// update order status for seller
 export const updateOrderStatus = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const order = await OrderModel.findById(req.params.id);
+    const existingOrder = await OrderModel.findById(req.params.id);
 
-    if (!order) {
+    if (!existingOrder) {
       return next(new ErrorHandler("Order not found with this id", 400));
     }
 
     const sellerId = req.seller?._id;
-    const cartItems = order.cart as ICartItem[];
+    const cartItems = existingOrder.cart as ICartItem[];
     const belongsToSeller =
       !!sellerId &&
       cartItems.length > 0 &&
@@ -272,68 +273,142 @@ export const updateOrderStatus = catchAsyncErrors(
       return next(new ErrorHandler("You are not authorized to update this order", 403));
     }
 
-    // Stock is now reserved atomically at order-creation time (createOrder),
-    // so no further decrement happens on this status transition.
-    order.status = req.body.status;
+    const newStatus = req.body.status as string;
 
-    if (req.body.status === "Delivered") {
-      order.deliveredAt = new Date();
-      if (order.paymentInfo) {
-        order.paymentInfo.status = "Succeeded";
-      }
-      const serviceCharge = order.totalPrice * 0.1;
-      const netAmount = order.totalPrice - serviceCharge;
-
-      // Atomic $inc avoids losing concurrent credits under a
-      // read-modify-write race when a seller processes many deliveries at once.
-      await ShopModel.findByIdAndUpdate(sellerId, { $inc: { availableBalance: netAmount } });
+    // Once an order has left the normal fulfillment flow (delivered, or in
+    // any refund state), it must only move further through the refund
+    // endpoints below — never back through a plain status update. Without
+    // this guard a seller could bounce an order Delivered -> Processing ->
+    // Delivered again and have their balance credited twice for one order.
+    if (
+      existingOrder.status === "Delivered" ||
+      existingOrder.status === "Processing Refund" ||
+      existingOrder.status === "Refund Success"
+    ) {
+      return next(
+        new ErrorHandler(`This order is already "${existingOrder.status}" and cannot be updated this way`, 400)
+      );
     }
 
-    await order.save({ validateBeforeSave: false });
+    if (newStatus !== "Delivered") {
+      existingOrder.status = newStatus;
+      await existingOrder.save({ validateBeforeSave: false });
 
-    const buyerIdForNotif = (order.user as { _id?: unknown })?._id;
+      const buyerIdForNotif = (existingOrder.user as { _id?: unknown })?._id;
+      if (buyerIdForNotif) {
+        createNotification(
+          String(buyerIdForNotif),
+          "user",
+          "order_status",
+          `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
+          `/orders/${existingOrder._id}`
+        ).catch(() => { });
+      }
+
+      res.status(200).json({ success: true, order: existingOrder });
+      return;
+    }
+
+    // Delivering: credit the seller's balance exactly once, atomically,
+    // guarded so a duplicate/concurrent request can never double-credit.
+    const serviceCharge = existingOrder.totalPrice * 0.1;
+    const netAmount = existingOrder.totalPrice - serviceCharge;
+
+    const session = await mongoose.startSession();
+    let deliveredOrder: IOrder | null = null;
+
+    try {
+      await session.withTransaction(async () => {
+        const updated = await OrderModel.findOneAndUpdate(
+          { _id: existingOrder._id, status: { $ne: "Delivered" } },
+          {
+            $set: {
+              status: "Delivered",
+              deliveredAt: new Date(),
+              "paymentInfo.status": "Succeeded",
+              sellerCreditedAmount: netAmount,
+            },
+          },
+          { new: true, session }
+        );
+
+        if (!updated) {
+          throw new ErrorHandler("This order was already delivered", 409);
+        }
+
+        const shop = await ShopModel.findById(sellerId).session(session);
+        if (!shop) {
+          throw new ErrorHandler("Shop not found", 404);
+        }
+
+        // Any outstanding owedBalance (from a prior refund that couldn't be
+        // fully clawed back because the money had already been withdrawn)
+        // is repaid out of this new credit first; only the remainder, if
+        // any, becomes withdrawable availableBalance.
+        const owed = shop.owedBalance || 0;
+        const repayment = Math.min(owed, netAmount);
+        const toAvailable = netAmount - repayment;
+
+        await ShopModel.findByIdAndUpdate(
+          sellerId,
+          { $inc: { owedBalance: -repayment, availableBalance: toAvailable } },
+          { session }
+        );
+
+        deliveredOrder = updated;
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    const finalOrder = deliveredOrder as unknown as IOrder;
+
+    const buyerIdForNotif = (finalOrder.user as { _id?: unknown })?._id;
     if (buyerIdForNotif) {
       createNotification(
         String(buyerIdForNotif),
         "user",
         "order_status",
-        `Your order #${String(order._id).slice(-8).toUpperCase()} is now "${order.status}"`,
-        `/orders/${order._id}`
+        `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
+        `/orders/${finalOrder._id}`
       ).catch(() => { });
     }
 
-    res.status(200).json({
-      success: true,
-      order,
-    });
+    res.status(200).json({ success: true, order: finalOrder });
   }
 );
 
 // user requests a refund for their own delivered order
+// user requests a refund for their own delivered order
 export const orderRefund = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const order = await OrderModel.findById(req.params.id);
+    const existingOrder = await OrderModel.findById(req.params.id);
 
-    if (!order) {
+    if (!existingOrder) {
       return next(new ErrorHandler("Order not found with this id", 400));
     }
 
-    const buyerId = (order.user as { _id?: unknown })?._id;
+    const buyerId = (existingOrder.user as { _id?: unknown })?._id;
     if (!req.user || String(buyerId) !== String(req.user._id)) {
       return next(new ErrorHandler("You are not authorized to refund this order", 403));
     }
 
-    if (order.status !== "Delivered") {
+    // Atomic guard: only a currently-"Delivered" order can move to
+    // "Processing Refund", so a duplicate click/request can't produce two
+    // separate refund requests for the same order.
+    const updated = await OrderModel.findOneAndUpdate(
+      { _id: existingOrder._id, status: "Delivered" },
+      { $set: { status: "Processing Refund" } },
+      { new: true }
+    );
+
+    if (!updated) {
       return next(new ErrorHandler("Only delivered orders can be refunded", 400));
     }
 
-    order.status = "Processing Refund";
-
-    await order.save({ validateBeforeSave: false });
-
     res.status(200).json({
       success: true,
-      order,
+      order: updated,
       message: "Order Refund Request successfully!",
     });
   }
@@ -342,44 +417,90 @@ export const orderRefund = catchAsyncErrors(
 // seller accepts a pending refund request
 export const orderRefundSuccess = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const order = await OrderModel.findById(req.params.id);
+    const sellerId = req.seller?._id;
+    if (!sellerId) {
+      return next(new ErrorHandler("You are not authorized to update this order", 403));
+    }
 
-    if (!order) {
+    const preCheckOrder = await OrderModel.findById(req.params.id);
+    if (!preCheckOrder) {
       return next(new ErrorHandler("Order not found with this id", 400));
     }
 
-    const sellerId = req.seller?._id;
-    const cartItems = order.cart as ICartItem[];
+    const cartItems = preCheckOrder.cart as ICartItem[];
     const belongsToSeller =
-      !!sellerId && cartItems.length > 0 && cartItems.every((item) => String(item.shopId) === String(sellerId));
+      cartItems.length > 0 && cartItems.every((item) => String(item.shopId) === String(sellerId));
 
     if (!belongsToSeller) {
       return next(new ErrorHandler("You are not authorized to update this order", 403));
     }
 
-    if (order.status !== "Processing Refund") {
-      return next(new ErrorHandler("This order is not awaiting a refund", 400));
+    const session = await mongoose.startSession();
+    let refundedOrder: IOrder | null = null;
+
+    try {
+      await session.withTransaction(async () => {
+        // Atomic guard: only a currently-"Processing Refund" order can be
+        // marked "Refund Success", so a duplicate/concurrent approval can
+        // never reverse the seller's balance twice for the same order.
+        const updated = await OrderModel.findOneAndUpdate(
+          { _id: preCheckOrder._id, status: "Processing Refund" },
+          { $set: { status: "Refund Success" } },
+          { new: true, session }
+        );
+
+        if (!updated) {
+          throw new ErrorHandler("This order is not awaiting a refund", 400);
+        }
+
+        const creditedAmount = updated.sellerCreditedAmount || 0;
+
+        if (creditedAmount > 0) {
+          const shop = await ShopModel.findById(sellerId).session(session);
+          if (!shop) {
+            throw new ErrorHandler("Shop not found", 404);
+          }
+
+          // Claw back what was credited to the seller at delivery. The
+          // seller may already have withdrawn some or all of it, so
+          // availableBalance can only be pulled down to zero — never
+          // negative. Whatever can't be recovered here becomes
+          // owedBalance, automatically repaid out of the seller's next
+          // delivered-order credit(s) before any of it reaches
+          // availableBalance again (see updateOrderStatus above).
+          const recoverable = Math.min(shop.availableBalance || 0, creditedAmount);
+          const shortfall = creditedAmount - recoverable;
+
+          await ShopModel.findByIdAndUpdate(
+            sellerId,
+            { $inc: { availableBalance: -recoverable, owedBalance: shortfall } },
+            { session }
+          );
+        }
+
+        // Restock inside the same transaction so inventory and the
+        // financial reversal are atomic together.
+        for (const item of cartItems) {
+          const isEvent = item.kind === "event";
+          const Model = (isEvent ? EventModel : ProductModel) as unknown as mongoose.Model<any>;
+          await Model.findByIdAndUpdate(
+            item._id,
+            { $inc: { stock: item.qty, sold_out: -item.qty } },
+            { session }
+          );
+        }
+
+        refundedOrder = updated;
+      });
+    } finally {
+      await session.endSession();
     }
-
-    order.status = "Refund Success";
-
-    await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
+      order: refundedOrder,
       message: "Order Refund successfull!",
     });
-
-    // Atomic restock — avoids the same read-modify-write race as the stock
-    // reservation/crediting above.
-    const restock = async (id: string, qty: number, kind?: string): Promise<void> => {
-      const Model = (kind === "event" ? EventModel : ProductModel) as unknown as mongoose.Model<any>;
-      await Model.findByIdAndUpdate(id, { $inc: { stock: qty, sold_out: -qty } });
-    };
-
-    for (const item of cartItems) {
-      await restock(item._id, item.qty, item.kind);
-    }
   }
 );
 

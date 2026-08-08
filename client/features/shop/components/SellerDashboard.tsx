@@ -42,7 +42,6 @@ import type { IProduct, IShop } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
@@ -58,6 +57,8 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Tab =
   | "profile"
@@ -67,6 +68,16 @@ type Tab =
   | "payouts"
   | "coupons"
   | "messages";
+
+const TABS: Tab[] = [
+  "profile",
+  "products",
+  "events",
+  "orders",
+  "payouts",
+  "coupons",
+  "messages",
+];
 
 const ORDER_STATUSES = [
   "Processing",
@@ -78,7 +89,21 @@ const ORDER_STATUSES = [
 
 export default function SellerDashboard() {
   const { seller } = useCurrentSeller();
-  const [tab, setTab] = useState<Tab>("profile");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const tabFromUrl = searchParams.get("tab") as Tab | null;
+  const tab: Tab =
+    tabFromUrl && TABS.includes(tabFromUrl) ? tabFromUrl : "profile";
+
+  const setTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", next);
+    if (next !== "messages") {
+      params.delete("conversation");
+    }
+    router.replace(`/seller/dashboard?${params.toString()}`, { scroll: false });
+  };
 
   if (!seller) return null;
 
@@ -128,17 +153,7 @@ export default function SellerDashboard() {
 
       <div className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b mb-6">
-          {(
-            [
-              "profile",
-              "products",
-              "events",
-              "orders",
-              "payouts",
-              "coupons",
-              "messages",
-            ] as Tab[]
-          ).map((t) => (
+          {TABS.map((t) => (
             <button
               key={t}
               type="button"
@@ -163,7 +178,10 @@ export default function SellerDashboard() {
         )}
         {tab === "orders" && <OrdersPanel shopId={seller._id} />}
         {tab === "payouts" && (
-          <PayoutsPanel availableBalance={seller.availableBalance} />
+          <PayoutsPanel
+            availableBalance={seller.availableBalance}
+            owedBalance={seller.owedBalance}
+          />
         )}
         {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
         {tab === "coupons" && <CouponsPanel />}
@@ -299,7 +317,13 @@ const WITHDRAW_STATUS_STYLES: Record<string, string> = {
   succeed: "bg-green-100 text-green-700",
 };
 
-function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
+function PayoutsPanel({
+  availableBalance,
+  owedBalance,
+}: {
+  availableBalance: number;
+  owedBalance?: number;
+}) {
   const { seller } = useCurrentSeller();
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetMyWithdrawRequestsQuery({
@@ -357,6 +381,13 @@ function PayoutsPanel({ availableBalance }: { availableBalance: number }) {
           Available balance:{" "}
           <span className="font-semibold">${availableBalance.toFixed(2)}</span>
         </p>
+        {Boolean(owedBalance && owedBalance > 0) && (
+          <p className="mb-4 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm px-3 py-2">
+            ${owedBalance!.toFixed(2)} from recent refunds could not be
+            recovered from your available balance and will be deducted from
+            future order earnings before they become available to withdraw.
+          </p>
+        )}
         <form
           onSubmit={handleSubmit}
           className="flex flex-col sm:flex-row gap-3"

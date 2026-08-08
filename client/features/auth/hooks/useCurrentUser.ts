@@ -2,17 +2,19 @@
 
 import { useGetUserDetailsQuery } from "../authApiSlice";
 
-export function useCurrentUser() {
-  const { data, isLoading, isFetching, error, refetch } = useGetUserDetailsQuery(undefined, 
-    // {
-    // refetchOnReconnect: true,
-  // }
-);
+interface UseCurrentUserOptions {
+  skip?: boolean;
+}
+
+export function useCurrentUser(options?: UseCurrentUserOptions) {
+  const { data, isLoading, isFetching, error, refetch } = useGetUserDetailsQuery(undefined, {
+    skip: options?.skip,
+  });
 
   return {
     user: data?.user ?? null,
     isAuthenticated: Boolean(data?.user),
-    isLoading,
+    isLoading: options?.skip ? false : isLoading,
     isFetching,
     error,
     refetch,
