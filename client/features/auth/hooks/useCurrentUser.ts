@@ -3,9 +3,11 @@
 import { useGetUserDetailsQuery } from "../authApiSlice";
 
 export function useCurrentUser() {
-  const { data, isLoading, isFetching, error, refetch } = useGetUserDetailsQuery(undefined, {
-    refetchOnReconnect: true,
-  });
+  const { data, isLoading, isFetching, error, refetch } = useGetUserDetailsQuery(undefined, 
+    // {
+    // refetchOnReconnect: true,
+  // }
+);
 
   return {
     user: data?.user ?? null,
