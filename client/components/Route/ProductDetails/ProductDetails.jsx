@@ -68,7 +68,7 @@ const ProductDetails = ({ productId }) => {
   const incrementCount = () => setCount(count + 1);
 
   const handleMessageSubmit = async () => {
-    if (!product?.shop?._id) return;
+    if (!product?.shopId) return;
 
     if (!user) {
       router.push(`/login?redirect=${encodeURIComponent(`/product/${productId}`)}`);
@@ -76,7 +76,7 @@ const ProductDetails = ({ productId }) => {
     }
 
     try {
-      const result = await createConversation({ sellerId: product.shop._id }).unwrap();
+      const result = await createConversation({ sellerId: product.shopId }).unwrap();
       router.push(`/inbox?conversation=${result.conversation._id}`);
     } catch {
       // Best-effort: the user can retry from the product page if this fails.
