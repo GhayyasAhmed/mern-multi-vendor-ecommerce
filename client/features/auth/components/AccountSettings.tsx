@@ -1,36 +1,33 @@
 "use client";
 
+import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
+import styles from "@/styles/styles";
+import type { IAddress } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
-import ProtectedRoute from "./ProtectedRoute";
-import { useCurrentUser } from "../hooks/useCurrentUser";
 import {
-  useUpdateUserProfileMutation,
-  useUpdateUserEmailMutation,
-  useUpdateUserAvatarMutation,
-  useUpdateUserAddressMutation,
   useDeleteUserAddressMutation,
+  useUpdateUserAddressMutation,
+  useUpdateUserAvatarMutation,
   useUpdateUserPasswordMutation,
+  useUpdateUserProfileMutation
 } from "../authApiSlice";
+import { useCurrentUser } from "../hooks/useCurrentUser";
+import { getErrorMessage, readFileAsBase64 } from "../utils";
 import {
-  profileSchema,
-  emailUpdateSchema,
   addressSchema,
   passwordChangeSchema,
-  type ProfileFormValues,
-  type EmailUpdateFormValues,
+  profileSchema,
   type AddressFormValues,
   type PasswordChangeFormValues,
+  type ProfileFormValues,
 } from "../validators";
-import { getErrorMessage, readFileAsBase64 } from "../utils";
-import styles from "@/styles/styles";
-import type { IAddress } from "@/types";
+import ProtectedRoute from "./ProtectedRoute";
 
 type Tab = "profile" | "addresses" | "security";
 
@@ -75,14 +72,10 @@ function AccountContent() {
 function ProfileTab() {
   const { user } = useCurrentUser();
   const [updateProfile, { isLoading: isSavingProfile }] = useUpdateUserProfileMutation();
-  const [updateEmail, { isLoading: isSavingEmail }] = useUpdateUserEmailMutation();
   const [updateAvatar, { isLoading: isSavingAvatar }] = useUpdateUserAvatarMutation();
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const {
     register: registerProfile,
@@ -92,13 +85,6 @@ function ProfileTab() {
     resolver: zodResolver(profileSchema),
     defaultValues: { name: user?.name || "", phoneNumber: user?.phoneNumber ? String(user.phoneNumber) : "" },
   });
-
-  const {
-    register: registerEmail,
-    handleSubmit: handleEmailSubmit,
-    reset: resetEmail,
-    formState: { errors: emailErrors },
-  } = useForm<EmailUpdateFormValues>({ resolver: zodResolver(emailUpdateSchema) });
 
   const onProfileSubmit = async (values: ProfileFormValues) => {
     setProfileError(null);
@@ -112,19 +98,7 @@ function ProfileTab() {
     } catch (error) {
       setProfileError(getErrorMessage(error));
     }
-  };
-
-  const onEmailSubmit = async (values: EmailUpdateFormValues) => {
-    setEmailError(null);
-    setEmailSuccess(null);
-    try {
-      await updateEmail(values).unwrap();
-      setEmailSuccess("Email updated successfully.");
-      resetEmail();
-    } catch (error) {
-      setEmailError(getErrorMessage(error));
-    }
-  };
+  }
 
   const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -191,7 +165,7 @@ function ProfileTab() {
         </button>
       </form>
 
-      <form onSubmit={handleEmailSubmit(onEmailSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6" noValidate>
+      {/* <form onSubmit={handleEmailSubmit(onEmailSubmit)} className="space-y-4 bg-white rounded-lg shadow-sm p-6" noValidate>
         <h2 className="text-lg font-semibold text-[#333]">Email address</h2>
         <p className="text-sm text-gray-500">Current email: {user.email}</p>
         <div>
@@ -222,7 +196,7 @@ function ProfileTab() {
         <button type="submit" disabled={isSavingEmail} className={`${styles.submit_button} disabled:opacity-60`}>
           <span className="text-white font-[Poppins]">{isSavingEmail ? "Updating..." : "Update email"}</span>
         </button>
-      </form>
+      </form> */}
     </div>
   );
 }

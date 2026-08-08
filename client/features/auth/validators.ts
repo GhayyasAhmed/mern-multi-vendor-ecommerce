@@ -44,11 +44,6 @@ export const profileSchema = z.object({
 });
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export const emailUpdateSchema = z.object({
-  email: z.string("Email is required").email("Invalid email address"),
-  password: z.string("Password is required").min(1, "Password is required"),
-});
-export type EmailUpdateFormValues = z.infer<typeof emailUpdateSchema>;
 
 export const addressSchema = z.object({
   addressType: z.string("Address label is required").min(1, "Address label is required"),

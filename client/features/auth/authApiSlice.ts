@@ -54,11 +54,6 @@ export interface UpdateUserProfileRequest {
     phoneNumber?: number;
 }
 
-export interface UpdateUserEmailRequest {
-    email: string;
-    password: string;
-}
-
 export interface UpdateUserAvatarRequest {
     avatar: string;
 }
@@ -158,11 +153,6 @@ export const authApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ["User"],
         }),
 
-        updateUserEmail: builder.mutation<UpdateUserResponse, UpdateUserEmailRequest>({
-            query: (body) => ({ url: "/user/update-user-email", method: "PUT", body }),
-            invalidatesTags: ["User"],
-        }),
-
         updateUserAvatar: builder.mutation<UpdateUserResponse, UpdateUserAvatarRequest>({
             query: (body) => ({ url: "/user/update-avatar", method: "PUT", body }),
             invalidatesTags: ["User"],
@@ -196,7 +186,6 @@ export const {
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useUpdateUserProfileMutation,
-    useUpdateUserEmailMutation,
     useUpdateUserAvatarMutation,
     useUpdateUserAddressMutation,
     useDeleteUserAddressMutation,

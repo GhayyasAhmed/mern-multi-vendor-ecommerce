@@ -358,49 +358,6 @@ export const updateUserProfile = catchAsyncErrors(
     }
 );
 
-// 6b. Update User Email (Explicitly Password-Verified)
-export const updateUserEmail = catchAsyncErrors(
-    async (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user?._id) {
-            return next(new ErrorHandler("User not found", 404));
-        }
-
-        const { email, password } = req.body;
-
-        const user = await User.findById(req.user._id).select("+password");
-
-        if (!user) {
-            return next(new ErrorHandler("User not found", 404));
-        }
-
-        const isPasswordValid = await user.comparePassword(password);
-
-        if (!isPasswordValid) {
-            return next(
-                new ErrorHandler("Please provide the correct password", 400)
-            );
-        }
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-            return next(new ErrorHandler("Email already in use", 400));
-        }
-
-        user.email = email;
-        await user.save();
-
-        const sessionRaw = await redis.get(user._id.toString());
-        if (sessionRaw) {
-            const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
-            await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
-        }
-
-        res.status(200).json({
-            success: true,
-            user,
-        });
-    }
-);
 
 // 7. Update User Avatar
 export const updateUserAvatar = catchAsyncErrors(

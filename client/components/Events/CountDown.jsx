@@ -1,62 +1,75 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-// Pure helper moved outside component scope
-const calculateTimeLeft = (finishDate) => {
+const getTimeDetails = (finishDate) => {
   const targetDate = finishDate
     ? new Date(finishDate)
     : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
   const difference = +targetDate - +new Date();
-  let timeLeft = {};
+  
+  if (difference <= 0) {
+    return { expired: true };
+  }
 
-  if (difference > 0) {
-    timeLeft = {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+  const totalHours = Math.floor(difference / (1000 * 60 * 60));
+  const totalDays = Math.floor(difference / (1000 * 60 * 60 * 24));
+
+  if (totalHours < 24) {
+    return {
+      type: 'hours',
+      hours: totalHours,
       minutes: Math.floor((difference / 1000 / 60) % 60),
       seconds: Math.floor((difference / 1000) % 60),
     };
+  } else if (totalDays < 30) {
+    return {
+      type: 'days',
+      days: totalDays,
+    };
+  } else {
+    const months = Math.floor(totalDays / 30);
+    return {
+      type: 'months',
+      months: months,
+    };
   }
-
-  return timeLeft;
 };
 
-const CountDown = ({ data }) => {
+const CountDownOption1 = ({ data }) => {
   const finishDate = data?.Finish_Date;
-  const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft(finishDate));
+  const [timeDetails, setTimeDetails] = useState(() => getTimeDetails(finishDate));
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(finishDate));
+      setTimeDetails(getTimeDetails(finishDate));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [finishDate]);
 
-  const timerComponents = [];
+  if (timeDetails.expired) {
+    return <span className="text-red-600 text-sm font-semibold">Time&apos;s up!</span>;
+  }
 
-  Object.keys(timeLeft).forEach((interval) => {
-    if (!timeLeft[interval]) {
-      return;
-    }
-
-    timerComponents.push(
-      <span key={interval} className="text-[16px] text-[#333]">
-        {timeLeft[interval]} {interval}{" "}
-      </span>
-    );
-  });
+  const isUrgent = timeDetails.type === 'hours';
 
   return (
-    <div>
-      {timerComponents.length ? (
-        timerComponents
-      ) : (
-        <span className="text-[red] text-[18px]">Time&apos;s up!</span>
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+      isUrgent ? 'bg-red-50 text-red-600 border border-red-200 animate-pulse' : 'bg-gray-200 text-gray-700'
+    }`}>
+      <span className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-gray-400'}`} />
+      {timeDetails.type === 'hours' && (
+        <span>{timeDetails.hours} hours {timeDetails.minutes} minutes {timeDetails.seconds} seconds</span>
+      )}
+      {timeDetails.type === 'days' && (
+        <span>{timeDetails.days} days left</span>
+      )}
+      {timeDetails.type === 'months' && (
+        <span>{timeDetails.months} {timeDetails.months === 1 ? 'month' : 'months'} left</span>
       )}
     </div>
   );
 };
 
-export default CountDown;
+export default CountDownOption1;

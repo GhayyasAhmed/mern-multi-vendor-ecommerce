@@ -25,8 +25,7 @@ const EventCard = ({ active = true, data }) => {
         <Image
           src={
             data?.image_Url?.[0]?.url ||
-            data?.images?.[0]?.url ||
-            "https://m.media-amazon.com/images/I/71TPda7cwUL._AC_SL1500_.jpg"
+            data?.images?.[0]?.url
           }
           alt={data?.name || "Event Product"}
           fill
@@ -52,7 +51,7 @@ const EventCard = ({ active = true, data }) => {
             </h5>
           </div>
           <span className="pr-3 font-normal text-[17px] text-[#44a55e]">
-            {data?.sold_out || "120"} sold
+            {data?.sold_out ?? "0"} sold
           </span>
         </div>
         <CountDown data={data} />

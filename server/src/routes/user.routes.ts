@@ -1,30 +1,29 @@
 import express from "express";
 import {
-    createUser,
     activateUser,
-    resendActivation,
-    loginUser,
-    getUserDetails,
-    logoutUser,
-    updateUserProfile,
-    updateUserEmail,
-    updateUserAvatar,
-    updateUserAddresses,
-    deleteUserAddress,
-    updateUserPassword,
-    getUserInfo,
-    getAllUsersAdmin,
-    deleteUserAdmin,
-    refreshAccessToken,
-    forgotPassword,
-    resetPassword,
-    getWishlist,
     addToWishlist,
-    removeFromWishlist
+    createUser,
+    deleteUserAddress,
+    deleteUserAdmin,
+    forgotPassword,
+    getAllUsersAdmin,
+    getUserDetails,
+    getUserInfo,
+    getWishlist,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    removeFromWishlist,
+    resendActivation,
+    resetPassword,
+    updateUserAddresses,
+    updateUserAvatar,
+    updateUserPassword,
+    updateUserProfile
 } from "../controllers/user.controller.js";
-import { isAuthenticated, authorizeRoles } from "../middlewares/auth.js";
-import validate from "../middlewares/validate.js";
+import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
 import { authLimiter } from "../middlewares/rateLimiter.js";
+import validate from "../middlewares/validate.js";
 import { UserValidations, activationSchema, resendActivationSchema } from "../utils/validators.js";
 
 const userRouter = express.Router();
@@ -41,7 +40,6 @@ userRouter.post("/refresh-token", authLimiter, refreshAccessToken);
 
 // Profile & Account Settings Routes
 userRouter.put("/update-user-profile", isAuthenticated, validate(UserValidations.updateUserProfileSchema), updateUserProfile);
-userRouter.put("/update-user-email", isAuthenticated, validate(UserValidations.updateUserEmailSchema), updateUserEmail);
 userRouter.put("/update-avatar", isAuthenticated, validate(UserValidations.updateUserAvatarSchema), updateUserAvatar);
 userRouter.put("/update-user-addresses", isAuthenticated, validate(UserValidations.updateUserAddressesSchema), updateUserAddresses);
 userRouter.delete("/delete-user-address/:id", isAuthenticated, deleteUserAddress);
