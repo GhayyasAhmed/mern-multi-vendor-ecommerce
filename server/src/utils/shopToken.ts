@@ -12,6 +12,15 @@ import { env } from "../config/env.js";
 // with a matching 90-day expiry fixes that.
 const SELLER_SESSION_SECONDS = 90 * 24 * 60 * 60;
 
+export function buildSellerCookieOptions(maxAgeSeconds: number) {
+  return {
+    expires: new Date(Date.now() + maxAgeSeconds * 1000),
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+  };
+}
+
 const sendShopToken = async (
   user: IShop,
   statusCode: number,
@@ -22,14 +31,14 @@ const sendShopToken = async (
     expiresIn: `${SELLER_SESSION_SECONDS}s`,
   });
 
-  const isProduction = process.env.NODE_ENV === "production";
-
-  const options = {
-    expires: new Date(Date.now() + SELLER_SESSION_SECONDS * 1000),
-    httpOnly: true,
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
-    secure: isProduction,
-  };
+  const options = buildSellerCookieOptions(SELLER_SESSION_SECONDS);
+  // const isProduction = process.env.NODE_ENV === "production";
+  // const options = {
+  //   expires: new Date(Date.now() + SELLER_SESSION_SECONDS * 1000),
+  //   httpOnly: true,
+  //   sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  //   secure: isProduction,
+  // };
 
   // Sanitize document explicitly before Redis cache and HTTP response payload
   const sanitizedUser = typeof user.toJSON === "function" ? user.toJSON() : user;

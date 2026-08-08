@@ -255,18 +255,8 @@ export const logoutUser = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         const userId = req.user?._id;
 
-        res.cookie("accessToken", "", {
-            expires: new Date(Date.now()),
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-        });
-        res.cookie("refreshToken", "", {
-            expires: new Date(Date.now()),
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-        });
+        res.cookie("accessToken", "", { ...accessTokenOptions, expires: new Date(0), maxAge: 0 });
+        res.cookie("refreshToken", "", { ...refreshTokenOptions, expires: new Date(0), maxAge: 0 });
 
         if (userId) {
             await redis.del(userId.toString());

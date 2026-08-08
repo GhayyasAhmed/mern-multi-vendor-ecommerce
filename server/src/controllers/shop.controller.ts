@@ -9,12 +9,13 @@ import CouponCode from "../models/couponCode.model.js";
 import EventModel from "../models/event.model.js";
 import Product from "../models/product.model.js";
 import Shop from "../models/shop.model.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import sendEmail from "../utils/sendEmail.js";
-import sendShopToken from "../utils/shopToken.js";
-import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
-import { trackPendingUpload, clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS } from "../utils/pendingUploads.js";
 import { encryptSecret } from "../utils/crypto.js";
+import ErrorHandler from "../utils/errorhandler.js";
+import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
+import { clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS, trackPendingUpload } from "../utils/pendingUploads.js";
+import sendEmail from "../utils/sendEmail.js";
+import sendShopToken, { buildSellerCookieOptions } from "../utils/shopToken.js";
+
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -284,12 +285,7 @@ export const logoutShop = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const sellerId = req.seller?._id;
 
-    res.cookie("seller_token", "", {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
+    res.cookie("seller_token", "", { ...buildSellerCookieOptions(0), expires: new Date(0) })
 
     if (sellerId) {
       await redis.del(`seller_${sellerId.toString()}`);

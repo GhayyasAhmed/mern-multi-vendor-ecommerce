@@ -23,7 +23,7 @@ export const accessTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + accessTokenExpiresIn),
     maxAge: accessTokenExpiresIn,
     httpOnly: true,
-    sameSite: isProduction ? "none" : "lax",
+    sameSite: "lax",
     secure: isProduction
 };
 
@@ -31,7 +31,7 @@ export const refreshTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + refreshTokenExpiresIn),
     maxAge: refreshTokenExpiresIn,
     httpOnly: true,
-    sameSite: isProduction ? "none" : "lax",
+    sameSite: "lax",
     secure: isProduction
 };
 
