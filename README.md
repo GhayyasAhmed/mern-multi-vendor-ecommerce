@@ -1,192 +1,734 @@
-Mercovia
+# Mercovia
 
-Production-oriented multi-vendor e-commerce marketplace demonstratingfull-stack engineering, domain-oriented architecture, secure APIdesign, data integrity, and real-world buyer, seller, and adminworkflows.
+> Production-oriented multi-vendor e-commerce marketplace demonstrating
+> full-stack engineering, domain-oriented architecture, secure API
+> design, data integrity, and real-world buyer, seller, and admin
+> workflows.
 
-Live application: https://mercovia.vercel.app
+**Live application:** https://mercovia.vercel.app
 
-Overview
+## Overview
 
-Mercovia is a full-stack marketplace where multiple sellers manageproducts, events, orders, coupons, conversations and payouts whilebuyers discover products, maintain a user-scoped cart, check out, trackorders, request supported refunds, submit eligible reviews andcommunicate with sellers. Protected administration supports platformoperations and moderation.
+Mercovia is a full-stack marketplace where multiple sellers can manage
+products, events, orders, coupons, conversations, payouts, and shop
+operations while buyers can discover products, maintain a user-scoped
+cart, complete checkout, track orders, request supported refunds, submit
+eligible reviews, manage their account, and communicate with sellers.
 
-The project is deliberately more than a CRUD exercise. It addresses theboundaries that matter in a marketplace: authentication andauthorization, frontend/backend contract alignment, validation, routeprotection, stock and order integrity, payment verification, sellerbalance integrity, pagination, RTK Query caching, real-time messaging,cloud media and explicit loading/error/empty states.
+The project is intentionally designed beyond a basic CRUD
+implementation. The architecture addresses the boundaries that matter in
+a marketplace:
 
-Architecture
+-   authentication and role-based authorization
+-   frontend/backend contract alignment
+-   server-side validation
+-   protected routes and deep-linking
+-   inventory and order integrity
+-   payment verification
+-   seller balance integrity
+-   pagination for production-scale list endpoints
+-   RTK Query caching and invalidation
+-   real-time messaging
+-   external media storage
+-   explicit loading, error, and empty states
+-   administrative operations and moderation
 
-Next.js / React Client
-        │ HTTP + HTTP-only cookies + Socket.IO
-        ▼
-Express + TypeScript API
-        │
-        ├── Auth / Authorization / Validation
-        ├── Domain Controllers / Models
-        ├── Stripe / Webhooks
-        └── Socket.IO
-        │
-        ├── MongoDB
-        ├── Redis
-        └── Cloudinary
+The implementation is organized so that buyer, seller, and administrator
+responsibilities remain distinct while sharing the same backend domain
+model and API contracts.
 
-The repository is split into independently runnable applications:
+## Key Features
 
+### Buyer
+
+-   Register and activate an account
+-   Log in and maintain an authenticated session
+-   Browse and search marketplace products
+-   Filter products by category, price, and rating
+-   View product details and seller information
+-   Add products to a user-scoped cart
+-   Revalidate product availability before checkout
+-   Complete multi-shop checkout
+-   Pay using supported payment methods
+-   View all resulting orders
+-   Track order status
+-   Request supported refunds
+-   Submit eligible product reviews
+-   Manage profile information and addresses
+-   Apply seller coupons during checkout
+-   Communicate with sellers
+
+### Seller
+
+-   Register and activate a seller account
+-   Manage shop profile and shop media
+-   Configure payout/withdrawal information
+-   Create, update, and delete products
+-   Create, update, and delete events
+-   Upload product and event media
+-   Manage incoming orders
+-   Update fulfillment status
+-   Manage seller coupons
+-   View seller balance and withdrawal history
+-   Request withdrawals
+-   Communicate with buyers
+-   Receive operational notifications
+
+### Admin
+
+-   Securely provision an administrator account
+-   Access protected administrative routes
+-   Review users and sellers
+-   Review products, events, and orders
+-   Manage withdrawals
+-   Perform authorized platform-level corrective and moderation
+    operations
+-   Monitor marketplace data through protected admin APIs and UI
+
+## Architecture
+
+``` text
+                         Browser
+                            │
+                ┌───────────┴───────────┐
+                │                       │
+           HTTP / Cookies          Socket.IO
+                │                       │
+                ▼                       ▼
+       React / Next.js Client     Real-time handlers
+                │
+                │ REST API
+                ▼
+       Express + TypeScript API
+                │
+       ┌────────┼─────────┬─────────────┐
+       │        │         │             │
+       ▼        ▼         ▼             ▼
+   MongoDB    Redis    Cloudinary     Stripe
+   /Mongoose            / Media       / Payments
+       │
+       ▼
+  Domain models and
+  business invariants
+```
+
+The repository is split into two independently runnable applications:
+
+``` text
 /
-├── client/       # Next.js frontend
+├── client/       # React/Next.js frontend
 ├── server/       # Express + TypeScript backend
 ├── README.md
 ├── client/README.md
 └── server/README.md
+```
 
-Domains
+The client is responsible for presentation, routing, local UI state, API
+consumption, and user experience. The server remains authoritative for
+authentication, authorization, validation, business rules, persistence,
+inventory, financial state, and payment verification.
 
-Domain                              Responsibility
+## Domain Architecture
 
-Authentication / Users              Registration, activation, login,sessions, password recovery,account management
+  -----------------------------------------------------------------------
+  Domain                              Responsibility
+  ----------------------------------- -----------------------------------
+  Authentication / Users              Registration, activation, login,
+                                      sessions, password recovery,
+                                      account management
 
-Shops                               Seller identity, profile, payoutinformation
+  Shops                               Seller identity, shop profile,
+                                      payout information
 
-Products                            Catalog, inventory, categories,reviews
+  Products                            Catalog, pricing, stock,
+                                      categories, media, reviews
 
-Events                              Seller promotional/event listings
+  Events                              Seller promotional/event listings
+                                      and management
 
-Cart                                User-scoped shopping state
+  Cart                                User-scoped shopping state and
+                                      availability checks
 
-Orders                              Checkout, fulfillment, refunds,order history
+  Orders                              Checkout, shop-specific orders,
+                                      fulfillment, refunds, order history
 
-Payments                            Stripe PaymentIntents, paymentverification, webhooks, COD
+  Payments                            COD, Stripe PaymentIntents, payment
+                                      confirmation, webhooks
 
-Coupons                             Seller-owned discount codes andcheckout validation
+  Coupons                             Seller-owned discount codes and
+                                      checkout validation
 
-Conversations / Messages            Buyer-seller communication andreal-time updates
+  Conversations / Messages            Buyer-seller communication and
+                                      real-time updates
 
-Withdrawals                         Seller payout requests andadministrative processing
+  Withdrawals                         Seller payout requests and
+                                      administrative processing
 
-Notifications                       Important marketplace events
+  Notifications                       User-facing operational
+                                      notifications and read/unread state
 
-Administration                      Platform-level management
+  Administration                      Platform-level management and
+                                      moderation
+  -----------------------------------------------------------------------
 
-Roles
+## Technology Stack
 
-Buyer --- browse/search, cart, checkout, orders, refunds, reviews,coupons, account management and seller communication.
+### Frontend
 
-Seller --- shop/profile management, products, events, orders,coupons, payouts and buyer communication.
+-   React / Next.js
+-   JavaScript / TypeScript where applicable
+-   Redux Toolkit
+-   RTK Query
+-   React Hook Form
+-   Zod where used for client-side validation
+-   Tailwind CSS and existing component styling
+-   Socket.IO client
 
-Admin --- protected platform operations across users, sellers,products, events, orders, withdrawals and moderation-related workflows.
+### Backend
 
-Stack
+-   Node.js
+-   Express.js
+-   TypeScript
+-   MongoDB
+-   Mongoose
+-   Zod
+-   JWT / HTTP-only cookie authentication
+-   bcryptjs
+-   Redis
+-   Stripe
+-   Cloudinary
+-   Socket.IO
+-   Nodemailer
+-   Helmet
+-   CORS middleware
 
-Frontend: Next.js, React, TypeScript/JavaScript, Redux Toolkit, RTKQuery, React Hook Form, Zod, Tailwind CSS, Socket.IO client.
+### Infrastructure
 
-Backend: Node.js, Express, TypeScript, MongoDB, Mongoose, Zod,JWT/HTTP-only cookies, bcryptjs, Redis, Stripe, Cloudinary, Socket.IO,Nodemailer, Helmet and CORS.
+-   Vercel
+-   MongoDB Atlas
+-   Redis-compatible managed service
+-   Cloudinary
+-   Stripe
+-   GitHub
 
-Infrastructure: MongoDB Atlas, Redis-compatible service, Cloudinary,Stripe, Vercel and GitHub.
+## Prerequisites
 
-Local Development
+Install:
 
-Prerequisites
+-   Node.js and npm
+-   MongoDB access
+-   Redis access
+-   Git
 
-Install Node.js and npm. The complete application also requires accessto MongoDB, Redis, Cloudinary and SMTP. Stripe is required to exerciseonline payment flows.
+For complete end-to-end functionality, also configure:
 
-Backend
+-   Cloudinary
+-   Stripe
+-   SMTP/email delivery
 
+Stripe test credentials should be used for local development.
+
+## Local Development
+
+### 1. Clone the repository
+
+``` bash
+git clone <repository-url>
+cd <repository-folder>
+```
+
+### 2. Configure the backend
+
+``` bash
 cd server
 npm install
+```
 
-Create server/.env. Configure the variables required byserver/src/config/env.ts, including the MongoDB URI, frontend origin,authentication configuration, Redis, Cloudinary, Stripe and emailconfiguration.
+Create:
 
-At minimum the local configuration must include the equivalent of:
+``` text
+server/.env
+```
 
+At minimum, configure the variables required by
+`server/src/config/env.ts`.
+
+Typical local configuration includes:
+
+``` env
 NODE_ENV=development
-PORT=<server-port>
-FRONTEND_URL=http://localhost:<frontend-port>
-MONGO_URI=<mongodb-connection-string>
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+MONGO_URI=mongodb://localhost:27017/mercovia
+```
 
-Do not commit secrets. Use the actual variable names defined by thecurrent env.ts configuration for JWT, Redis, Cloudinary, Stripe andSMTP values.
+Also configure the authentication, Redis, Cloudinary, Stripe, SMTP, and
+other service-specific variables required by the current backend
+configuration.
 
-Start the API:
+Do not commit `.env`.
 
+### 3. Configure the frontend
+
+``` bash
+cd ../client
+npm install
+```
+
+Create:
+
+``` text
+client/.env.local
+```
+
+Configure the backend API URL:
+
+``` env
+NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
+```
+
+Only browser-safe values may use the `NEXT_PUBLIC_` prefix. Never expose
+database credentials, JWT secrets, Stripe secret keys, Cloudinary
+secrets, SMTP passwords, or other server secrets through frontend
+environment variables.
+
+### 4. Run the backend
+
+``` bash
+cd server
 npm run dev
+```
 
-Frontend
+Typical local API:
+
+``` text
+http://localhost:3001
+```
+
+### 5. Run the frontend
 
 In a second terminal:
 
+``` bash
 cd client
-npm install
-
-Create client/.env.local:
-
-NEXT_PUBLIC_SERVER_URI=http://localhost:<server-port>/api/v1
-
-Start Next.js:
-
 npm run dev
+```
 
-Use the URL printed by Next.js.
+Typical local frontend:
 
-Admin provisioning
+``` text
+http://localhost:3000
+```
 
-From server/.env:
+### 6. Open the application
 
+Visit:
+
+``` text
+http://localhost:3000
+```
+
+The backend and frontend are separate processes and must both be running
+for authenticated and data-backed functionality.
+
+## Verifying the Setup
+
+Start both applications and verify:
+
+1.  The frontend loads without build/runtime errors.
+2.  The backend starts and connects to MongoDB.
+3.  API requests point to the expected backend origin.
+4.  Authentication cookies are being set and sent.
+5.  Product listing loads from the backend.
+6.  Seller and buyer protected routes redirect correctly.
+7.  Socket.IO connects when messaging is opened.
+8.  Stripe flows use test credentials when enabled.
+
+A basic API health check, if enabled by the current backend:
+
+``` bash
+curl http://localhost:3001/test
+```
+
+## Admin Provisioning
+
+The repository contains an operational admin seeding flow.
+
+Configure in `server/.env`:
+
+``` env
 ADMIN_NAME=Admin
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=<strong-password>
+```
 
 Then:
 
+``` bash
 cd server
 npm run seed:admin
+```
 
-The script creates the admin or promotes an existing account. Nevercommit these credentials. For production, provision against theproduction database through a controlled operational process.
+The script creates the admin account if it does not exist or promotes an
+existing user.
 
-Authentication
+Never commit admin credentials.
 
-Authentication uses server-managed HTTP-only cookies. The clientresolves session state through the current-user API and can refresh anexpired access token through the backend. Route protection isimplemented through middleware and client-side defense-in-depth.
+For production, run the seed operation deliberately against the
+production database rather than exposing an unauthenticated public
+admin-creation endpoint.
 
-For local development, FRONTEND_URL must exactly match the browserorigin or protected POST/PUT flows can fail CORS/origin checks.
+## Authentication Model
 
-Payments
+Authentication is server-managed and uses HTTP-only cookies.
 
-Mercovia supports Cash on Delivery and Stripe PaymentIntents. Stripewebhook verification is the authoritative payment confirmationmechanism; client-supplied payment success must never be treated asproof of payment.
+The client does not treat a visible frontend state as proof of
+authorization. The backend validates the authenticated identity for
+protected operations.
 
-Media and Real-Time Communication
+High-level flow:
 
-Cloudinary stores user, seller, product and event media. Socket.IOsupports buyer/seller messaging and related real-time events.
+``` text
+Registration
+    ↓
+Activation
+    ↓
+Login
+    ↓
+Authenticated HTTP-only session
+    ↓
+Current-user/session resolution
+    ↓
+Role-aware protected routes
+```
 
-Engineering Practices
+Roles include:
 
-domain-oriented modularity
+-   `user`
+-   `seller`
+-   `admin`
 
-typed backend code
+Seller-owned resources additionally require ownership checks where
+applicable.
 
-server-side validation and authorization
+## Buyer Flow
 
-centralized error handling
+``` text
+Visitor
+  ↓
+Browse products / shops
+  ↓
+Register
+  ↓
+Activate account
+  ↓
+Login
+  ↓
+Browse / search / filter
+  ↓
+Product details
+  ↓
+Add to user-scoped cart
+  ↓
+Revalidate availability
+  ↓
+Checkout
+  ↓
+Payment / COD
+  ↓
+Shop-specific order creation
+  ↓
+Order confirmation
+  ↓
+Track fulfillment
+  ↓
+Refund / review / messaging when eligible
+```
 
-RTK Query caching/invalidation
+## Seller Flow
 
-paginated list APIs
+``` text
+Seller registration
+  ↓
+Account activation
+  ↓
+Seller login
+  ↓
+Seller dashboard
+  ↓
+Configure shop / payout details
+  ↓
+Create products / events
+  ↓
+Manage catalog and coupons
+  ↓
+Receive buyer orders
+  ↓
+Update fulfillment status
+  ↓
+Delivery / seller balance workflow
+  ↓
+Request withdrawal
+  ↓
+Track payout status
+```
 
-atomic operations for concurrency-sensitive financial/inventorypaths
+## Admin Flow
 
-protected administrative operations
+``` text
+Admin provisioning
+  ↓
+Admin login
+  ↓
+Protected admin area
+  ↓
+Review marketplace data
+  ↓
+Manage users / sellers / products / events
+  ↓
+Review orders / withdrawals
+  ↓
+Perform authorized moderation / corrective operations
+```
 
-explicit loading/error/empty states
+## Payments
 
-environment-based secrets
+Mercovia supports:
 
-externalized media storage
+-   Cash on Delivery
+-   Stripe PaymentIntent-based online payment
 
-Production Boundary
+The backend is the payment trust boundary.
 
-This is a production-oriented portfolio system, not an assertion thatevery enterprise capability exists. Full observability platforms,automated disaster recovery, advanced fraud detection, large-scaleanalytics infrastructure and formal enterprise release governance areseparate concerns unless explicitly implemented.
+Client-supplied payment success must never be treated as authoritative.
+Stripe confirmation and verified webhook events are used to establish
+payment state.
 
-Documentation
+For local Stripe testing, use Stripe test-mode credentials.
 
-client/README.md --- frontend architectureand setup
+## Inventory and Order Integrity
 
-server/README.md --- backend architecture,configuration and operations
+Marketplace checkout is multi-shop aware. Items belonging to different
+sellers may produce separate order records.
 
-Project case study --- architecture, flows, database design,security and production-readiness rationale
+Inventory-sensitive operations use server-side availability checks and
+atomic database behavior where required.
 
-License
+Financially sensitive operations such as seller balances and withdrawals
+should not rely on unsafe read-modify-write patterns.
 
-MIT — see individual package.json files for the declared license per app.
+## Real-Time Messaging
+
+Messaging combines:
+
+-   REST APIs for persistence and retrieval
+-   Socket.IO for real-time communication
+-   conversation/message domain models
+-   presence/read-state functionality where enabled
+
+The real-time layer should be tested together with the authenticated
+HTTP API rather than in isolation.
+
+## Media
+
+Cloudinary is used for supported user, seller, product, event, and
+messaging media.
+
+The application server should not become the permanent storage layer for
+uploaded media. Persistent media references should remain externalized.
+
+## Pagination and Caching
+
+List endpoints are designed around pagination to avoid unbounded
+responses as marketplace data grows.
+
+RTK Query provides:
+
+-   request caching
+-   request deduplication
+-   tag-based invalidation
+-   mutation synchronization
+
+The frontend should not duplicate server state in unrelated Redux slices
+without a concrete reason.
+
+## Security Practices
+
+The application uses production-oriented controls including:
+
+-   HTTP-only authentication cookies
+-   role-based authorization
+-   seller ownership checks
+-   server-side request validation
+-   password hashing
+-   controlled CORS
+-   Helmet/security middleware
+-   rate limiting where configured
+-   payment verification
+-   protected admin routes
+-   environment-based secrets
+-   Cloudinary for external media storage
+
+The frontend is not a security boundary.
+
+## Production Deployment
+
+### Frontend
+
+The frontend can be deployed independently to Vercel.
+
+Configure the production backend URL through the appropriate
+`NEXT_PUBLIC_*` variable.
+
+### Backend
+
+The backend can be deployed as a separate service compatible with the
+project's Express/Vercel deployment setup.
+
+Configure:
+
+-   production MongoDB
+-   Redis
+-   frontend origin
+-   authentication secrets
+-   Cloudinary
+-   Stripe
+-   SMTP
+-   deployment-specific environment variables
+
+### Database
+
+MongoDB Atlas is suitable for the production database.
+
+Verify:
+
+-   network access
+-   database user permissions
+-   indexes
+-   backup policy
+-   connection string correctness
+
+### Stripe
+
+Configure the production webhook endpoint and signing secret. Verify
+raw-body webhook handling before enabling real payments.
+
+## Production Checklist
+
+-   [ ] `NODE_ENV` configured for production
+-   [ ] production MongoDB URI configured
+-   [ ] Redis configured
+-   [ ] exact production frontend origin configured
+-   [ ] strong authentication secrets configured
+-   [ ] Cloudinary configured
+-   [ ] Stripe secret and webhook signing secret configured
+-   [ ] SMTP configured
+-   [ ] admin account provisioned securely
+-   [ ] CORS verified
+-   [ ] HTTP-only secure cookies verified
+-   [ ] no secrets committed
+-   [ ] database indexes verified
+-   [ ] payment webhook tested
+-   [ ] buyer flow tested
+-   [ ] seller flow tested
+-   [ ] admin flow tested
+-   [ ] direct URL/deep-link navigation tested
+-   [ ] loading/error/empty states tested
+
+## Troubleshooting
+
+### CORS / 403 errors
+
+Verify the backend frontend-origin configuration exactly matches the
+browser origin.
+
+### Authentication works but refresh logs the user out
+
+Check:
+
+-   HTTP-only cookie attributes
+-   frontend API URL
+-   backend CORS credentials configuration
+-   frontend origin
+-   HTTPS configuration in production
+
+### MongoDB connection errors
+
+Check:
+
+-   `MONGO_URI`
+-   credentials
+-   URL encoding for special characters
+-   MongoDB Atlas network access
+-   database user permissions
+
+### Redis errors
+
+Verify the Redis URL/credentials and TLS configuration required by the
+provider.
+
+### Cloudinary uploads fail
+
+Verify Cloudinary cloud name, API key, API secret, upload configuration,
+and client-side upload handling.
+
+### Stripe payment fails
+
+Use test keys locally and verify the PaymentIntent flow, backend secret
+key, client configuration, and webhook signing secret.
+
+### Messaging does not update in real time
+
+Verify:
+
+-   Socket.IO server
+-   authenticated session
+-   client socket URL
+-   browser network connection
+-   backend socket handlers
+
+### Admin routes are inaccessible
+
+Verify that the authenticated user has `role: "admin"` and that both the
+backend authorization and frontend route protection are operating
+against the current session.
+
+## Engineering Standards
+
+The project favors:
+
+-   domain-oriented modules
+-   explicit API contracts
+-   server-side authorization
+-   validation at the API boundary
+-   centralized error handling
+-   RTK Query for server state
+-   pagination for list endpoints
+-   atomic operations for concurrency-sensitive state
+-   external media storage
+-   explicit loading/error/empty UI states
+-   environment-based configuration
+-   small, focused modules
+
+## Project Documentation
+
+-   [`client/README.md`](./client/README.md) --- frontend architecture
+    and setup
+-   [`server/README.md`](./server/README.md) --- backend architecture,
+    configuration, API and operations
+-   Project case study --- architecture, workflows, database design,
+    security and production-readiness rationale
+
+## Production Boundary
+
+Mercovia is a production-oriented portfolio system. That does not imply
+that every enterprise concern is implemented.
+
+For example, a full enterprise deployment may additionally require
+dedicated observability infrastructure, formal disaster recovery,
+advanced fraud detection, large-scale analytics, secrets management
+infrastructure, compliance controls, automated release governance, and
+dedicated operational support.
+
+Those concerns should not be represented as implemented unless they
+actually exist in the system.

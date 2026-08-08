@@ -1,180 +1,493 @@
-Mercovia Client
+# Mercovia Client
 
-Next.js frontend for Mercovia. The client is responsible forpresentation, routing, client state and complete buyer/seller/adminexperiences while the backend remains the security and business-ruleauthority.
+> Frontend application for Mercovia, responsible for the marketplace
+> user experience, routing, client state, API integration, forms,
+> protected navigation, and buyer/seller/admin workflows.
 
-Responsibilities
+## Responsibilities
 
-Next.js App Router pages and layouts
+The client is responsible for:
 
-reusable UI components
+-   application routing and deep-linking
+-   page composition
+-   reusable UI components
+-   buyer workflows
+-   seller dashboard workflows
+-   administrative UI
+-   Redux Toolkit state
+-   RTK Query server-state management
+-   form handling and client-side validation
+-   authentication-state resolution
+-   protected navigation
+-   loading, error, and empty states
+-   real-time messaging UI
 
-buyer, seller and admin workflows
+The browser is **not** the final authorization boundary. Sensitive
+decisions remain enforced by the backend.
 
-Redux Toolkit state
+## Architecture
 
-RTK Query server-state management
+``` text
+React / Next.js UI
+       │
+       ├── Route / Layout
+       │
+       ├── Feature components
+       │
+       ├── Redux Toolkit
+       │      └── RTK Query
+       │
+       └── Socket.IO client
+              │
+              ▼
+       Express REST API
+              │
+              ▼
+       MongoDB / Redis / services
+```
 
-form validation
+RTK Query is the primary server-state layer. Domain API slices should
+use the shared API infrastructure rather than creating independent
+ad-hoc API clients.
 
-authentication-state resolution
+## Structure
 
-protected navigation
+The exact tree may evolve, but the client is organized around
+application routes, shared components, domain features, and state
+infrastructure.
 
-real-time messaging UI
+Typical responsibilities:
 
-loading, error and empty states
-
-The browser is never treated as the final authorization boundary andnever owns payment truth.
-
-Structure
-
+``` text
 client/
-├── app/           # Next.js routes/layouts
-├── components/    # shared UI
-├── features/      # domain-specific UI and API integration
-├── lib/           # shared infrastructure / API layer
-├── store/         # Redux store
-├── types/         # frontend types
-├── styles/        # styling
-└── public/        # static assets
+├── app/              # application routes and layouts
+├── components/       # reusable/shared UI
+├── features/         # domain-specific components and API slices
+├── store/            # Redux store configuration
+├── public/            # static assets
+├── styles/            # global/component styling
+└── ...
+```
 
-The feature structure is intentionally domain-oriented so newmarketplace capabilities can be added without turning shared componentsinto a monolith.
+## Technology Stack
 
-API Architecture
+-   React / Next.js
+-   JavaScript / TypeScript where applicable
+-   Redux Toolkit
+-   RTK Query
+-   React Hook Form
+-   Zod where used
+-   Tailwind CSS
+-   Socket.IO client
 
-RTK Query is the primary server-state layer. A shared API slice handlesthe API base URL, cookies, refresh behavior, tags and cacheinvalidation; domain slices inject their endpoints into it.
+## Environment Variables
 
-This avoids separate ad-hoc API clients and keeps cache behaviorpredictable.
+Create:
 
-Environment
+``` text
+client/.env.local
+```
 
-Create client/.env.local:
+The frontend API configuration uses:
 
-NEXT_PUBLIC_SERVER_URI=http://localhost:<server-port>/api/v1
+``` env
+NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
+```
 
-NEXT_PUBLIC_* values are browser-visible. Never put secrets in them.
+`NEXT_PUBLIC_*` variables are exposed to browser code.
 
-The backend API prefix should match the route prefix exposed by theserver.
+### Never put these in the client environment
 
-Local Setup
+-   MongoDB credentials
+-   Redis credentials
+-   JWT secrets
+-   Cloudinary API secret
+-   Stripe secret key
+-   Stripe webhook secret
+-   SMTP password
+-   admin password
+-   any server-only credential
 
+If a value is secret, it belongs in the backend environment.
+
+## Local Setup
+
+From the repository root:
+
+``` bash
+cd client
 npm install
 npm run dev
+```
 
-The backend must be running separately. Typical local topology:
+Open:
 
-Browser → Next.js → Express API → MongoDB / Redis / external services
+``` text
+http://localhost:3000
+```
 
-Production Build
+The backend must be running separately.
 
+Typical topology:
+
+``` text
+Browser
+   │
+   ├── HTTP + cookies ──────► Express API
+   │
+   └── Socket.IO ───────────► Socket.IO server
+                                  │
+                                  ▼
+                              MongoDB / Redis
+```
+
+## Production Build
+
+``` bash
 npm run build
 npm run start
+```
 
-Before shipping a change, verify that direct navigation, browserrefresh, protected routes, API failures, empty collections, mutationinvalidation and reconnect behavior all work as expected.
+Before deployment, verify:
 
-Authentication
+-   direct route navigation
+-   browser refresh
+-   protected routes
+-   authentication/session restoration
+-   API failures
+-   empty collections
+-   mutation invalidation
+-   pagination
+-   Socket.IO reconnect behavior
+-   production API URL
+-   image loading
 
-Authentication is cookie-based. The browser sends credentials with APIrequests and the client resolves the current user from the backendbecause HTTP-only tokens are intentionally unavailable to JavaScript.
+## Authentication
 
-Auth flows include:
+Authentication is cookie-based.
 
-login
+The client does not need to read the HTTP-only authentication token.
+Instead, it resolves the current authenticated user from the backend.
 
-registration
+Expected flow:
 
-activation
+``` text
+Login / registration
+      ↓
+Server sets HTTP-only cookies
+      ↓
+Client resolves current user
+      ↓
+Role-aware UI and navigation
+      ↓
+Backend re-validates every protected operation
+```
 
-forgot password
+Protected navigation should provide a good user experience, but it must
+never be treated as the security mechanism.
 
-reset password
+## Buyer Experience
 
-session refresh
+The buyer-facing client supports:
 
-account management
+-   marketplace browsing
+-   product search/filtering
+-   product details
+-   seller/shop discovery
+-   cart management
+-   stock revalidation
+-   checkout
+-   COD / Stripe payment flows
+-   multi-shop order results
+-   order history
+-   order details
+-   supported refunds
+-   eligible product reviews
+-   account management
+-   saved address management
+-   coupons
+-   seller communication
+-   notifications where enabled
 
-Protected navigation uses middleware plus client-side session checkswhere required.
+## Seller Experience
 
-Domain Coverage
+Seller-facing UI includes:
 
-Products
+-   seller dashboard
+-   shop profile
+-   payout configuration
+-   product management
+-   event management
+-   inventory management
+-   order management
+-   coupon management
+-   withdrawal requests
+-   withdrawal history/status
+-   buyer conversations
+-   seller operational information
 
-Listing, search/filtering, details, seller management, media andreviews.
+Seller actions should always use backend authorization and ownership
+checks.
 
-Cart
+## Admin Experience
 
-User-scoped cart state, quantity management, stock revalidation andcheckout preparation.
+The admin client exposes protected platform operations where
+implemented.
 
-Orders
+Typical administrative areas include:
 
-Buyer order history/details, fulfillment state, refunds and multi-shopcheckout results.
+-   users
+-   sellers
+-   products
+-   events
+-   orders
+-   withdrawals
+-   moderation/corrective operations
 
-Shops and Events
+Admin UI visibility is only a convenience. Backend admin authorization
+remains authoritative.
 
-Seller storefronts, seller profile information and eventlisting/detail/management flows.
+## Domain Coverage
 
-Coupons
+### Products
 
-Checkout coupon validation and seller coupon management.
+-   listing
+-   search
+-   filtering
+-   pagination
+-   product details
+-   seller management
+-   media
+-   reviews and ratings
 
-Conversations and Messaging
+### Cart
 
-Conversation lists, message history, message sending and real-timeupdates.
+-   user-scoped persistence
+-   quantity changes
+-   stock validation
+-   checkout preparation
 
-Seller Dashboard
+### Orders
 
-Profile, products, events, orders, coupons, payouts and messaging.
+-   buyer order history
+-   order details
+-   multi-shop checkout results
+-   fulfillment status
+-   refunds
 
-Administration
+### Payments
 
-Protected platform-level operational screens and API consumers.
+-   COD
+-   Stripe PaymentIntent integration
+-   payment state feedback
 
-UI State Standards
+### Shops and Events
 
-Every asynchronous domain flow should explicitly account for:
+-   seller storefronts
+-   seller information
+-   event listing/details
+-   seller management
 
-Loading → Success / Empty
-       ↘ Error
+### Coupons
 
-Mutations should also prevent duplicate submission and providesuccess/error feedback while invalidating affected cached data.
+-   checkout coupon validation
+-   seller coupon management
 
-Frontend Engineering Rules
+### Conversations and Messaging
 
-Use the shared RTK Query infrastructure.
+-   conversation lists
+-   message history
+-   sending messages
+-   real-time updates
+-   presence/read state where enabled
 
-Keep server state in RTK Query rather than duplicating it in localRedux state.
+### Seller Dashboard
 
-Keep transient UI state local where possible.
+-   profile
+-   products
+-   events
+-   orders
+-   coupons
+-   payouts
+-   messaging
 
-Validate before avoidable requests.
+### Administration
 
-Never use frontend visibility as an authorization mechanism.
+-   protected platform-level management
 
-Preserve direct URL navigation and deep-linking.
+## API Integration
 
-Make loading/error/empty states explicit.
+RTK Query should be treated as the source of truth for remote API state.
 
-Avoid duplicate requests and unnecessary refetches.
+Good patterns:
 
-Never expose secrets through NEXT_PUBLIC_* variables.
+-   query data stays in RTK Query cache
+-   mutations invalidate affected tags
+-   duplicate requests are avoided
+-   loading and error states are explicit
+-   pagination state is represented in the query arguments
+-   stale UI data is refreshed through targeted invalidation rather than
+    broad unnecessary refetches
 
-Troubleshooting
+Avoid copying API responses into separate Redux state unless there is a
+concrete client-state requirement.
 
-403 from the API
+## UI State Standards
 
-Check that the backend is running, NEXT_PUBLIC_SERVER_URI is correct,and the backend FRONTEND_URL exactly matches the browser origin.
+Every asynchronous screen should explicitly handle:
 
-Authentication fails
+``` text
+Loading
+   │
+   ├── Success
+   │      └── Empty
+   │
+   └── Error
+```
 
-Inspect browser cookies and the current-user request. HTTP-only cookiescannot be inspected from JavaScript; diagnose them through browserdeveloper tools and the API response.
+Mutations should additionally handle:
 
-Images fail
+-   disabled/submitting state
+-   success feedback
+-   validation feedback
+-   API error feedback
+-   cache invalidation
 
-Verify the returned Cloudinary URL and the trusted image-hostconfiguration in next.config.ts.
+## Forms
 
-Messaging fails
+Forms should:
 
-Verify the backend Socket.IO server, configured backend origin,authenticated session and WebSocket connection.
+-   validate user input before avoidable API requests
+-   show field-level errors where practical
+-   prevent duplicate submission
+-   preserve useful entered values after recoverable failures
+-   handle server validation failures
+-   provide clear success/failure feedback
 
-Related Documentation
+## Routing and Deep Linking
 
-See ../README.md for the complete system and../server/README.md for backend setup.
+Every implemented page should support direct URL navigation and browser
+refresh where appropriate.
+
+Do not rely on arriving through a specific UI path to make a page work.
+
+For protected routes:
+
+``` text
+Unauthenticated request
+       ↓
+Login / redirect flow
+       ↓
+Authenticated session
+       ↓
+Original destination
+```
+
+Route protection should remain consistent with backend authorization.
+
+## Real-Time Messaging
+
+Messaging combines REST data with Socket.IO.
+
+The client should account for:
+
+-   connection state
+-   reconnect behavior
+-   message loading
+-   message send failures
+-   empty conversations
+-   new incoming messages
+-   presence where enabled
+-   read/message-seen state where enabled
+
+Real-time UI should not assume that a socket event is the only source of
+truth; persisted messages come from the backend API.
+
+## Media
+
+Cloudinary-backed media is represented by URLs/references returned by
+the backend.
+
+The frontend should not contain Cloudinary API secrets.
+
+Image handling should include meaningful alt text and sensible loading
+behavior.
+
+## Security Rules
+
+1.  Never trust frontend role checks for authorization.
+2.  Never store server secrets in `NEXT_PUBLIC_*` variables.
+3.  Never treat a client-side payment-success flag as proof of payment.
+4.  Avoid logging authentication credentials or sensitive payment data.
+5.  Preserve HTTP-only cookie behavior.
+6.  Keep API URLs environment-specific.
+7.  Do not expose internal server errors directly to users.
+
+## Troubleshooting
+
+### API requests fail
+
+Verify:
+
+``` env
+NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
+```
+
+and confirm the backend is running.
+
+### 403 / CORS errors
+
+Verify the backend's allowed frontend origin exactly matches the browser
+origin.
+
+### Authentication does not persist
+
+Check:
+
+-   browser cookies
+-   `credentials` handling
+-   backend CORS credentials
+-   frontend/backend origins
+-   HTTPS/cookie settings in production
+
+### Product images do not load
+
+Verify the Cloudinary URLs returned by the backend and the framework's
+image configuration if applicable.
+
+### Messaging does not update
+
+Check:
+
+-   Socket.IO connection
+-   backend URL
+-   authenticated session
+-   browser network/WebSocket panel
+-   backend socket handlers
+
+### Admin pages are inaccessible
+
+Verify the current account has `role: "admin"` and re-authenticate after
+changing the role.
+
+## Frontend Engineering Standards
+
+-   Prefer domain-oriented components.
+-   Keep shared components generic.
+-   Keep business rules out of presentational components where
+    practical.
+-   Use RTK Query for remote state.
+-   Keep transient UI state local.
+-   Avoid duplicate requests.
+-   Preserve deep-linking.
+-   Make asynchronous states explicit.
+-   Keep accessibility semantics meaningful.
+-   Avoid fake/hardcoded data in production flows.
+-   Do not use the UI as an authorization mechanism.
+
+## Related Documentation
+
+-   [`../README.md`](../README.md) --- complete project overview and
+    local setup
+-   [`../server/README.md`](../server/README.md) --- backend
+    architecture, configuration, API and operations
