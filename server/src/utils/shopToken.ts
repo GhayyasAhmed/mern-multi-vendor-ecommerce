@@ -13,10 +13,12 @@ import { env } from "../config/env.js";
 const SELLER_SESSION_SECONDS = 90 * 24 * 60 * 60;
 
 export function buildSellerCookieOptions(maxAgeSeconds: number) {
+  const isProduction = process.env.NODE_ENV === "production";
   return {
     expires: new Date(Date.now() + maxAgeSeconds * 1000),
     httpOnly: true,
-    sameSite: "lax" as const,
+    path: "/",
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
     secure: process.env.NODE_ENV === "production",
   };
 }

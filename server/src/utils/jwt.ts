@@ -8,6 +8,7 @@ interface ITokenOptions {
     expires: Date;
     maxAge: number;
     httpOnly: boolean;
+    path?: string,
     sameSite: "strict" | "lax" | "none" | undefined;
     secure?: boolean;
 }
@@ -23,6 +24,7 @@ export const accessTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + accessTokenExpiresIn),
     maxAge: accessTokenExpiresIn,
     httpOnly: true,
+    path: "/",
     sameSite: "lax",
     secure: isProduction
 };
@@ -31,6 +33,7 @@ export const refreshTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + refreshTokenExpiresIn),
     maxAge: refreshTokenExpiresIn,
     httpOnly: true,
+    path: "/",
     sameSite: "lax",
     secure: isProduction
 };
