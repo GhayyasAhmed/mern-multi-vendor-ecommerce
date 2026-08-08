@@ -127,6 +127,7 @@ export const eventApiSlice = apiSlice.injectEndpoints({
             { type: "Event" as const, id: "LIST" },
           ]
           : [{ type: "Event" as const, id: "LIST" }],
+      keepUnusedDataFor: 30,
     }),
 
     getEventById: builder.query<GetEventResponse, string>({

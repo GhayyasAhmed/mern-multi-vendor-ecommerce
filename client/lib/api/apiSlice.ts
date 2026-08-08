@@ -117,8 +117,9 @@ export const apiSlice = createApi({
     "Message",
     "Wishlist",
     "Withdraw",
-    "Coupon", 
-    "Notification"
+    "Coupon",
+    "Notification",
+    "AdminStats",
   ],
   endpoints: () => ({}),
 });

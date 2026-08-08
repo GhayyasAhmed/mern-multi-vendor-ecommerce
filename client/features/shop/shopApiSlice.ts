@@ -111,26 +111,27 @@ export const shopApiSlice = apiSlice.injectEndpoints({
         getShopInfo: builder.query<GetShopInfoResponse, string>({
             query: (id) => ({ url: `/shop/get-shop-info/${id}`, method: "GET" }),
             providesTags: (_result, _error, id) => [{ type: "Shop", id }],
+            keepUnusedDataFor: 300,
         }),
 
         updateSellerInfo: builder.mutation<UpdateShopResponse, UpdateSellerInfoRequest>({
             query: (body) => ({ url: "/shop/update-seller-info", method: "PUT", body }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags: (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
         }),
 
         updateShopAvatar: builder.mutation<UpdateShopResponse, UpdateShopAvatarRequest>({
             query: (body) => ({ url: "/shop/update-shop-avatar", method: "PUT", body }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
         }),
 
         updatePaymentMethods: builder.mutation<UpdateShopResponse, UpdatePaymentMethodsRequest>({
             query: (body) => ({ url: "/shop/update-payment-methods", method: "PUT", body }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
         }),
 
         deleteWithdrawMethod: builder.mutation<UpdateShopResponse, void>({
             query: () => ({ url: "/shop/delete-withdraw-method", method: "DELETE" }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
         }),
     }),
     overrideExisting: false,

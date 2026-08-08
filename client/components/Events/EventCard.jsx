@@ -17,19 +17,19 @@ const EventCard = ({ active = true, data }) => {
 
   return (
     <div
-      className={`w-full block bg-white rounded-lg ${
-        active ? "unset" : "mb-12"
-      } lg:flex p-2`}
+      className={`w-full block bg-white rounded-lg ${active ? "unset" : "mb-12"
+        } lg:flex p-2`}
     >
-      <div className="w-full lg:w-[50%] m-auto relative h-75">
+      <div className="w-full lg:w-[50%] m-auto relative h-75 bg-gray-50 rounded-md overflow-hidden">
         <Image
           src={
             data?.image_Url?.[0]?.url ||
-            data?.images?.[0]?.url
+            data?.images?.[0]?.url ||
+            "/placeholder.png"
           }
           alt={data?.name || "Event Product"}
           fill
-          className="object-contain"
+          className="object-contain p-2"
           sizes="(max-width: 1024px) 100vw, 50vw"
         />
       </div>
@@ -61,9 +61,8 @@ const EventCard = ({ active = true, data }) => {
             <div className={`${styles.button} text-white`}>See Details</div>
           </Link>
           <div
-            className={`${styles.button} text-white ml-5 ${
-              outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-            }`}
+            className={`${styles.button} text-white ml-5 ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
             onClick={handleAddToCart}
           >
             {outOfStock ? "Out of stock" : "Add to cart"}

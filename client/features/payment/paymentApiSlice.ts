@@ -22,6 +22,7 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
         url: "/payment/stripeapikey",
         method: "GET",
       }),
+      keepUnusedDataFor: 3600,
     }),
 
     createPaymentIntent: builder.mutation<CreatePaymentIntentResponse, CreatePaymentIntentRequest>({

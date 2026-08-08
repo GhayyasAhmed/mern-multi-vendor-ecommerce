@@ -74,13 +74,15 @@ const ProductCard = ({ data }) => {
           )}
         </div>
         <Link href={`/product/${data?._id}`}>
-          <Image
-            src={data?.images?.[0]?.url || "/placeholder.png"}
-            alt={data?.name || "Product image"}
-            width={300}
-            height={170}
-            className="w-full h-42.5 object-contain"
-          />
+          <div className="relative w-full h-42.5 rounded-md overflow-hidden bg-gray-50">
+            <Image
+              src={data?.images?.[0]?.url || "/placeholder.png"}
+              alt={data?.name || "Product image"}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              className="object-contain p-2"
+            />
+          </div>
         </Link>
         <Link href={`/shop/preview/${data?.shop?._id}`}>
           <h5 className={`${styles.shop_name}`}>{data?.shop?.name}</h5>

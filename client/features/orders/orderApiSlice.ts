@@ -180,6 +180,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Order", id },
         { type: "Order", id: "LIST" },
+        { type: "Order", id: "SELLER-LIST" },
       ],
     }),
   }),
