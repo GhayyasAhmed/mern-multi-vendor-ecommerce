@@ -8,6 +8,7 @@ import {
 import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminSellersPage() {
   const [page, setPage] = useState(1);
@@ -48,7 +49,7 @@ export default function AdminSellersPage() {
         <p className="text-sm text-red-600 mb-4">{actionError}</p>
       )}
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading sellers...</p>
+        <TableSkeleton rows={8} cols={5} />
       ) : isError ? (
         <p className="text-sm text-red-500">Could not load sellers.</p>
       ) : (

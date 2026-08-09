@@ -2,6 +2,7 @@
 import styles from "@/styles/styles";
 import EventCard from "./EventCard";
 import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
+import CardListSkeleton from "@/components/ui/CardListSkeleton";
 
 const Events = () => {
   const { data, isLoading, isError } = useGetAllEventsQuery({ status: "active", limit: 4 });
@@ -14,7 +15,7 @@ const Events = () => {
           <h1>Popular Events</h1>
         </div>
         {isLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] pb-12">Loading events...</p>
+          <CardListSkeleton count={2} />
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 pb-12">Could not load events.</p>
         ) : events.length === 0 ? (

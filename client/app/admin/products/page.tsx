@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useGetAllProductsAdminQuery } from "@/features/admin/adminApiSlice";
 import Pagination from "@/components/ui/Pagination";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
@@ -16,7 +17,7 @@ export default function AdminProductsPage() {
     <div>
       <h1 className="text-2xl font-semibold mb-6">Products</h1>
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading products...</p>
+        <TableSkeleton rows={8} cols={4} />
       ) : isError ? (
         <p className="text-sm text-red-500">Could not load products.</p>
       ) : (

@@ -7,6 +7,7 @@ import Pagination from "@/components/ui/Pagination";
 import styles from "@/styles/styles";
 import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
+import CardListSkeleton from "@/components/ui/CardListSkeleton";
 
 const EventsListing = () => {
   const [page, setPage] = useState(1);
@@ -26,9 +27,7 @@ const EventsListing = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">
-            Loading events...
-          </p>
+          <CardListSkeleton count={4} />
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 py-12">
             {getErrorMessage(error, "Could not load events.")}

@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import { AiOutlineHeart } from "react-icons/ai";
@@ -14,16 +15,32 @@ const Wishlist = ({ setOpenWishlist }) => {
   const dispatch = useAppDispatch();
   const wishlistData = data?.products ?? [];
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setOpenWishlist(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [setOpenWishlist]);
+
   return (
     <div className="fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-50">
-      <div className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-white flex flex-col justify-between shadow-sm overflow-y-scroll">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Wishlist"
+        className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-white flex flex-col justify-between shadow-sm overflow-y-scroll"
+      >
         <div>
           <div className="flex w-full justify-end pt-5 pr-5">
-            <RxCross1
-              size={25}
-              className="cursor-pointer"
-              onClick={() => setOpenWishlist(false)}
-            />
+            <button type="button" onClick={() => setOpenWishlist(false)} aria-label="Close wishlist">
+              <RxCross1 size={25} className="cursor-pointer" aria-hidden="true" />
+            </button>
           </div>
 
           <div className={`${styles.normalFlex} p-4`}>

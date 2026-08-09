@@ -8,6 +8,7 @@ import {
 import Pagination from "@/components/ui/Pagination";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminWithdrawalsPage() {
   const [page, setPage] = useState(1);
@@ -23,7 +24,12 @@ export default function AdminWithdrawalsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const withdraws = data?.withdraws ?? [];
 
-  const handleApprove = async (id: string, sellerId: string, amount: number, sellerName: string) => {
+  const handleApprove = async (
+    id: string,
+    sellerId: string,
+    amount: number,
+    sellerName: string,
+  ) => {
     setActionError(null);
     const confirmed = await confirm({
       title: "Mark Withdrawal as Paid",
@@ -70,9 +76,7 @@ export default function AdminWithdrawalsPage() {
         <p className="text-sm text-red-600 mb-4">{actionError}</p>
       )}
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">
-          Loading withdrawal requests...
-        </p>
+        <TableSkeleton rows={6} cols={5} />
       ) : isError ? (
         <p className="text-sm text-red-500">
           Could not load withdrawal requests.
@@ -93,12 +97,13 @@ export default function AdminWithdrawalsPage() {
             </thead>
             <tbody>
               {withdraws.map((withdraw) => {
-                const sellerName = withdraw.seller?.name || withdraw.seller?._id || "Unknown Seller";
+                const sellerName =
+                  withdraw.seller?.name ||
+                  withdraw.seller?._id ||
+                  "Unknown Seller";
                 return (
                   <tr key={withdraw._id} className="border-t">
-                    <td className="px-4 py-3">
-                      {sellerName}
-                    </td>
+                    <td className="px-4 py-3">{sellerName}</td>
                     <td className="px-4 py-3">${withdraw.amount.toFixed(2)}</td>
                     <td className="px-4 py-3">{withdraw.status}</td>
                     <td className="px-4 py-3">
@@ -111,7 +116,12 @@ export default function AdminWithdrawalsPage() {
                             type="button"
                             disabled={isUpdating}
                             onClick={() =>
-                              handleApprove(withdraw._id, withdraw.seller._id, withdraw.amount, sellerName)
+                              handleApprove(
+                                withdraw._id,
+                                withdraw.seller._id,
+                                withdraw.amount,
+                                sellerName,
+                              )
                             }
                             className="text-[#3957db] hover:underline disabled:opacity-60 cursor-pointer"
                           >
@@ -120,7 +130,9 @@ export default function AdminWithdrawalsPage() {
                           <button
                             type="button"
                             disabled={isRejecting}
-                            onClick={() => handleReject(withdraw._id, sellerName)}
+                            onClick={() =>
+                              handleReject(withdraw._id, sellerName)
+                            }
                             className="ml-3 text-red-600 hover:underline disabled:opacity-60 cursor-pointer"
                           >
                             Reject

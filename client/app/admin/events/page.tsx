@@ -3,17 +3,21 @@ import Image from "next/image";
 import { useState } from "react";
 import { useGetAllEventsAdminQuery } from "@/features/admin/adminApiSlice";
 import Pagination from "@/components/ui/Pagination";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminEventsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useGetAllEventsAdminQuery({ page, limit: 20 });
+  const { data, isLoading, isError } = useGetAllEventsAdminQuery({
+    page,
+    limit: 20,
+  });
   const events = data?.events ?? [];
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Events</h1>
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading events...</p>
+        <TableSkeleton rows={8} cols={4} />
       ) : isError ? (
         <p className="text-sm text-red-500">Could not load events.</p>
       ) : (
@@ -42,7 +46,11 @@ export default function AdminEventsPage() {
                     {event.name}
                   </td>
                   <td className="px-4 py-3">
-                    {event.isActive ? "Active" : event.isUpcoming ? "Upcoming" : "Expired"}
+                    {event.isActive
+                      ? "Active"
+                      : event.isUpcoming
+                        ? "Upcoming"
+                        : "Expired"}
                   </td>
                   <td className="px-4 py-3">${event.discountPrice}</td>
                   <td className="px-4 py-3">{event.stock}</td>

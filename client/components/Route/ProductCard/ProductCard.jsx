@@ -55,23 +55,19 @@ const ProductCard = ({ data }) => {
     <>
       <div className="w-full h-92.5 bg-white rounded-lg shadow-sm p-3 relative cursor-pointer">
         <div className="flex justify-end">
-          {isWishlisted ? (
-            <AiFillHeart
-              size={22}
-              className="cursor-pointer absolute right-2 top-5"
-              onClick={handleWishlistToggle}
-              color="red"
-              title="Remove from wishlist"
-            />
-          ) : (
-            <AiOutlineHeart
-              size={22}
-              className="cursor-pointer absolute right-2 top-5"
-              onClick={handleWishlistToggle}
-              color="#333"
-              title="Add to wishlist"
-            />
-          )}
+           <button
+            type="button"
+            onClick={handleWishlistToggle}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={isWishlisted}
+            className="absolute right-2 top-5 cursor-pointer"
+          >
+            {isWishlisted ? (
+              <AiFillHeart size={22} color="red" aria-hidden="true" />
+            ) : (
+              <AiOutlineHeart size={22} color="#333" aria-hidden="true" />
+            )}
+          </button>
         </div>
         <Link href={`/product/${data?._id}`}>
           <div className="relative w-full h-42.5 rounded-md overflow-hidden bg-gray-50">
@@ -124,21 +120,25 @@ const ProductCard = ({ data }) => {
 
         {/* Side options */}
         <div>
-          <AiOutlineEye
-            size={22}
-            className="cursor-pointer absolute right-2 top-14"
+          <button
+            type="button"
             onClick={() => setOpen(!open)}
-            color="#333"
-            title="Quick view"
-          />
-          <AiOutlineShoppingCart
-            size={25}
-            className={`absolute right-2 top-24 ${outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-              }`}
+            aria-label="Quick view"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            className="absolute right-2 top-14 cursor-pointer"
+          >
+            <AiOutlineEye size={22} color="#333" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
             onClick={handleAddToCart}
-            color="#444"
-            title={outOfStock ? "Out of stock" : "Add to cart"}
-          />
+            disabled={outOfStock}
+            aria-label={outOfStock ? "Out of stock" : "Add to cart"}
+            className={`absolute right-2 top-24 ${outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+          >
+            <AiOutlineShoppingCart size={25} color="#444" aria-hidden="true" />
+          </button>
           {open ? <ProductDetailsCard setOpen={setOpen} data={data} /> : null}
         </div>
       </div>

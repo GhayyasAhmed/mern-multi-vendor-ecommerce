@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import styles from "@/styles/styles";
 import { useResetPasswordMutation } from "../authApiSlice";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "../validators";
 import { getErrorMessage } from "../utils";
+import { getPasswordStrength } from "@/lib/validation";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
@@ -19,10 +20,14 @@ export default function ResetPasswordForm({ token }: { token: string }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
   });
+
+  const passwordValue = useWatch({ control, name: "password" }) || "";
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -70,6 +75,9 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           {...register("password")}
         />
         {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+         {passwordValue && !errors.password && (
+          <p className="mt-1 text-xs text-gray-500">Password strength: {passwordStrength.label}</p>
+        )}
       </div>
 
       <div>

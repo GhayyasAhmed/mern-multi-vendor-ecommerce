@@ -76,7 +76,7 @@ const Header = ({ activeHeading }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [accountMenuOpen]);
   return (
-    <>
+    <header>
       <div className={`${styles.section}`}>
         <div className="hidden 800px:h-12.5 800px:my-5 800px:flex items-center justify-between">
           <div>
@@ -91,19 +91,29 @@ const Header = ({ activeHeading }) => {
           </div>
           {/* Search Box */}
           <div className="w-[50%] relative">
+            <label htmlFor="header-search" className="sr-only">
+              Search products
+            </label>
             <input
+              id="header-search"
               type="text"
               placeholder="Search Product..."
               value={searchTerm}
               onChange={handleSearchChange}
+              role="combobox"
+              aria-expanded={searchData !== null}
+              aria-controls="header-search-results"
+              aria-autocomplete="list"
               className="h-10 w-full px-2 border-[#3957db] border-2 rounded-md"
             />
-            <AiOutlineSearch
-              size={30}
-              className="absolute right-2 top-1.5 cursor-pointer"
-            />
+            <AiOutlineSearch size={30} aria-hidden="true" className="absolute right-2 top-1.5 pointer-events-none" />
             {searchData !== null ? (
-              <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-9 p-4 w-full left-0 top-11.25">
+              <div
+                id="header-search-results"
+                role="region"
+                aria-live="polite"
+                className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-9 p-4 w-full left-0 top-11.25"
+              >
                 {isSearching ? (
                   <p className="text-sm text-gray-500 px-2 py-3">Searching...</p>
                 ) : searchData.length === 0 ? (
@@ -146,11 +156,15 @@ const Header = ({ activeHeading }) => {
           {/* Categories */}
           <div onClick={() => setDropDown(!dropDown)}>
             <div className="relative h-15 mt-2.5 w-67.5 hidden 1000px:block">
-              <BiMenuAltLeft size={30} className="absolute top-3 left-2" />
+              <BiMenuAltLeft size={30} className="absolute top-3 left-2" aria-hidden="true" />
               <button
+                type="button"
+                aria-expanded={dropDown}
+                aria-haspopup="menu"
                 className={`h-full w-full flex justify-between items-center pl-10 bg-white font-sans text-lg font-medium select-none rounded-t-md`}
               >
                 All Categories
+                <IoIosArrowDown size={20} className="mr-2" aria-hidden="true" />
               </button>
               <IoIosArrowDown
                 size={20}
@@ -173,30 +187,31 @@ const Header = ({ activeHeading }) => {
 
           <div className="flex">
             <div className={`${styles.normalFlex}`}>
-              <div
+              <button
+                type="button"
                 className="relative cursor-pointer mr-3.75"
                 onClick={() => setOpenWishlist(true)}
+                aria-label={`Open wishlist, ${user?.wishlist?.length ?? 0} items`}
               >
-                <AiOutlineHeart size={30} color="rgb(255 255 255 / 83%)" />
-                <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
+                <AiOutlineHeart size={30} color="rgb(255 255 255 / 83%)" aria-hidden="true" />
+                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
                   {user?.wishlist?.length ?? 0}
                 </span>
-              </div>
+              </button>
             </div>
 
             <div className={`${styles.normalFlex}`}>
-              <div
+              <button
+                type="button"
                 className="relative cursor-pointer mr-3.75"
                 onClick={() => setOpenCart(true)}
+                aria-label={`Open cart, ${cartCount} items`}
               >
-                <AiOutlineShoppingCart
-                  size={30}
-                  color="rgb(255 255 255 / 83%)"
-                />
-                <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
+                <AiOutlineShoppingCart size={30} color="rgb(255 255 255 / 83%)" aria-hidden="true" />
+                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
                   {cartCount}
                 </span>
-              </div>
+              </button>
             </div>
 
             <div className={`${styles.normalFlex} mr-3.75`}>
@@ -302,11 +317,9 @@ const Header = ({ activeHeading }) => {
           } w-full h-15 bg-white z-50 top-0 left-0 shadow-sm 800px:hidden flex items-center justify-between px-4`}
       >
         <div>
-          <BiMenuAltLeft
-            size={40}
-            className="cursor-pointer"
-            onClick={() => setOpen(true)}
-          />
+          <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" className="cursor-pointer">
+            <BiMenuAltLeft size={40} aria-hidden="true" />
+          </button>
         </div>
         <div>
           <Link href="/">
@@ -319,15 +332,17 @@ const Header = ({ activeHeading }) => {
           </Link>
         </div>
         <div>
-          <div
+          <button
+            type="button"
             className="relative cursor-pointer mr-3.75"
             onClick={() => setOpenCart(true)}
+            aria-label={`Open cart, ${cartCount} items`}
           >
-            <AiOutlineShoppingCart size={30} />
-            <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
+            <AiOutlineShoppingCart size={30} aria-hidden="true" />
+            <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
               {cartCount}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -456,7 +471,7 @@ const Header = ({ activeHeading }) => {
           </div>
         </div>
       )}
-    </>
+    </header>
   );
 };
 

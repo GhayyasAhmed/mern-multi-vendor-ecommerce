@@ -97,16 +97,33 @@ const Cart = ({ setOpenCart }) => {
     router.push("/checkout");
   };
 
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setOpenCart(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [setOpenCart]);
+
   return (
     <div className="fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-50">
-      <div className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-white flex flex-col justify-between shadow-sm overflow-y-scroll">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
+        className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-white flex flex-col justify-between shadow-sm overflow-y-scroll"
+      >
         <div>
           <div className="flex w-full justify-end pt-5 pr-5">
-            <RxCross1
-              size={25}
-              className="cursor-pointer"
-              onClick={() => setOpenCart(false)}
-            />
+            <button type="button" onClick={() => setOpenCart(false)} aria-label="Close cart">
+              <RxCross1 size={25} className="cursor-pointer" aria-hidden="true" />
+            </button>
           </div>
 
           <div className={`${styles.normalFlex} p-4`}>
@@ -177,11 +194,10 @@ const CartSingle = ({ data, warning, onRemove, onQtyChange }) => {
         <div className="flex items-center">
           <div>
             <div
-              className={`bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center ${
-                data.qty >= data.stock && data.stock > 0
+              className={`bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center ${data.qty >= data.stock && data.stock > 0
                   ? "opacity-40 cursor-not-allowed"
                   : "cursor-pointer"
-              }`}
+                }`}
               onClick={() =>
                 (data.stock <= 0 || data.qty < data.stock) &&
                 onQtyChange(data.qty + 1)

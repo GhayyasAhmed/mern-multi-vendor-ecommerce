@@ -60,6 +60,14 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
+import {
+  blockNonIntegerKeys,
+  blockNonPriceKeys,
+  sanitizeDigitsOnly,
+  sanitizePriceString,
+  todayDateString,
+  validateImageFile,
+} from "@/lib/validation";
 
 type Tab =
   | "profile"
@@ -397,7 +405,10 @@ function PayoutsPanel({
             type="number"
             min="0.01"
             step="0.01"
+            max={availableBalance}
             placeholder="Amount"
+            inputMode="decimal"
+            aria-describedby="withdraw-amount-hint"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className={`${styles.input} sm:max-w-40`}
@@ -412,6 +423,9 @@ function PayoutsPanel({
             </span>
           </button>
         </form>
+        <p id="withdraw-amount-hint" className="sr-only">
+          Enter an amount up to your available balance of ${availableBalance.toFixed(2)}
+        </p>
         {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
         {successMessage && (
           <p className="mt-2 text-sm text-green-700">{successMessage}</p>
@@ -672,6 +686,12 @@ function ProfilePanel() {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarError(null);
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setAvatarError(validation.error ?? "Invalid image file.");
+      e.target.value = "";
+      return;
+    }
     try {
       const base64 = await readFileAsBase64(file);
       await updateShopAvatar({ avatar: base64 }).unwrap();
@@ -762,7 +782,12 @@ function ProfilePanel() {
             </label>
             <input
               className={`${styles.input} mt-1`}
-              {...register("phoneNumber")}
+              inputMode="numeric"
+              maxLength={15}
+              onKeyDown={blockNonIntegerKeys}
+              {...register("phoneNumber", {
+                onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+              })}
             />
           </div>
           <div>
@@ -771,7 +796,12 @@ function ProfilePanel() {
             </label>
             <input
               className={`${styles.input} mt-1`}
-              {...register("zipCode")}
+              inputMode="numeric"
+              maxLength={10}
+              onKeyDown={blockNonIntegerKeys}
+              {...register("zipCode", {
+                onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+              })}
             />
           </div>
         </div>
@@ -825,6 +855,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     // Check if adding new files exceeds the 8 image limit
     if (images.length + files.length > 8) {
       setFormError("Maximum 8 images allowed");
+      e.target.value = "";
+      return;
+    }
+
+    const invalidFile = files.find((file) => !validateImageFile(file).valid);
+    if (invalidFile) {
+      setFormError(validateImageFile(invalidFile).error ?? "One or more files are invalid.");
       e.target.value = "";
       return;
     }
@@ -1056,7 +1093,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("originalPrice")}
+                inputMode="decimal"
+                onKeyDown={blockNonPriceKeys}
+                {...register("originalPrice", {
+                  onChange: (e) => {
+                    e.target.value = sanitizePriceString(e.target.value);
+                  },
+                })}
               />
             </div>
             <div>
@@ -1065,7 +1108,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("discountPrice")}
+                inputMode="decimal"
+                onKeyDown={blockNonPriceKeys}
+                {...register("discountPrice", {
+                  onChange: (e) => {
+                    e.target.value = sanitizePriceString(e.target.value);
+                  },
+                })}
               />
               {errors.discountPrice && (
                 <p className="mt-1 text-sm text-red-600">
@@ -1079,7 +1128,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("stock")}
+                inputMode="numeric"
+                onKeyDown={blockNonIntegerKeys}
+                {...register("stock", {
+                  onChange: (e) => {
+                    e.target.value = sanitizeDigitsOnly(e.target.value);
+                  },
+                })}
               />
               {errors.stock && (
                 <p className="mt-1 text-sm text-red-600">
@@ -1250,6 +1305,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     if (images.length + files.length > 8) {
       setFormError("Maximum 8 images allowed");
+      e.target.value = "";
+      return;
+    }
+
+    const invalidFile = files.find((file) => !validateImageFile(file).valid);
+    if (invalidFile) {
+      setFormError(validateImageFile(invalidFile).error ?? "One or more files are invalid.");
       e.target.value = "";
       return;
     }
@@ -1483,6 +1545,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 type="date"
+                min={todayDateString()}
                 className={`${styles.input} mt-1`}
                 {...register("start_Date")}
               />
@@ -1498,6 +1561,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 type="date"
+                min={todayDateString()}
                 className={`${styles.input} mt-1`}
                 {...register("Finish_Date")}
               />
@@ -1515,7 +1579,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("originalPrice")}
+                inputMode="decimal"
+                onKeyDown={blockNonPriceKeys}
+                {...register("originalPrice", {
+                  onChange: (e) => {
+                    e.target.value = sanitizePriceString(e.target.value);
+                  },
+                })}
               />
             </div>
             <div>
@@ -1524,7 +1594,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("discountPrice")}
+                inputMode="decimal"
+                onKeyDown={blockNonPriceKeys}
+                {...register("discountPrice", {
+                  onChange: (e) => {
+                    e.target.value = sanitizePriceString(e.target.value);
+                  },
+                })}
               />
               {errors.discountPrice && (
                 <p className="mt-1 text-sm text-red-600">
@@ -1538,7 +1614,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               </label>
               <input
                 className={`${styles.input} mt-1`}
-                {...register("stock")}
+                inputMode="numeric"
+                onKeyDown={blockNonIntegerKeys}
+                {...register("stock", {
+                  onChange: (e) => {
+                    e.target.value = sanitizeDigitsOnly(e.target.value);
+                  },
+                })}
               />
               {errors.stock && (
                 <p className="mt-1 text-sm text-red-600">
@@ -1763,21 +1845,31 @@ function CouponsPanel() {
           <input
             required
             placeholder="Discount % (1-100)"
+            inputMode="numeric"
             className={`${styles.input}`}
+            onKeyDown={blockNonIntegerKeys}
             value={form.value}
-            onChange={(e) => setForm({ ...form, value: e.target.value })}
+            onChange={(e) => {
+              const digits = sanitizeDigitsOnly(e.target.value);
+              const clamped = digits === "" ? "" : String(Math.min(100, Number(digits)));
+              setForm({ ...form, value: clamped });
+            }}
           />
           <input
             placeholder="Minimum order amount (optional)"
+            inputMode="decimal"
             className={`${styles.input}`}
+            onKeyDown={blockNonPriceKeys}
             value={form.minAmount}
-            onChange={(e) => setForm({ ...form, minAmount: e.target.value })}
+            onChange={(e) => setForm({ ...form, minAmount: sanitizePriceString(e.target.value) })}
           />
           <input
             placeholder="Maximum order amount (optional)"
+            inputMode="decimal"
             className={`${styles.input}`}
+            onKeyDown={blockNonPriceKeys}
             value={form.maxAmount}
-            onChange={(e) => setForm({ ...form, maxAmount: e.target.value })}
+            onChange={(e) => setForm({ ...form, maxAmount: sanitizePriceString(e.target.value) })}
           />
           {formError && <p className="text-sm text-red-600">{formError}</p>}
           <button

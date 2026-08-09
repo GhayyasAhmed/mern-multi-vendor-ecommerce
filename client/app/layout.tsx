@@ -6,6 +6,7 @@ import { ConfirmProvider } from "@/providers/confirm-provider";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins, Roboto } from "next/font/google";
 import "./globals.css";
+import SkipLink from "@/components/ui/SkipLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -131,12 +132,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd).replace(
-              /</g,
-              "\\u003c",
-            ),
+            __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c"),
           }}
         />
+        <SkipLink />
         <StoreProvider>
           <ThemeProvider>
             <ToastProvider>

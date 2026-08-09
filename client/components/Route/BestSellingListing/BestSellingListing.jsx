@@ -7,6 +7,7 @@ import Pagination from "@/components/ui/Pagination";
 import styles from "@/styles/styles";
 import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
+import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -31,9 +32,7 @@ const BestSellingListing = () => {
         </div>
 
         {isLoading ? (
-          <div className="w-full flex items-center justify-center py-20">
-            <p className="text-[18px] text-[#00000082]">Loading best sellers...</p>
-          </div>
+          <ProductGridSkeleton count={12} />
         ) : isError ? (
           <div className="w-full flex items-center justify-center py-20">
             <p className="text-[18px] text-red-500">

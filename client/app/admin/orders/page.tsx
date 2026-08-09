@@ -3,17 +3,21 @@ import Link from "next/link";
 import { useState } from "react";
 import { useGetAllOrdersAdminQuery } from "@/features/admin/adminApiSlice";
 import Pagination from "@/components/ui/Pagination";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useGetAllOrdersAdminQuery({ page, limit: 20 });
+  const { data, isLoading, isError } = useGetAllOrdersAdminQuery({
+    page,
+    limit: 20,
+  });
   const orders = data?.orders ?? [];
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Orders</h1>
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading orders...</p>
+        <TableSkeleton rows={8} cols={4} />
       ) : isError ? (
         <p className="text-sm text-red-500">Could not load orders.</p>
       ) : (
@@ -31,13 +35,18 @@ export default function AdminOrdersPage() {
               {orders.map((order) => (
                 <tr key={order._id} className="border-t">
                   <td className="px-4 py-3">
-                    <Link href={`/orders/${order._id}`} className="text-[#3957db] hover:underline">
+                    <Link
+                      href={`/orders/${order._id}`}
+                      className="text-[#3957db] hover:underline"
+                    >
                       #{order._id.slice(-8).toUpperCase()}
                     </Link>
                   </td>
                   <td className="px-4 py-3">{order.status}</td>
                   <td className="px-4 py-3">${order.totalPrice.toFixed(2)}</td>
-                  <td className="px-4 py-3">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </td>
                 </tr>
               ))}
             </tbody>

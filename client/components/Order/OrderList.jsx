@@ -10,6 +10,7 @@ import { useGetMyOrdersQuery } from "@/features/orders/orderApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useState } from "react";
 import Pagination from "@/components/ui/Pagination";
+import CardListSkeleton from "@/components/ui/CardListSkeleton";
 
 function OrderListContent() {
   const { user } = useCurrentUser();
@@ -31,7 +32,7 @@ function OrderListContent() {
         </div>
 
         {isLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">Loading your orders...</p>
+          <CardListSkeleton count={4} />
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 py-12">
             {getErrorMessage(error, "Could not load your orders.")}
@@ -61,13 +62,12 @@ function OrderListContent() {
                     </div>
                     <div className="text-right">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          order.status === "Delivered"
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${order.status === "Delivered"
                             ? "bg-green-100 text-green-700"
                             : order.status === "Refund Success"
                               ? "bg-gray-100 text-gray-700"
                               : "bg-blue-100 text-blue-700"
-                        }`}
+                          }`}
                       >
                         {order.status}
                       </span>

@@ -1,14 +1,21 @@
 "use client";
 import Pagination from "@/components/ui/Pagination";
-import { useDeleteUserAdminMutation, useGetAllUsersAdminQuery } from "@/features/admin/adminApiSlice";
+import {
+  useDeleteUserAdminMutation,
+  useGetAllUsersAdminQuery,
+} from "@/features/admin/adminApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const confirm = useConfirm(); // Initialize confirmation hook
-  const { data, isLoading, isError } = useGetAllUsersAdminQuery({ page, limit: 20 });
+  const { data, isLoading, isError } = useGetAllUsersAdminQuery({
+    page,
+    limit: 20,
+  });
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserAdminMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const users = data?.users ?? [];
@@ -38,7 +45,7 @@ export default function AdminUsersPage() {
         <p className="text-sm text-red-600 mb-4">{actionError}</p>
       )}
       {isLoading ? (
-        <p className="text-sm text-[#00000082]">Loading users...</p>
+        <TableSkeleton rows={8} cols={5} />
       ) : isError ? (
         <p className="text-sm text-red-500">Could not load users.</p>
       ) : (
@@ -60,7 +67,9 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">{user.email}</td>
                   <td className="px-4 py-3 capitalize">{user.role}</td>
                   <td className="px-4 py-3">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString()
+                      : "-"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {user.role !== "admin" && (

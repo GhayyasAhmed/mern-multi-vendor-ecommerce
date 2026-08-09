@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ChangeEvent } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -10,12 +10,13 @@ import styles from "@/styles/styles";
 import { useRegisterUserMutation } from "../authApiSlice";
 import { registerSchema, type RegisterFormValues } from "../validators";
 import { getErrorMessage, readFileAsBase64 } from "../utils";
+import { getPasswordStrength, validateImageFile } from "@/lib/validation";
 
 export default function RegisterForm() {
   const [registerUser, { isLoading }] = useRegisterUserMutation();
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // States for avatars and password visibility
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarData, setAvatarData] = useState<string | null>(null);
@@ -26,22 +27,37 @@ export default function RegisterForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
+
+  const passwordValue = useWatch({ control, name: "password" }) || "";
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setAvatarError(null);
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setAvatarError(validation.error ?? "Invalid image file.");
+      e.target.value = "";
+      return;
+    }
     try {
       const base64 = await readFileAsBase64(file);
       setAvatarData(base64);
       setAvatarPreview(base64);
     } catch (err) {
-      setAvatarError(getErrorMessage(err, "Could not read image. Please try a different file."));
+      setAvatarError(
+        getErrorMessage(
+          err,
+          "Could not read image. Please try a different file.",
+        ),
+      );
       e.target.value = "";
     }
   };
@@ -84,14 +100,20 @@ export default function RegisterForm() {
     <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm">
       {/* Back Navigation Link */}
       <div>
-        <Link href="/" className="text-sm text-gray-600 hover:text-[#3957db] hover:underline inline-flex items-center gap-1">
+        <Link
+          href="/"
+          className="text-sm text-gray-600 hover:text-[#3957db] hover:underline inline-flex items-center gap-1"
+        >
           Back to Home
         </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700"
+          >
             Full name
           </label>
           <input
@@ -101,11 +123,16 @@ export default function RegisterForm() {
             className={`${styles.input} mt-1`}
             {...register("name")}
           />
-          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+          )}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email
           </label>
           <input
@@ -115,12 +142,17 @@ export default function RegisterForm() {
             className={`${styles.input} mt-1`}
             {...register("email")}
           />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          )}
         </div>
 
         {/* Password Field with Eye Icon */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
             Password
           </label>
           <div className="relative mt-1">
@@ -136,15 +168,55 @@ export default function RegisterForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
             >
-              {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+              {showPassword ? (
+                <AiOutlineEye size={20} />
+              ) : (
+                <AiOutlineEyeInvisible size={20} />
+              )}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.password.message}
+            </p>
+          )}
+          {passwordValue && !errors.password && (
+            <div className="mt-2">
+              <div
+                className="flex h-1.5 gap-1"
+                role="img"
+                aria-label={`Password strength: ${passwordStrength.label}`}
+              >
+                {[0, 1, 2, 3].map((bar) => (
+                  <span
+                    key={bar}
+                    className={`flex-1 rounded-full transition-colors ${
+                      bar < passwordStrength.score
+                        ? passwordStrength.color === "error"
+                          ? "bg-red-500"
+                          : passwordStrength.color === "warning"
+                            ? "bg-amber-500"
+                            : passwordStrength.color === "info"
+                              ? "bg-blue-500"
+                              : "bg-green-500"
+                        : "bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                {passwordStrength.label} password
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Confirm Password Field with Eye Icon */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="confirmPassword"
+            className="block text-sm font-medium text-gray-700"
+          >
             Confirm password
           </label>
           <div className="relative mt-1">
@@ -160,11 +232,17 @@ export default function RegisterForm() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
             >
-              {showConfirmPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+              {showConfirmPassword ? (
+                <AiOutlineEye size={20} />
+              ) : (
+                <AiOutlineEyeInvisible size={20} />
+              )}
             </button>
           </div>
           {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.confirmPassword.message}
+            </p>
           )}
         </div>
 
@@ -200,7 +278,9 @@ export default function RegisterForm() {
               />
             </label>
           </div>
-          {avatarError && <p className="mt-1 text-sm text-red-600">{avatarError}</p>}
+          {avatarError && (
+            <p className="mt-1 text-sm text-red-600">{avatarError}</p>
+          )}
         </div>
 
         {formError && (
@@ -209,8 +289,14 @@ export default function RegisterForm() {
           </p>
         )}
 
-        <button type="submit" disabled={isLoading} className={`${styles.submit_button} w-full disabled:opacity-60`}>
-          <span className="text-white font-[Poppins]">{isLoading ? "Creating account..." : "Create account"}</span>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`${styles.submit_button} w-full disabled:opacity-60`}
+        >
+          <span className="text-white font-[Poppins]">
+            {isLoading ? "Creating account..." : "Create account"}
+          </span>
         </button>
 
         <p className="text-center text-sm text-gray-600">

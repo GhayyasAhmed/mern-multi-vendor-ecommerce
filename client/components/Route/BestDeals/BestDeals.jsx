@@ -2,6 +2,7 @@
 import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
 import styles from "@/styles/styles";
 import ProductCard from "../ProductCard/ProductCard";
+import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
 
 const BestDeals = () => {
   const { data, isLoading, isError } = useGetAllProductsQuery({
@@ -18,7 +19,7 @@ const BestDeals = () => {
           <h1>Best Deals</h1>
         </div>
         {isLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] pb-12">Loading best deals...</p>
+          <ProductGridSkeleton count={5} />
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 pb-12">Could not load best deals.</p>
         ) : bestDeals.length === 0 ? (

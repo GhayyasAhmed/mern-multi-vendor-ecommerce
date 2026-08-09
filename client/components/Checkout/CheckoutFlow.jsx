@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { blockNonIntegerKeys, sanitizeDigitsOnly } from "@/lib/validation";
 
 const shippingSchema = z.object({
   address1: z.string("Address is required").min(3, "Please enter your street address"),
@@ -310,7 +311,15 @@ function CheckoutContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Zip code</label>
-                  <input className={`${styles.input} mt-1`} {...register("zipCode")} />
+                  <input
+                    className={`${styles.input} mt-1`}
+                    inputMode="numeric"
+                    maxLength={10}
+                    onKeyDown={blockNonIntegerKeys}
+                    {...register("zipCode", {
+                      onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+                    })}
+                  />
                   {errors.zipCode && <p className="mt-1 text-sm text-red-600">{errors.zipCode.message}</p>}
                 </div>
               </div>
