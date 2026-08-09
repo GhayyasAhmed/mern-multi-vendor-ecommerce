@@ -1,14 +1,17 @@
 "use client";
-import { useState } from "react";
+import Pagination from "@/components/ui/Pagination";
 import {
-  useGetAllSellersAdminQuery,
   useDeleteSellerAdminMutation,
+  useGetAllSellersAdminQuery,
   useUpdateSellerStatusAdminMutation,
 } from "@/features/admin/adminApiSlice";
-import Pagination from "@/components/ui/Pagination";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useConfirm } from "@/providers/confirm-provider";
+import { useState } from "react";
 
 export default function AdminSellersPage() {
   const [page, setPage] = useState(1);
+  const confirm = useConfirm();
   const { data, isLoading, isError } = useGetAllSellersAdminQuery({
     page,
     limit: 20,
@@ -17,25 +20,33 @@ export default function AdminSellersPage() {
     useDeleteSellerAdminMutation();
   const [updateStatus, { isLoading: isUpdatingStatus }] =
     useUpdateSellerStatusAdminMutation();
+  const [actionError, setActionError] = useState<string | null>(null);
   const sellers = data?.sellers ?? [];
 
-  const handleDelete = async (id: string) => {
-    if (
-      !confirm(
-        "Delete this seller and all their listings? This cannot be undone.",
-      )
-    )
-      return;
+  const handleDelete = async (id: string, sellerName: string) => {
+    setActionError(null);
+    const confirmed = await confirm({
+      title: "Delete Seller",
+      description: `Are you sure you want to delete "${sellerName}" and all their listings? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteSeller(id).unwrap();
-    } catch {
-      // list stays as-is on failure; admin can retry
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Could not delete seller."));
     }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Sellers</h1>
+      {actionError && (
+        <p className="text-sm text-red-600 mb-4">{actionError}</p>
+      )}
       {isLoading ? (
         <p className="text-sm text-[#00000082]">Loading sellers...</p>
       ) : isError ? (
@@ -90,7 +101,7 @@ export default function AdminSellersPage() {
                     <button
                       type="button"
                       disabled={isDeleting}
-                      onClick={() => handleDelete(seller._id)}
+                      onClick={() => handleDelete(seller._id, seller.name)}
                       className="text-red-600 hover:underline disabled:opacity-60 cursor-pointer"
                     >
                       Delete

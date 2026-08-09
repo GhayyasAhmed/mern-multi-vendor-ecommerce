@@ -28,10 +28,12 @@ import {
   type ProfileFormValues,
 } from "../validators";
 import ProtectedRoute from "./ProtectedRoute";
+import { useToast } from "@/providers/toast-provider";
 
 type Tab = "profile" | "addresses" | "security";
 
 function AccountContent() {
+  
   const { user } = useCurrentUser();
   const [tab, setTab] = useState<Tab>("profile");
 
@@ -70,6 +72,7 @@ function AccountContent() {
 }
 
 function ProfileTab() {
+  const toast = useToast()
   const { user } = useCurrentUser();
   const [updateProfile, { isLoading: isSavingProfile }] = useUpdateUserProfileMutation();
   const [updateAvatar, { isLoading: isSavingAvatar }] = useUpdateUserAvatarMutation();
@@ -94,9 +97,11 @@ function ProfileTab() {
         name: values.name,
         phoneNumber: values.phoneNumber ? Number(values.phoneNumber) : undefined,
       }).unwrap();
-      setProfileSuccess("Profile updated successfully.");
+      toast.showToast({title: "Profile updated successfully", variant:"success"})
+      // setProfileSuccess("Profile updated successfully.");
     } catch (error) {
       setProfileError(getErrorMessage(error));
+      toast.showToast({title: getErrorMessage(error), variant:"error"})
     }
   }
 

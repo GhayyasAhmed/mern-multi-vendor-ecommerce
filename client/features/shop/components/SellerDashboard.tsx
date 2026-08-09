@@ -37,11 +37,14 @@ import {
   useCreateWithdrawRequestMutation,
   useGetMyWithdrawRequestsQuery,
 } from "@/features/withdraw/withdrawApiSlice";
+import { useConfirm } from "@/providers/confirm-provider";
 import styles from "@/styles/styles";
 import type { IProduct, IShop } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
@@ -57,8 +60,6 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 
 type Tab =
   | "profile"
@@ -796,6 +797,7 @@ function ProfilePanel() {
 
 function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const [page, setPage] = useState(1);
+  const confirm = useConfirm(); // Initialize confirmation hook
   const { data, isLoading, isError, error } = useGetShopProductsQuery({
     shopId,
     page,
@@ -947,11 +949,20 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, productName: string) => {
+    const confirmed = await confirm({
+      title: "Delete Product",
+      description: `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteProduct({ id, shopId }).unwrap();
-    } catch {
-      // list stays as-is; a toast/notification system is a follow-up improvement
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not delete product."));
     }
   };
 
@@ -1187,7 +1198,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(product._id)}
+                  onClick={() => handleDelete(product._id, product.name)}
                   className="text-sm text-red-600 hover:underline cursor-pointer"
                 >
                   Delete
@@ -1210,6 +1221,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
 function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const [page, setPage] = useState(1);
+  const confirm = useConfirm(); // Initialize confirmation hook
   const { data, isLoading, isError, error } = useGetShopEventsQuery({
     shopId,
     page,
@@ -1364,11 +1376,20 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, eventName: string) => {
+    const confirmed = await confirm({
+      title: "Delete Event",
+      description: `Are you sure you want to delete "${eventName}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteEvent({ id, shopId }).unwrap();
-    } catch {
-      // list stays as-is; a toast/notification system is a follow-up improvement
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not delete event."));
     }
   };
 
@@ -1641,7 +1662,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(event._id)}
+                  onClick={() => handleDelete(event._id, event.name)}
                   className="text-sm text-red-600 hover:underline cursor-pointer"
                 >
                   Delete
@@ -1664,6 +1685,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
 function CouponsPanel() {
   const { data, isLoading, isError } = useGetShopCouponsQuery();
+  const confirm = useConfirm(); // Initialize confirmation hook
   const [createCouponCode, { isLoading: isCreating }] =
     useCreateCouponCodeMutation();
   const [deleteCouponCode] = useDeleteCouponCodeMutation();
@@ -1695,11 +1717,21 @@ function CouponsPanel() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, couponName: string) => {
+    setFormError(null);
+    const confirmed = await confirm({
+      title: "Delete Coupon",
+      description: `Are you sure you want to delete "${couponName}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteCouponCode(id).unwrap();
-    } catch {
-      // list stays as-is
+    } catch (err) {
+      setFormError(getErrorMessage(err, "Could not delete coupon."));
     }
   };
 
@@ -1715,6 +1747,7 @@ function CouponsPanel() {
           {showForm ? "Cancel" : "Add coupon"}
         </button>
       </div>
+
       {showForm && (
         <form
           onSubmit={handleSubmit}
@@ -1758,6 +1791,11 @@ function CouponsPanel() {
           </button>
         </form>
       )}
+
+      {formError && !showForm && (
+        <p className="text-sm text-red-600 mb-4">{formError}</p>
+      )}
+
       {isLoading ? (
         <p className="text-[15px] text-[#00000082] py-8">Loading coupons...</p>
       ) : isError ? (
@@ -1783,7 +1821,7 @@ function CouponsPanel() {
               </div>
               <button
                 type="button"
-                onClick={() => handleDelete(c._id)}
+                onClick={() => handleDelete(c._id, c.name)}
                 className="text-sm text-red-600 hover:underline cursor-pointer"
               >
                 Delete

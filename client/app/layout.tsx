@@ -1,5 +1,8 @@
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import StoreProvider from "@/providers/store-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { ToastProvider } from "@/providers/toast-provider";
+import { ConfirmProvider } from "@/providers/confirm-provider";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins, Roboto } from "next/font/google";
 import "./globals.css";
@@ -114,6 +117,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('mercovia-theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();",
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased duration-300 bg-no-repeat`}
       >
@@ -127,9 +138,13 @@ export default function RootLayout({
           }}
         />
         <StoreProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <ConfirmProvider>
+                <AuthProvider>{children}</AuthProvider>
+              </ConfirmProvider>
+            </ToastProvider>
+          </ThemeProvider>
         </StoreProvider>
       </body>
     </html>
