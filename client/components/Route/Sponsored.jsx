@@ -13,7 +13,7 @@ const sponsors = [
   // https://logos-world.net/wp-content/uploads/2023/05/LG-Logo-New-500x281.png
   {
     name: "LG",
-    src: "https://logos-world.net/wp-content/uploads/2023/05/LG-Logo-New-500x281.png"   
+    src: "https://logos-world.net/wp-content/uploads/2023/05/LG-Logo-New-500x281.png"
   },
   {
     name: "Apple",
@@ -28,11 +28,17 @@ const sponsors = [
 const Sponsored = () => {
   return (
     <div
-      className={`${styles.section} hidden sm:block bg-white py-10 px-5 mb-12 cursor-pointer rounded-xl`}
+      className={`${styles.section} hidden sm:block bg-surface border border-border py-10 px-5 mb-12 rounded-xl`}
     >
-      <div className="flex justify-between w-full">
+      <p className="mb-6 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Trusted by leading brands
+      </p>
+      <div className="flex flex-wrap items-center justify-between gap-6 w-full">
         {sponsors.map((sponsor, index) => (
-          <div className="flex items-start" key={index}>
+          <div
+            className="flex items-start grayscale opacity-70 transition-all duration-300 hover:grayscale-0 hover:opacity-100"
+            key={index}
+          >
             <Image
               src={sponsor.src}
               alt={`${sponsor.name} logo`}

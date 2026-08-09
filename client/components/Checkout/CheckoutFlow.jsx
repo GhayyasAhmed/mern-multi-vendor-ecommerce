@@ -381,7 +381,7 @@ function CheckoutContent() {
                   disabled={isPlacingOrder || isPreparingPayment}
                   className={`${styles.submit_button} w-full disabled:opacity-60`}
                 >
-                  <span className="text-white font-[Poppins]">
+                  <span className="font-[Poppins]">
                     {paymentMethod === "cod"
                       ? isPlacingOrder
                         ? "Placing order..."
@@ -513,7 +513,7 @@ function CardPaymentForm({ isPlacingOrder, onSuccess, onError }) {
         disabled={!stripe || isConfirming || isPlacingOrder}
         className={`${styles.submit_button} w-full disabled:opacity-60`}
       >
-        <span className="text-white font-[Poppins]">
+        <span className="font-[Poppins]">
           {isConfirming || isPlacingOrder ? "Processing payment..." : "Pay and place order"}
         </span>
       </button>

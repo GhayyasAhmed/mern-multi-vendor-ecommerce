@@ -240,7 +240,7 @@ function ProfileTab() {
           disabled={isSavingProfile}
           className={`${styles.submit_button} disabled:opacity-60`}
         >
-          <span className="text-white font-[Poppins]">
+          <span className="font-[Poppins]">
             {isSavingProfile ? "Saving..." : "Save changes"}
           </span>
         </button>
@@ -432,7 +432,7 @@ function AddressesTab() {
             disabled={isSaving}
             className={`${styles.submit_button} disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">
+            <span className="font-[Poppins]">
               {isSaving
                 ? "Saving..."
                 : editingId
@@ -641,7 +641,7 @@ function SecurityTab() {
           disabled={isLoading}
           className={`${styles.submit_button} disabled:opacity-60`}
         >
-          <span className="text-white font-[Poppins]">
+          <span className="font-[Poppins]">
             {isLoading ? "Updating..." : "Update password"}
           </span>
         </button>

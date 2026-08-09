@@ -28,6 +28,10 @@ const ProductCard = ({ data }) => {
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const outOfStock = (data?.stock ?? 0) <= 0;
   const isWishlisted = Boolean(data?._id && user?.wishlist?.includes(data._id));
+  const discountPercent =
+    data?.originalPrice && data.originalPrice > data.discountPrice
+      ? Math.round(((data.originalPrice - data.discountPrice) / data.originalPrice) * 100)
+      : null;
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
@@ -49,99 +53,102 @@ const ProductCard = ({ data }) => {
     }
   };
 
-  // const productName = data?.name ? data.name.replace(/\s+/g, "-") : "";
-
   return (
     <>
-      <div className="w-full h-92.5 bg-white rounded-lg shadow-sm p-3 relative cursor-pointer">
-        <div className="flex justify-end">
-           <button
-            type="button"
-            onClick={handleWishlistToggle}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            aria-pressed={isWishlisted}
-            className="absolute right-2 top-5 cursor-pointer"
-          >
-            {isWishlisted ? (
-              <AiFillHeart size={22} color="red" aria-hidden="true" />
-            ) : (
-              <AiOutlineHeart size={22} color="#333" aria-hidden="true" />
-            )}
-          </button>
-        </div>
+      <div className="group relative w-full h-92.5 bg-surface border border-border rounded-lg shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-3">
         <Link href={`/product/${data?._id}`}>
-          <div className="relative w-full h-42.5 rounded-md overflow-hidden bg-gray-50">
+          <div className="relative w-full h-42.5 rounded-md overflow-hidden bg-muted">
+            {discountPercent ? (
+              <span className="absolute left-2 top-2 z-10 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground">
+                -{discountPercent}%
+              </span>
+            ) : null}
             <Image
               src={data?.images?.[0]?.url || "/placeholder.png"}
               alt={data?.name || "Product image"}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-              className="object-contain p-2"
+              className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
             />
-          </div>
-        </Link>
-        <Link href={`/shop/preview/${data?.shop?._id}`}>
-          <h5 className={`${styles.shop_name}`}>{data?.shop?.name}</h5>
-        </Link>
-        <Link href={`/product/${data?._id}`}>
-          <h4 className="pb-3 font-medium">
-            {data?.name?.length > 40
-              ? data.name.slice(0, 40) + "..."
-              : data?.name}
-          </h4>
-
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, index) =>
-                index < Math.round(data?.ratings || 0) ? (
-                  <AiFillStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-                ) : (
-                  <AiOutlineStar key={index} className="mr-2 cursor-pointer" color="#F6BA00" size={20} />
-                )
-              )}
-            </div>
-            <span className="text-[13px] text-[#00000082]">({data?.reviews?.length ?? 0})</span>
-          </div>
-
-          <div className="py-2 flex items-center justify-between">
-            <div className="flex">
-              <h5 className={`${styles.productDiscountPrice}`}>
-                {data?.discountPrice}$
-              </h5>
-              {data?.originalPrice ? (
-                <h4 className={`${styles.price}`}>{data.originalPrice}$</h4>
-              ) : null}
-            </div>
-            <span className="font-normal text-[17px] text-[#68d8d4]">
-              {data?.sold_out || 0} sold
-            </span>
+            {outOfStock && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-[1px]">
+                <span className="rounded-md bg-foreground/90 px-3 py-1 text-xs font-semibold text-background">
+                  Out of stock
+                </span>
+              </div>
+            )}
           </div>
         </Link>
 
-        {/* Side options */}
-        <div>
+        <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => setOpen(!open)}
+            onClick={handleWishlistToggle}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={isWishlisted}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
+          >
+            {isWishlisted ? (
+              <AiFillHeart size={16} className="text-accent" aria-hidden="true" />
+            ) : (
+              <AiOutlineHeart size={16} className="text-muted-foreground" aria-hidden="true" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(!open);
+            }}
             aria-label="Quick view"
             aria-haspopup="dialog"
             aria-expanded={open}
-            className="absolute right-2 top-14 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
           >
-            <AiOutlineEye size={22} color="#333" aria-hidden="true" />
+            <AiOutlineEye size={16} className="text-muted-foreground" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={outOfStock}
             aria-label={outOfStock ? "Out of stock" : "Add to cart"}
-            className={`absolute right-2 top-24 ${outOfStock ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface/90 disabled:hover:text-current cursor-pointer"
           >
-            <AiOutlineShoppingCart size={25} color="#444" aria-hidden="true" />
+            <AiOutlineShoppingCart size={16} className="text-muted-foreground" aria-hidden="true" />
           </button>
-          {open ? <ProductDetailsCard setOpen={setOpen} data={data} /> : null}
         </div>
+
+        <Link href={`/shop/preview/${data?.shop?._id}`}>
+          <h5 className={`${styles.shop_name} mt-2`}>{data?.shop?.name}</h5>
+        </Link>
+        <Link href={`/product/${data?._id}`}>
+          <h4 className="pb-3 font-medium text-foreground">
+            {data?.name?.length > 40 ? data.name.slice(0, 40) + "..." : data?.name}
+          </h4>
+
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, index) =>
+                index < Math.round(data?.ratings || 0) ? (
+                  <AiFillStar key={index} className="mr-1 cursor-pointer" color="#F6BA00" size={16} />
+                ) : (
+                  <AiOutlineStar key={index} className="mr-1 cursor-pointer" color="#F6BA00" size={16} />
+                )
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">({data?.reviews?.length ?? 0})</span>
+          </div>
+
+          <div className="py-2 flex items-center justify-between">
+            <div className="flex items-baseline">
+              <h5 className={`${styles.productDiscountPrice}`}>{data?.discountPrice}$</h5>
+              {data?.originalPrice ? <h4 className={`${styles.price}`}>{data.originalPrice}$</h4> : null}
+            </div>
+            <span className="text-xs text-muted-foreground">{data?.sold_out || 0} sold</span>
+          </div>
+        </Link>
       </div>
+      {open ? <ProductDetailsCard setOpen={setOpen} data={data} /> : null}
     </>
   );
 };

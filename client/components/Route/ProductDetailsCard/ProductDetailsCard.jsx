@@ -77,14 +77,9 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   };
 
   return (
-    <div className="bg-[#0000003b] fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
+    <div className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
       {data ? (
-        <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-white rounded-md shadow-sm relative p-4 overflow-y-auto">
-          {/* <AiOutlineClose
-            size={30}
-            className="absolute right-3 top-3 z-50 cursor-pointer"
-            onClick={() => setOpen(false)}
-          /> */}
+        <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface rounded-md shadow-lg relative p-4 overflow-y-auto">
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -129,16 +124,16 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </div>
 
               <button
-                className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
+                className="bg-primary hover:bg-primary-hover my-3 font-semibold text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
                 onClick={handleMessageSubmit}
                 disabled={isStartingChat}
               >
-                <span className="text-white flex items-center">
+                <span className="flex items-center">
                   {isStartingChat ? "Starting chat..." : "Send Message"} <AiOutlineMessage className="ml-1" />
                 </span>
               </button>
 
-              <h5 className="text-[16px] text-red-500 mt-5 font-Roboto">
+              <h5 className="text-xs text-muted-foreground mt-5">   
                 ({data?.sold_out ?? 0}) Sold
               </h5>
             </div>
@@ -148,7 +143,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               <h1 className={`${styles.productTitle} text-[20px]`}>
                 {data?.name}
               </h1>
-              <p className="py-3 text-[14px] text-[#555] leading-6">
+              <p className="py-3 text-[14px] text-muted-foreground leading-6">
                 {data?.description}
               </p>
 
@@ -198,12 +193,12 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </div>
 
               <button
-                className={`${styles.button} mt-6 rounded-md text-white font-medium flex items-center justify-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                   }`}
                 onClick={handleAddToCart}
                 disabled={outOfStock}
               >
-                <span className="text-white flex items-center">
+                <span className="flex items-center">
                   {outOfStock ? "Out of stock" : "Add to cart"} <AiOutlineShoppingCart className="ml-1" />
                 </span>
               </button>

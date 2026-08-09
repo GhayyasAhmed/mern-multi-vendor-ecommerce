@@ -105,7 +105,8 @@ const Header = ({ activeHeading }) => {
               aria-expanded={searchData !== null}
               aria-controls="header-search-results"
               aria-autocomplete="list"
-              className="h-10 w-full px-2 border-[#3957db] border-2 rounded-md"
+              className="h-10 w-full px-3 rounded-md border border-border bg-surface text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-primary"
+
             />
             <AiOutlineSearch size={30} aria-hidden="true" className="absolute right-2 top-1.5 pointer-events-none" />
             {searchData !== null ? (
@@ -113,16 +114,16 @@ const Header = ({ activeHeading }) => {
                 id="header-search-results"
                 role="region"
                 aria-live="polite"
-                className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-9 p-4 w-full left-0 top-11.25"
+                className="absolute min-h-[30vh] bg-surface border border-border shadow-lg z-9 p-4 w-full left-0 top-11.25 rounded-md"
               >
                 {isSearching ? (
-                  <p className="text-sm text-gray-500 px-2 py-3">Searching...</p>
+                  <p className="text-sm text-muted-foreground px-2 py-3">Searching...</p>
                 ) : searchData.length === 0 ? (
-                  <p className="text-sm text-gray-500 px-2 py-3">No products found.</p>
+                  <p className="text-sm text-muted-foreground px-2 py-3">No products found.</p>
                 ) : (
                   searchData.map((product) => (
                     <Link href={`/product/${product._id}`} key={product._id}>
-                      <div className="w-full flex items-start py-3">
+                      <div className="w-full flex items-start py-3 hover:bg-surface-hover rounded-md px-1 transition-colors">
                         <Image
                           src={product.images?.[0]?.url || "/placeholder.png"}
                           alt={product.name || "Product image"}
@@ -141,7 +142,7 @@ const Header = ({ activeHeading }) => {
 
           <div className={`${styles.button}`}>
             <Link href="/seller">
-              <h1 className="text-white flex items-center">
+              <h1 className="flex items-center">
                 Become Seller <IoIosArrowForward className="ml-1" />
               </h1>
             </Link>
@@ -151,7 +152,7 @@ const Header = ({ activeHeading }) => {
 
       <div
         className={`${active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
-          } transition hidden 800px:flex items-center justify-between w-full bg-[#3321c8] h-17.5`}
+          } transition hidden 800px:flex items-center justify-between w-full bg-brand text-brand-foreground h-17.5`}
       >
         <div className={`${styles.section} relative ${styles.normalFlex} justify-between`}>
           {/* Categories */}
@@ -162,7 +163,7 @@ const Header = ({ activeHeading }) => {
                 type="button"
                 aria-expanded={dropDown}
                 aria-haspopup="menu"
-                className={`h-full w-full flex justify-between items-center pl-10 bg-white font-sans text-lg font-medium select-none rounded-t-md`}
+                className={`h-full w-full flex justify-between items-center pl-10 bg-white text-gray-900 font-sans text-lg font-medium select-none rounded-t-md`}
               >
                 All Categories
                 <IoIosArrowDown size={20} className="mr-2" aria-hidden="true" />
@@ -195,7 +196,7 @@ const Header = ({ activeHeading }) => {
                 aria-label={`Open wishlist, ${user?.wishlist?.length ?? 0} items`}
               >
                 <AiOutlineHeart size={30} color="rgb(255 255 255 / 83%)" aria-hidden="true" />
-                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
+                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-accent w-4 h-4 p-0 m-0 text-accent-foreground font-mono text-[12px] leading-tight text-center">
                   {user?.wishlist?.length ?? 0}
                 </span>
               </button>
@@ -209,7 +210,7 @@ const Header = ({ activeHeading }) => {
                 aria-label={`Open cart, ${cartCount} items`}
               >
                 <AiOutlineShoppingCart size={30} color="rgb(255 255 255 / 83%)" aria-hidden="true" />
-                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
+                <span aria-hidden="true" className="absolute right-0 top-0 rounded-full bg-accent w-4 h-4 p-0 m-0 text-accent-foreground font-mono text-[12px] leading-tight text-center">
                   {cartCount}
                 </span>
               </button>
@@ -250,17 +251,18 @@ const Header = ({ activeHeading }) => {
                   {accountMenuOpen && (
                     <div
                       role="menu"
-                      className="absolute right-0 top-10 w-45 bg-white rounded-md shadow-sm py-2 z-20"
+                      // className="absolute right-0 top-10 w-45 bg-white rounded-md shadow-sm py-2 z-20"
+                      className="absolute right-0 top-10 w-45 bg-surface border border-border rounded-md shadow-lg py-2 z-20"
                     >
                       {user?.name && (
-                        <p className="px-4 py-1 text-sm font-medium text-gray-700 truncate">
+                        <p className="px-4 py-1 text-sm font-medium text-foreground truncate">
                           {user.name}
                         </p>
                       )}
                       {user?.role === "admin" && (
                         <Link
                           href="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                          className="block px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
                           onClick={() => setAccountMenuOpen(false)}
                         >
                           Admin panel
@@ -268,27 +270,27 @@ const Header = ({ activeHeading }) => {
                       )}
                       <Link
                         href="/orders"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
                         onClick={() => setAccountMenuOpen(false)}
                       >
                         My Orders
                       </Link>
                       <Link
                         href="/inbox"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
                         onClick={() => setAccountMenuOpen(false)}
                       >
                         Inbox
                       </Link>
                       <Link
                         href="/account"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
                         onClick={() => setAccountMenuOpen(false)}
                       >
                         Account settings
                       </Link>
                       <LogoutButton
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 disabled:opacity-60"
+                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface-hover disabled:opacity-60"
                         onLoggedOut={() => setAccountMenuOpen(false)}
                       />
                     </div>
@@ -319,7 +321,7 @@ const Header = ({ activeHeading }) => {
       {/* Mobile Header */}
       <div
         className={`${active === true ? "shadow-sm fixed top-0 left-0 z-10" : null
-          } w-full h-15 bg-white z-50 top-0 left-0 shadow-sm 800px:hidden flex items-center justify-between px-4`}
+          } w-full h-15 bg-surface border-b border-border z-50 top-0 left-0 shadow-sm 800px:hidden flex items-center justify-between px-4`}
       >
         <div>
           <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" className="cursor-pointer">
@@ -354,7 +356,7 @@ const Header = ({ activeHeading }) => {
       {/* Mobile Sidebar */}
       {open && (
         <div className="fixed w-full bg-[#0000005f] z-20 h-full top-0 left-0">
-          <div className="fixed w-[60%] bg-white h-full top-0 left-0 z-10 overflow-y-scroll">
+          <div className="fixed w-[60%] bg-surface h-full top-0 left-0 z-10 overflow-y-scroll">
             <div className="w-full justify-between flex items-start pr-3 pt-3">
               <div className="flex items-center gap-2">
                 <div
@@ -379,16 +381,16 @@ const Header = ({ activeHeading }) => {
               <input
                 type="search"
                 placeholder="Search Product..."
-                className="h-10 w-full px-2 border-[#3957db] border-2 rounded-md"
+                className="h-10 w-full px-3 rounded-md border border-border bg-surface text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-primary"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
               {searchData !== null ? (
-                <div className="absolute bg-white z-10 shadow w-full left-0 p-3 top-11.25">
+                <div className="absolute bg-surface border border-border rounded-md shadow-lg z-10 w-full left-0 p-3 top-11.25">
                   {isSearching ? (
-                    <p className="text-sm text-gray-500 px-2 py-2">Searching...</p>
+                    <p className="text-sm text-muted-foreground px-2 py-2">Searching...</p>
                   ) : searchData.length === 0 ? (
-                    <p className="text-sm text-gray-500 px-2 py-2">No products found.</p>
+                    <p className="text-sm text-muted-foreground px-2 py-2">No products found.</p>
                   ) : (
                     searchData.map((product) => (
                       <Link href={`/product/${product._id}`} key={product._id}>
@@ -412,7 +414,7 @@ const Header = ({ activeHeading }) => {
             <Navbar active={activeHeading} />
             <div className={`${styles.button} ml-4 rounded-sm!`}>
               <Link href="/seller">
-                <h1 className="text-white flex items-center">
+                <h1 className="flex items-center">
                   Become Seller <IoIosArrowForward className="ml-1" />
                 </h1>
               </Link>
@@ -424,12 +426,13 @@ const Header = ({ activeHeading }) => {
             {isAuthenticated ? (
               <div className="flex w-full flex-col items-center gap-2">
                 {user?.name && (
-                  <span className="text-[16px] text-[#000000b7]">{user.name}</span>
+                  <span className="text-[16px] text-foreground">{user.name}</span>
                 )}
                 {user?.role === "admin" && (
                   <Link
                     href="/admin"
-                    className="text-[16px] text-[#3957db]"
+                    // className="text-[16px] text-[#3957db]"
+                    className="text-[16px] text-primary"
                     onClick={() => setOpen(false)}
                   >
                     Admin panel
@@ -437,27 +440,29 @@ const Header = ({ activeHeading }) => {
                 )}
                 <Link
                   href="/orders"
-                  className="text-[16px] text-[#3957db]"
+                  className="text-[16px] text-primary"
+
                   onClick={() => setOpen(false)}
                 >
                   My Orders
                 </Link>
                 <Link
                   href="/inbox"
-                  className="text-[16px] text-[#3957db]"
+                  className="text-[16px] text-primary"
                   onClick={() => setOpen(false)}
                 >
                   Inbox
                 </Link>
                 <Link
                   href="/account"
-                  className="text-[16px] text-[#3957db]"
+                  className="text-[16px] text-primary"
                   onClick={() => setOpen(false)}
                 >
                   Account settings
                 </Link>
                 <LogoutButton
-                  className="text-[18px] text-[#000000b7] disabled:opacity-60"
+                  // className="text-[18px] text-[#000000b7] disabled:opacity-60"
+                  className="text-[18px] text-foreground disabled:opacity-60"
                   onLoggedOut={() => setOpen(false)}
                 />
               </div>
@@ -465,19 +470,20 @@ const Header = ({ activeHeading }) => {
               <div className="flex w-full justify-center">
                 <Link
                   href="/login"
-                  className="text-[18px] pr-2 text-[#000000b7]"
+                  className="text-[18px] pr-2 text-foreground"
                 >
                   Login /
                 </Link>
-                <Link href="/signup" className="text-[18px] text-[#000000b7]">
+                <Link href="/signup" className="text-[18px] text-foreground">
                   Sign up
                 </Link>
               </div>
             )}
           </div>
         </div>
-      )}
-    </header>
+      )
+      }
+    </header >
   );
 };
 

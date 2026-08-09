@@ -345,7 +345,7 @@ export default function RegisterShopForm() {
           disabled={isLoading}
           className={`${styles.submit_button} w-full disabled:opacity-60`}
         >
-          <span className="text-white font-[Poppins]">
+          <span className="font-[Poppins]">
             {isLoading ? "Creating shop..." : "Create shop"}
           </span>
         </button>

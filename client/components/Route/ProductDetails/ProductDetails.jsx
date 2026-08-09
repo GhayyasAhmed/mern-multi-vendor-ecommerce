@@ -165,11 +165,12 @@ const ProductDetails = ({ productId }) => {
             </div>
 
             <button
-              className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
+              // className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
+              className="bg-primary hover:bg-primary-hover my-3 font-semibold text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
               onClick={handleMessageSubmit}
               disabled={isStartingChat}
             >
-              <span className="text-white flex items-center">
+              <span className="flex items-center">
                 {isStartingChat ? "Starting chat..." : "Send Message"} <AiOutlineMessage className="ml-1" />
               </span>
             </button>
@@ -229,10 +230,10 @@ const ProductDetails = ({ productId }) => {
             </div>
 
             <button
-              className={`${styles.button} mt-6 rounded-md text-white font-medium flex items-center justify-center cursor-pointer`}
+              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center cursor-pointer`}
               disabled={product.stock <= 0}
             >
-              <span className="text-white flex items-center">
+              <span className="flex items-center">
                 Add to cart <AiOutlineShoppingCart className="ml-1" />
               </span>
             </button>

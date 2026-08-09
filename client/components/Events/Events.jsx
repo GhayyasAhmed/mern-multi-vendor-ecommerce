@@ -19,7 +19,7 @@ const Events = () => {
         {isLoading ? (
           <CardListSkeleton count={2} />
         ) : isError ? (
-          <p className="text-center text-[15px] text-red-500 pb-12">Could not load events.</p>
+          <p className="text-center text-[15px] text-error pb-12">Could not load events.</p>
         ) : events.length === 0 ? (
           <EmptyState icon={<AiOutlineCalendar size={26} />} title="No active events right now" />
         ) : (

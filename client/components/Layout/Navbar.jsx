@@ -12,8 +12,8 @@ const Navbar = ({ active }) => {
               href={i.url}
               className={`${
                 active === index + 1
-                  ? "text-[#17dd1f]"
-                  : "text-black 800px:text-white"
+                ? "text-accent"
+                : "text-foreground 800px:text-white/90"
               } pb-7.5 800px:pb-0 font-medium px-6 cursor-pointer font-Roboto`}
             >
               {i.title}

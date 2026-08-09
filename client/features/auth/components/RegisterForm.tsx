@@ -294,7 +294,7 @@ export default function RegisterForm() {
           disabled={isLoading}
           className={`${styles.submit_button} w-full disabled:opacity-60`}
         >
-          <span className="text-white font-[Poppins]">
+          <span className="font-[Poppins]">
             {isLoading ? "Creating account..." : "Create account"}
           </span>
         </button>

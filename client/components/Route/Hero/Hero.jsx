@@ -12,20 +12,19 @@ const Hero = () => {
         backgroundPosition: "center",
       }}
     >
-      <div className={`${styles.section} w-[90%] 800px:w-[60%]`}>
+      <div className="absolute inset-0 bg-linear-to-r from-white/90 via-white/60 to-transparent dark:from-black/85 dark:via-black/55 dark:to-transparent" />
+      <div className={`${styles.section} relative z-10 w-[90%] 800px:w-[60%]`}>
         <h1
-          className={`text-[35px] leading-[1.2] 800px:text-[60px] text-[#3a3a3a] font-semibold capitalize`}
+          className={`text-[35px] leading-[1.2] 800px:text-[60px] text-foreground font-semibold capitalize`}
         >
           Best Collection for <br /> home Decoration
         </h1>
-        <p className="pt-5 text-[16px] font-[Poppins] font-normal text-[#000000ba]">
+        <p className="pt-5 text-[16px] font-[Poppins] font-normal text-muted-foreground">
           Discover top-quality items carefully curated to transform your living spaces.
         </p>
         <Link href="/products" className="inline-block">
           <div className={`${styles.button} mt-5`}>
-            <span className="text-white font-[Poppins] text-[18px]">
-              Shop Now
-            </span>
+            <span className="font-[Poppins] text-[18px]">Shop Now</span>
           </div>
         </Link>
       </div>

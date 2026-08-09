@@ -32,7 +32,12 @@
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
 
-  --color-focus-ring: var(--focus-ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
 
   /* Shape */
   --radius-xs: 0.25rem;
@@ -43,9 +48,12 @@
 
   /* Elevation */
   --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.06);
-  --shadow-md: 0 4px 8px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
-  --shadow-lg: 0 12px 24px -6px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.08);
+  --shadow-sm:
+    0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow-md:
+    0 4px 8px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-lg:
+    0 12px 24px -6px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.08);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -85,6 +93,13 @@
 
   --focus-ring: #93c5fd;
 
+  --brand: #1e2a78;
+  --brand-foreground: #ffffff;
+
+  --accent: #e11d48;
+  --accent-hover: #be123c;
+  --accent-foreground: #ffffff;
+
   color-scheme: light;
 }
 
@@ -116,6 +131,10 @@
 
   --focus-ring: #3b82f6;
 
+  --accent: #fb7185;
+  --accent-hover: #f43f5e;
+  --accent-foreground: #1f0a0d;
+
   color-scheme: dark;
 }
 
@@ -123,11 +142,15 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-roboto);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

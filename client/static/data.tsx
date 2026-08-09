@@ -89,16 +89,18 @@ export const brandingData: BrandingData[] = [
         viewBox="0 0 36 36"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className="text-primary shrink-0"
       >
         <path
           d="M1 1H7L10.68 19.39C10.8068 20.0274 11.1448 20.5982 11.6375 21.0028C12.1302 21.4074 12.7447 21.6192 13.37L27.3 21.62C27.9253 21.6192 28.5398 21.4074 29.0325 21.0028C29.5252 20.5982 29.8632 20.0274 29.99 19.39L32.2 8H8.25"
-          stroke="#3957DB"
+          // stroke="#3957DB"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="13" cy="30" r="3" fill="#3957DB" />
-        <circle cx="27" cy="30" r="3" fill="#3957DB" />
+        <circle cx="13" cy="30" r="3" fill="currentColor" />
+        <circle cx="27" cy="30" r="3" fill="currentColor" />
       </svg>
     ),
   },
@@ -113,10 +115,12 @@ export const brandingData: BrandingData[] = [
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className="text-primary shrink-0"
       >
         <path
           d="M16 2L20.3262 10.7639L30 12.1764L23 19.0005L24.6524 28.6472L16 24.1L7.34762 28.6472L9 19.0005L2 12.1764L11.6738 10.7639L16 2Z"
-          stroke="#3957DB"
+          // stroke="#3957DB"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -135,10 +139,12 @@ export const brandingData: BrandingData[] = [
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className="text-primary shrink-0"
       >
         <path
           d="M16 2V30M2 16H30"
-          stroke="#3957DB"
+          // stroke="#3957DB"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -157,10 +163,12 @@ export const brandingData: BrandingData[] = [
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className="text-primary shrink-0"
       >
         <path
           d="M16 2L4 7V15C4 22.38 9.12 29.23 16 31C22.88 29.23 28 22.38 28 15V7L16 2Z"
-          stroke="#3957DB"
+          // stroke="#3957DB"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"

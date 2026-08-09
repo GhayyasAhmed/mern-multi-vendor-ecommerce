@@ -127,13 +127,13 @@ const EventDetails = ({ eventId }) => {
             </div>
 
             <button
-              className={`${styles.button} mt-6 rounded-md text-white font-medium flex items-center justify-center ${
+              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center ${
                 outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
               onClick={handleAddToCart}
               disabled={outOfStock}
             >
-              <span className="text-white flex items-center">{outOfStock ? "Out of stock" : "Add to cart"}</span>
+              <span className="flex items-center">{outOfStock ? "Out of stock" : "Add to cart"}</span>
             </button>
           </div>
         </div>

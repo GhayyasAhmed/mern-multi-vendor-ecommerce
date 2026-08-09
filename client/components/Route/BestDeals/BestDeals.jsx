@@ -21,9 +21,9 @@ const BestDeals = () => {
         {isLoading ? (
           <ProductGridSkeleton count={5} />
         ) : isError ? (
-          <p className="text-center text-[15px] text-red-500 pb-12">Could not load best deals.</p>
+          <p className="text-center text-[15px] text-error pb-12">Could not load best deals.</p>
         ) : bestDeals.length === 0 ? (
-          <p className="text-center text-[15px] text-[#00000082] pb-12">No deals available yet.</p>
+          <p className="text-center text-[15px] text-muted-foreground pb-12">No deals available yet.</p>
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">
             {bestDeals.map((item) => (

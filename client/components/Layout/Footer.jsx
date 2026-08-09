@@ -28,10 +28,11 @@ const Footer = () => {
           </p>
 
           <div className="flex items-center mt-3.75 space-x-3.5">
-            <AiFillFacebook size={25} className="cursor-pointer" />
-            <AiOutlineTwitter size={25} className="cursor-pointer" />
-            <AiFillInstagram size={25} className="cursor-pointer" />
-            <AiFillYoutube size={25} className="cursor-pointer" />
+            <AiFillFacebook size={25} className="cursor-pointer transition-colors hover:text-accent" />
+            <AiOutlineTwitter size={25} className="cursor-pointer transition-colors hover:text-accent" />
+            <AiFillInstagram size={25} className="cursor-pointer transition-colors hover:text-accent" />
+            <AiFillYoutube size={25} className="cursor-pointer transition-colors hover:text-accent" />
+
           </div>
         </ul>
 
@@ -41,7 +42,7 @@ const Footer = () => {
           {footerCompanyLinks.map((link, index) => (
             <li key={index}>
               <Link
-                className="text-gray-400 hover:text-teal-400 duration-300 text-sm leading-6 cursor-pointer"
+                className="text-gray-400 hover:text-accent duration-300 text-sm leading-6 cursor-pointer"               
                 href={link.link}
               >
                 {link.name}

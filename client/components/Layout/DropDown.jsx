@@ -12,7 +12,7 @@ const DropDown = ({ categoriesData, setDropDown }) => {
   };
 
   return (
-    <div className="pb-4 w-67.5 bg-white absolute z-30 rounded-b-md shadow-sm">
+    <div className="pb-4 w-67.5 bg-white absolute z-30 rounded-b-md shadow-lg">
       {categoriesData &&
         categoriesData.map((i, index) => (
           <div
@@ -27,7 +27,8 @@ const DropDown = ({ categoriesData, setDropDown }) => {
               alt={i.title || "Category icon"}
               className="object-contain ml-2.5 select-none"
             />
-            <h3 className="m-3 cursor-pointer select-none">{i.title}</h3>
+            <h3 className="m-3 cursor-pointer select-none text-gray-900">{i.title}</h3>
+          
           </div>
         ))}
     </div>

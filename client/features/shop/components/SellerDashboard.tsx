@@ -429,7 +429,7 @@ function PayoutsPanel({
             disabled={isRequesting}
             className={`${styles.submit_button} sm:w-auto disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">
+            <span className="font-[Poppins]">
               {isRequesting ? "Requesting..." : "Request withdrawal"}
             </span>
           </button>
@@ -642,7 +642,7 @@ function BankDetailsForm({
         disabled={isSaving}
         className={`${styles.submit_button} disabled:opacity-60`}
       >
-        <span className="text-white font-[Poppins]">
+        <span className="font-[Poppins]">
           {isSaving ? "Saving..." : "Save bank details"}
         </span>
       </button>
@@ -832,7 +832,7 @@ function ProfilePanel() {
           disabled={isSavingInfo}
           className={`${styles.submit_button} disabled:opacity-60`}
         >
-          <span className="text-white font-[Poppins]">
+          <span className="font-[Poppins]">
             {isSavingInfo ? "Saving..." : "Save changes"}
           </span>
         </button>
@@ -1229,7 +1229,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
             disabled={isCreating || isUpdating}
             className={`${styles.submit_button} disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">
+            <span className="font-[Poppins]">
               {editingProduct
                 ? isUpdating
                   ? "Saving..."
@@ -1723,7 +1723,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
             disabled={isCreating || isUpdating}
             className={`${styles.submit_button} disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">
+            <span className="font-[Poppins]">
               {editingEvent
                 ? isUpdating
                   ? "Saving..."
@@ -1933,7 +1933,7 @@ function CouponsPanel() {
             disabled={isCreating}
             className={`${styles.submit_button} disabled:opacity-60`}
           >
-            <span className="text-white font-[Poppins]">
+            <span className="font-[Poppins]">
               {isCreating ? "Creating..." : "Create coupon"}
             </span>
           </button>
