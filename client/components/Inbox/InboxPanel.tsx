@@ -72,9 +72,19 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const handleBack = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("conversation");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   return (
-    <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-sm overflow-hidden min-h-[60vh]">
-      <div className="w-full md:w-1/3 border-r">
+    <div className="flex flex-col md:flex-row bg-surface rounded-lg shadow-sm overflow-hidden min-h-[60vh]">  
+      <div
+        className={`w-full md:w-1/3 border-r border-border ${
+          activeConversationId ? "hidden md:block" : "block"
+        }`}
+      >
         <ConversationList
           conversations={conversations}
           isLoading={isLoading}
@@ -94,18 +104,19 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
       </div>
       <div className="w-full md:w-2/3">
         {activeConversation && identityId ? (
-          // <ChatWindow conversation={activeConversation} 
-          // identityId={identityId} role={role} />
-           <ChatWindow 
-            conversation={activeConversation} 
-            identityId={identityId} 
-            role={role} 
-            isPeerOnline={onlineUserIds.includes(role === "user" ? activeConversation.sellerId : activeConversation.userId)} 
-           />
+          <ChatWindow
+            conversation={activeConversation}
+            identityId={identityId}
+            role={role}
+            isPeerOnline={onlineUserIds.includes(
+              role === "user" ? activeConversation.sellerId : activeConversation.userId
+            )}
+            onBack={handleBack}
+          />
 
         ) : (
           <div className="flex h-full min-h-[50vh] items-center justify-center p-6 text-center">
-            <p className="text-[15px] text-[#00000082]">
+            <p className="text-[15px] text-muted-foreground">
               {conversations.length === 0
                 ? "You have no conversations yet."
                 : "Select a conversation to start chatting."}

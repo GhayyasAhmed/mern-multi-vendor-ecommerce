@@ -1,16 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
-import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
-import styles from "@/styles/styles";
-import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
-import { useGetMyOrdersQuery } from "@/features/orders/orderApiSlice";
-import { getErrorMessage } from "@/features/auth/utils";
-import { useState } from "react";
-import Pagination from "@/components/ui/Pagination";
+import Header from "@/components/Layout/Header";
 import CardListSkeleton from "@/components/ui/CardListSkeleton";
+import EmptyState from "@/components/ui/EmptyState";
+import Pagination from "@/components/ui/Pagination";
+import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useGetMyOrdersQuery } from "@/features/orders/orderApiSlice";
+import styles from "@/styles/styles";
+import Link from "next/link";
+import { useState } from "react";
+import { AiOutlineFileText } from "react-icons/ai";
 
 function OrderListContent() {
   const { user } = useCurrentUser();
@@ -38,12 +40,12 @@ function OrderListContent() {
             {getErrorMessage(error, "Could not load your orders.")}
           </p>
         ) : orders.length === 0 ? (
-          <div className="w-full flex flex-col items-center justify-center py-16 gap-3">
-            <p className="text-[15px] text-[#00000082]">You haven&apos;t placed any orders yet.</p>
-            <Link href="/products" className="text-[#3957db] hover:underline">
-              Start shopping
-            </Link>
-          </div>
+          <EmptyState
+            icon={<AiOutlineFileText size={26} />}
+            title="You haven't placed any orders yet"
+            actionLabel="Start shopping"
+            actionHref="/products"
+          />
         ) : (
           <>
             <div className="space-y-4">
@@ -63,10 +65,10 @@ function OrderListContent() {
                     <div className="text-right">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${order.status === "Delivered"
-                            ? "bg-green-100 text-green-700"
-                            : order.status === "Refund Success"
-                              ? "bg-gray-100 text-gray-700"
-                              : "bg-blue-100 text-blue-700"
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "Refund Success"
+                            ? "bg-gray-100 text-gray-700"
+                            : "bg-blue-100 text-blue-700"
                           }`}
                       >
                         {order.status}

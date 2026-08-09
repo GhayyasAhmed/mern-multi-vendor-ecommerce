@@ -1,8 +1,12 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import LogoutButton from "@/features/auth/components/LogoutButton";
-import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import Badge from "@/components/ui/Badge";
+import { useGetAdminStatsQuery } from "@/features/admin/adminApiSlice";
 
 const links = [
   { href: "/admin", label: "Overview" },
@@ -16,43 +20,112 @@ const links = [
 
 export default function AdminNav() {
   const pathname = usePathname();
-  return (
-    <nav className="w-56 shrink-0 bg-[#3321c8] text-white min-h-screen p-4 space-y-1">
-      <h2 className="text-lg font-semibold mb-4 px-2">Admin</h2>
-      {links.map((link) => {
-        const active = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`block px-3 py-2 rounded-md text-sm ${
-              active ? "bg-white/20 font-medium" : "hover:bg-white/10"
-            }`}
-          >
-            {link.label}
-          </Link>
-        );
-      })}
-      <div className="pt-4 mt-4 border-t border-white/20">
-        <Link
-          href="/"
-          className="block px-3 py-2 rounded-md text-sm hover:bg-white/10"
-        >
-          Back to Store
-        </Link>
+  const [open, setOpen] = useState(false);
+  const { data } = useGetAdminStatsQuery();
+  const pendingWithdrawCount = data?.stats?.pendingWithdrawCount ?? 0;
 
-        <AdminLogout />
+  const renderLinks = (onNavigate?: () => void) =>
+    links.map((link) => {
+      const active = pathname === link.href;
+      return (
+        <Link
+          key={link.href}
+          href={link.href}
+          onClick={onNavigate}
+          className={`flex items-center justify-between gap-2 min-h-11 px-3 py-2 rounded-md text-sm ${
+            active ? "bg-white/20 font-medium" : "hover:bg-white/10"
+          }`}
+        >
+          <span>{link.label}</span>
+          {link.href === "/admin/withdrawals" && pendingWithdrawCount > 0 && (
+            <Badge variant="warning">{pendingWithdrawCount}</Badge>
+          )}
+        </Link>
+      );
+    });
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-[#3321c8] text-white px-2 h-14">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open admin menu"
+          className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+        >
+          <AiOutlineMenu size={24} />
+        </button>
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          Admin
+          {pendingWithdrawCount > 0 && <Badge variant="warning">{pendingWithdrawCount}</Badge>}
+        </h2>
+        <ThemeToggle className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
       </div>
-    </nav>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="md:hidden fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setOpen(false)} />
+          <nav
+            role="dialog"
+            aria-modal="true"
+            aria-label="Admin navigation"
+            className="fixed top-0 left-0 h-full w-64 bg-[#3321c8] text-white p-4 space-y-1 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Admin</h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close admin menu"
+                className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+              >
+                <AiOutlineClose size={22} />
+              </button>
+            </div>
+            {renderLinks(() => setOpen(false))}
+            <div className="pt-4 mt-4 border-t border-white/20">
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="flex items-center min-h-11 px-3 py-2 rounded-md text-sm hover:bg-white/10"
+              >
+                Back to Store
+              </Link>
+              <AdminLogout onDone={() => setOpen(false)} />
+            </div>
+          </nav>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <nav className="hidden md:flex md:flex-col w-56 shrink-0 bg-[#3321c8] text-white min-h-screen p-4 space-y-1">
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h2 className="text-lg font-semibold">Admin</h2>
+          <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
+        </div>
+        {renderLinks()}
+        <div className="pt-4 mt-4 border-t border-white/20">
+          <Link href="/" className="block px-3 py-2 rounded-md text-sm hover:bg-white/10">
+            Back to Store
+          </Link>
+          <AdminLogout />
+        </div>
+      </nav>
+    </>
   );
 }
 
-function AdminLogout() {
+function AdminLogout({ onDone }: { onDone?: () => void }) {
   const router = useRouter();
   return (
     <LogoutButton
       className="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/10 disabled:opacity-60"
-      onLoggedOut={() => router.push("/")}
+      onLoggedOut={() => {
+        onDone?.();
+        router.push("/");
+      }}
     />
   );
 }

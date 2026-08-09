@@ -1,21 +1,22 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { RxCross1 } from "react-icons/rx";
-import { IoBagHandleOutline } from "react-icons/io5";
-import { HiOutlineMinus, HiPlus } from "react-icons/hi";
-import styles from "@/styles/styles";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   removeItem,
-  updateQty,
   selectCartItems,
   selectCartSubtotal,
   syncItemAvailability,
+  updateQty,
 } from "@/features/cart/cartSlice";
 import { useCheckAvailabilityMutation } from "@/features/products/productApiSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import styles from "@/styles/styles";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { HiOutlineMinus, HiPlus } from "react-icons/hi";
+import { IoBagHandleOutline } from "react-icons/io5";
+import { RxCross1 } from "react-icons/rx";
 
 const Cart = ({ setOpenCart }) => {
   const dispatch = useAppDispatch();
@@ -135,16 +136,20 @@ const Cart = ({ setOpenCart }) => {
 
           <br />
           {cartData.length === 0 ? (
-            <div className="w-full flex flex-col items-center justify-center py-16 px-4 text-center">
-              <IoBagHandleOutline size={50} className="text-gray-300 mb-3" />
-              <p className="text-[#00000082]">Your cart is empty.</p>
-              <Link
-                href="/products"
-                onClick={() => setOpenCart(false)}
-                className="mt-3 text-[#3957db] hover:underline"
-              >
-                Browse products
-              </Link>
+             <div>
+              <EmptyState
+                icon={<IoBagHandleOutline size={26} />}
+                title="Your cart is empty"
+              />
+              <div className="text-center pb-8 -mt-8">
+                <Link
+                  href="/products"
+                  onClick={() => setOpenCart(false)}
+                  className="text-primary hover:underline"
+                >
+                  Browse products
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="w-full border-t">
@@ -192,26 +197,31 @@ const CartSingle = ({ data, warning, onRemove, onQtyChange }) => {
     <div className="border-b p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <div>
-            <div
-              className={`bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center ${data.qty >= data.stock && data.stock > 0
-                  ? "opacity-40 cursor-not-allowed"
-                  : "cursor-pointer"
-                }`}
+          <div className="flex flex-col items-center">
+            <button
+              type="button"
+              aria-label={`Increase quantity of ${data.name}`}
+              disabled={data.qty >= data.stock && data.stock > 0}
               onClick={() =>
-                (data.stock <= 0 || data.qty < data.stock) &&
-                onQtyChange(data.qty + 1)
+                (data.stock <= 0 || data.qty < data.stock) && onQtyChange(data.qty + 1)
               }
+              className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <HiPlus size={18} color="#fff" />
-            </div>
-            <span className="pl-2.5">{data.qty}</span>
-            <div
-              className="bg-[#a7abb14d] rounded-full w-6.25 h-6.25 flex items-center justify-center cursor-pointer mt-1"
+              <span className="bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center">
+                <HiPlus size={18} color="#fff" />
+              </span>
+            </button>
+            <span className="text-sm">{data.qty}</span>
+            <button
+              type="button"
+              aria-label={`Decrease quantity of ${data.name}`}
               onClick={() => onQtyChange(data.qty > 1 ? data.qty - 1 : 1)}
+              className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
             >
-              <HiOutlineMinus size={16} color="#7d879c" />
-            </div>
+              <span className="bg-[#a7abb14d] rounded-full w-6.25 h-6.25 flex items-center justify-center">
+                <HiOutlineMinus size={16} color="#7d879c" />
+              </span>
+            </button>
           </div>
 
           <div className="relative w-20 h-20 ml-3">

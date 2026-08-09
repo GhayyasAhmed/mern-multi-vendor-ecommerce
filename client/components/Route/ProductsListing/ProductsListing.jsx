@@ -1,13 +1,15 @@
 "use client";
-import { useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
 import ProductCard from "@/components/Route/ProductCard/ProductCard";
-import styles from "@/styles/styles";
-import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
-import { getErrorMessage } from "@/features/auth/utils";
+import EmptyState from "@/components/ui/EmptyState";
 import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
+import styles from "@/styles/styles";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { AiOutlineSearch } from "react-icons/ai";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -60,9 +62,11 @@ const ProductsListing = () => {
             </p>
           </div>
         ) : products.length === 0 ? (
-          <div className="w-full flex items-center justify-center py-20">
-            <p className="text-[18px] text-[#00000082]">No products found.</p>
-          </div>
+          <EmptyState
+            icon={<AiOutlineSearch size={26} />}
+            title="No products found"
+            description={search ? `No results for "${search}". Try a different search term.` : "Try a different category or check back later."}
+          />
         ) : (
           <>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">

@@ -133,9 +133,8 @@ const ProductDetails = ({ productId }) => {
                     type="button"
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${
-                      activeImage === index ? "border-[#3957db]" : "border-transparent"
-                    }`}
+                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${activeImage === index ? "border-[#3957db]" : "border-transparent"
+                      }`}
                   >
                     <Image
                       src={img.url}
@@ -213,23 +212,19 @@ const ProductDetails = ({ productId }) => {
               </div>
 
               <div>
-                {isWishlisted ? (
-                  <AiFillHeart
-                    size={30}
-                    className="cursor-pointer"
-                    onClick={handleWishlistToggle}
-                    color="red"
-                    title="Remove from wishlist"
-                  />
-                ) : (
-                  <AiOutlineHeart
-                    size={30}
-                    className="cursor-pointer"
-                    onClick={handleWishlistToggle}
-                    color="#333"
-                    title="Add to wishlist"
-                  />
-                )}
+                <button
+                  type="button"
+                  onClick={handleWishlistToggle}
+                  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                  aria-pressed={isWishlisted}
+                  className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+                >
+                  {isWishlisted ? (
+                    <AiFillHeart size={30} color="red" aria-hidden="true" />
+                  ) : (
+                    <AiOutlineHeart size={30} color="#333" aria-hidden="true" />
+                  )}
+                </button>
               </div>
             </div>
 

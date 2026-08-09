@@ -267,7 +267,7 @@ function CheckoutContent() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-1/2 space-y-4">
+          <div className="w-full lg:w-1/2 space-y-4 order-2 lg:order-1">
             <form
               onSubmit={handleSubmit(onSubmit)}
               className="w-full lg:w-1/2 space-y-4 rounded-lg bg-white p-6 shadow-sm"
@@ -408,7 +408,7 @@ function CheckoutContent() {
             )}
           </div>
 
-          <div className="w-full lg:w-1/2 space-y-4">
+          <div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-[#333] mb-4">Order summary</h2>
 

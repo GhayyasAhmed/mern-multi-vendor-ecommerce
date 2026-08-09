@@ -1,8 +1,10 @@
 "use client";
-import styles from "@/styles/styles";
-import EventCard from "./EventCard";
-import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
 import CardListSkeleton from "@/components/ui/CardListSkeleton";
+import EmptyState from "@/components/ui/EmptyState";
+import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
+import styles from "@/styles/styles";
+import { AiOutlineCalendar } from "react-icons/ai";
+import EventCard from "./EventCard";
 
 const Events = () => {
   const { data, isLoading, isError } = useGetAllEventsQuery({ status: "active", limit: 4 });
@@ -19,7 +21,7 @@ const Events = () => {
         ) : isError ? (
           <p className="text-center text-[15px] text-red-500 pb-12">Could not load events.</p>
         ) : events.length === 0 ? (
-          <p className="text-center text-[15px] text-[#00000082] pb-12">No active events right now.</p>
+          <EmptyState icon={<AiOutlineCalendar size={26} />} title="No active events right now" />
         ) : (
           <div className="w-full grid">
             {events.map((event) => (

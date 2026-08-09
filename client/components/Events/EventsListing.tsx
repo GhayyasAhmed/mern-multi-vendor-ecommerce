@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
 import EventCard from "@/components/Events/EventCard";
-import Pagination from "@/components/ui/Pagination";
-import styles from "@/styles/styles";
-import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
-import { getErrorMessage } from "@/features/auth/utils";
+import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
 import CardListSkeleton from "@/components/ui/CardListSkeleton";
+import EmptyState from "@/components/ui/EmptyState";
+import Pagination from "@/components/ui/Pagination";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
+import styles from "@/styles/styles";
+import { useState } from "react";
+import { AiOutlineCalendar } from "react-icons/ai";
 
 const EventsListing = () => {
   const [page, setPage] = useState(1);
@@ -33,9 +35,7 @@ const EventsListing = () => {
             {getErrorMessage(error, "Could not load events.")}
           </p>
         ) : events.length === 0 ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">
-            No active events right now.
-          </p>
+           <EmptyState icon={<AiOutlineCalendar size={26} />} title="No active events right now" />        
         ) : (
           <>
             <div className="w-full grid">

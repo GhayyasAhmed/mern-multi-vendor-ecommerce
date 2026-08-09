@@ -1,13 +1,14 @@
 "use client";
-import { useEffect } from "react";
+import EmptyState from "@/components/ui/EmptyState";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useGetWishlistQuery, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
+import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
+import { useEffect } from "react";
 import { AiOutlineHeart } from "react-icons/ai";
 import { BsCartPlus } from "react-icons/bs";
 import { RxCross1 } from "react-icons/rx";
-import { useGetWishlistQuery, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
-import { addItem, productToCartItem } from "@/features/cart/cartSlice";
-import { useAppDispatch } from "@/store/hooks";
 
 const Wishlist = ({ setOpenWishlist }) => {
   const { data, isLoading, isError } = useGetWishlistQuery();
@@ -56,7 +57,7 @@ const Wishlist = ({ setOpenWishlist }) => {
           ) : isError ? (
             <p className="text-center text-sm text-red-500 py-8">Could not load your wishlist.</p>
           ) : wishlistData.length === 0 ? (
-            <p className="text-center text-sm text-[#00000082] py-8">Your wishlist is empty.</p>
+             <EmptyState icon={<AiOutlineHeart size={26} />} title="Your wishlist is empty" />
           ) : (
             <div className="w-full border-t">
               {wishlistData.map((item) => (

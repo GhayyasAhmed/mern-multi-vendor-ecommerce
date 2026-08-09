@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
-import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
 import ProductCard from "@/components/Route/ProductCard/ProductCard";
+import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
-import styles from "@/styles/styles";
-import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
-import { getErrorMessage } from "@/features/auth/utils";
 import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
+import { getErrorMessage } from "@/features/auth/utils";
+import { useGetAllProductsQuery } from "@/features/products/productApiSlice";
+import styles from "@/styles/styles";
+import { useState } from "react";
+import { AiOutlineShoppingCart } from "react-icons/ai";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -40,9 +42,7 @@ const BestSellingListing = () => {
             </p>
           </div>
         ) : products.length === 0 ? (
-          <div className="w-full flex items-center justify-center py-20">
-            <p className="text-[18px] text-[#00000082]">No products found.</p>
-          </div>
+          <EmptyState icon={<AiOutlineShoppingCart size={26} />} title="No products found" />
         ) : (
           <>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">

@@ -1,5 +1,6 @@
 "use client";
 import Pagination from "@/components/ui/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   useDeleteSellerAdminMutation,
   useGetAllSellersAdminQuery,
@@ -9,6 +10,7 @@ import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { AiOutlineShop } from "react-icons/ai";
 
 export default function AdminSellersPage() {
   const [page, setPage] = useState(1);
@@ -17,10 +19,8 @@ export default function AdminSellersPage() {
     page,
     limit: 20,
   });
-  const [deleteSeller, { isLoading: isDeleting }] =
-    useDeleteSellerAdminMutation();
-  const [updateStatus, { isLoading: isUpdatingStatus }] =
-    useUpdateSellerStatusAdminMutation();
+  const [deleteSeller, { isLoading: isDeleting }] = useDeleteSellerAdminMutation();
+  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateSellerStatusAdminMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const sellers = data?.sellers ?? [];
 
@@ -42,77 +42,104 @@ export default function AdminSellersPage() {
     }
   };
 
+  const statusSelect = (seller: (typeof sellers)[number]) => (
+    <select
+      value={seller.status}
+      disabled={isUpdatingStatus}
+      onChange={(e) =>
+        updateStatus({
+          id: seller._id,
+          status: e.target.value as "pending" | "active" | "suspended",
+        })
+      }
+      className="min-h-11 border border-border rounded-md px-2 text-sm bg-surface"
+    >
+      <option value="pending">Pending</option>
+      <option value="active">Active</option>
+      <option value="suspended">Suspended</option>
+    </select>
+  );
+
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Sellers</h1>
-      {actionError && (
-        <p className="text-sm text-red-600 mb-4">{actionError}</p>
-      )}
+      {actionError && <p className="text-sm text-error mb-4">{actionError}</p>}
       {isLoading ? (
         <TableSkeleton rows={8} cols={5} />
       ) : isError ? (
-        <p className="text-sm text-red-500">Could not load sellers.</p>
+        <p className="text-sm text-error">Could not load sellers.</p>
+      ) : sellers.length === 0 ? (
+        <EmptyState icon={<AiOutlineShop size={26} />} title="No sellers yet" />
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[#f5f5f5] text-left">
-              <tr>
-                <th className="px-4 py-3">Shop</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Balance</th>
-                <th className="px-4 py-3">Joined</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {sellers.map((seller) => (
-                <tr key={seller._id} className="border-t">
-                  <td className="px-4 py-3">{seller.name}</td>
-                  <td className="px-4 py-3">{seller.email}</td>
-                  <td className="px-4 py-3">
-                    ${(seller.availableBalance || 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {seller.createdAt
-                      ? new Date(seller.createdAt).toLocaleDateString()
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={seller.status}
-                      disabled={isUpdatingStatus}
-                      onChange={(e) =>
-                        updateStatus({
-                          id: seller._id,
-                          status: e.target.value as
-                            | "pending"
-                            | "active"
-                            | "suspended",
-                        })
-                      }
-                      className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="active">Active</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      disabled={isDeleting}
-                      onClick={() => handleDelete(seller._id, seller.name)}
-                      className="text-red-600 hover:underline disabled:opacity-60 cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden divide-y divide-border rounded-lg bg-surface shadow-sm overflow-hidden">
+            {sellers.map((seller) => (
+              <div key={seller._id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{seller.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">{seller.email}</p>
+                  </div>
+                  <p className="font-medium shrink-0">${(seller.availableBalance || 0).toFixed(2)}</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Joined {seller.createdAt ? new Date(seller.createdAt).toLocaleDateString() : "-"}
+                </p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  {statusSelect(seller)}
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => handleDelete(seller._id, seller.name)}
+                    className="min-h-11 px-2 text-error text-sm font-medium disabled:opacity-60 cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block bg-surface rounded-lg shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left">
+                <tr>
+                  <th className="px-4 py-3">Shop</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Balance</th>
+                  <th className="px-4 py-3">Joined</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {sellers.map((seller) => (
+                  <tr key={seller._id} className="border-t border-border">
+                    <td className="px-4 py-3">{seller.name}</td>
+                    <td className="px-4 py-3">{seller.email}</td>
+                    <td className="px-4 py-3">${(seller.availableBalance || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      {seller.createdAt ? new Date(seller.createdAt).toLocaleDateString() : "-"}
+                    </td>
+                    <td className="px-4 py-3">{statusSelect(seller)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={() => handleDelete(seller._id, seller.name)}
+                        className="text-error hover:underline disabled:opacity-60 cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {data?.pagination && (
         <Pagination

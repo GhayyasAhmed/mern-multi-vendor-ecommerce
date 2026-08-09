@@ -2,7 +2,9 @@
 
 import InboxPanel from "@/components/Inbox/InboxPanel";
 import NotificationBell from "@/components/Layout/NotificationBell";
+import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { PRODUCT_CATEGORIES } from "@/constants";
 import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
 import {
@@ -37,6 +39,14 @@ import {
   useCreateWithdrawRequestMutation,
   useGetMyWithdrawRequestsQuery,
 } from "@/features/withdraw/withdrawApiSlice";
+import {
+  blockNonIntegerKeys,
+  blockNonPriceKeys,
+  sanitizeDigitsOnly,
+  sanitizePriceString,
+  todayDateString,
+  validateImageFile,
+} from "@/lib/validation";
 import { useConfirm } from "@/providers/confirm-provider";
 import styles from "@/styles/styles";
 import type { IProduct, IShop } from "@/types";
@@ -46,6 +56,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
+import { AiOutlineCalendar, AiOutlineShoppingCart, AiOutlineTag } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
 import {
@@ -60,14 +71,7 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
-import {
-  blockNonIntegerKeys,
-  blockNonPriceKeys,
-  sanitizeDigitsOnly,
-  sanitizePriceString,
-  todayDateString,
-  validateImageFile,
-} from "@/lib/validation";
+
 
 type Tab =
   | "profile"
@@ -139,13 +143,14 @@ export default function SellerDashboard() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <p className="text-sm">
+          <div className="flex items-center gap-3 md:gap-4">
+            <p className="hidden sm:block text-sm">
               Balance:{" "}
               <span className="font-semibold">
                 ${(seller.availableBalance || 0).toFixed(2)}
               </span>
             </p>
+            <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
             <NotificationBell enabled={true} iconColor="#ffffff" />
             <ShopLogoutButton className="text-sm font-medium text-white hover:text-red-200" />
           </div>
@@ -161,13 +166,13 @@ export default function SellerDashboard() {
       )}
 
       <div className="w-11/12 mx-auto py-6">
-        <div className="flex gap-4 border-b mb-6">
+        <div className="flex gap-4 border-b mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
           {TABS.map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap min-h-11 pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
                 tab === t
                   ? "border-b-2 border-[#3957db] text-[#3957db]"
                   : "text-gray-500"
@@ -424,7 +429,8 @@ function PayoutsPanel({
           </button>
         </form>
         <p id="withdraw-amount-hint" className="sr-only">
-          Enter an amount up to your available balance of ${availableBalance.toFixed(2)}
+          Enter an amount up to your available balance of $
+          {availableBalance.toFixed(2)}
         </p>
         {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
         {successMessage && (
@@ -786,7 +792,9 @@ function ProfilePanel() {
               maxLength={15}
               onKeyDown={blockNonIntegerKeys}
               {...register("phoneNumber", {
-                onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+                onChange: (e) => {
+                  e.target.value = sanitizeDigitsOnly(e.target.value);
+                },
               })}
             />
           </div>
@@ -800,7 +808,9 @@ function ProfilePanel() {
               maxLength={10}
               onKeyDown={blockNonIntegerKeys}
               {...register("zipCode", {
-                onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+                onChange: (e) => {
+                  e.target.value = sanitizeDigitsOnly(e.target.value);
+                },
               })}
             />
           </div>
@@ -861,7 +871,10 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     const invalidFile = files.find((file) => !validateImageFile(file).valid);
     if (invalidFile) {
-      setFormError(validateImageFile(invalidFile).error ?? "One or more files are invalid.");
+      setFormError(
+        validateImageFile(invalidFile).error ??
+          "One or more files are invalid.",
+      );
       e.target.value = "";
       return;
     }
@@ -1217,9 +1230,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {getErrorMessage(error, "Could not load products.")}
         </p>
       ) : products.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">
-          You haven&apos;t added any products yet.
-        </p>
+        <EmptyState icon={<AiOutlineShoppingCart size={24} />} title="You haven't added any products yet" />      
       ) : (
         <div className="space-y-3">
           {products.map((product) => (
@@ -1311,7 +1322,10 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     const invalidFile = files.find((file) => !validateImageFile(file).valid);
     if (invalidFile) {
-      setFormError(validateImageFile(invalidFile).error ?? "One or more files are invalid.");
+      setFormError(
+        validateImageFile(invalidFile).error ??
+          "One or more files are invalid.",
+      );
       e.target.value = "";
       return;
     }
@@ -1703,9 +1717,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {getErrorMessage(error, "Could not load events.")}
         </p>
       ) : events.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">
-          You haven&apos;t created any events yet.
-        </p>
+          <EmptyState icon={<AiOutlineCalendar size={24} />} title="You haven't created any events yet" />
       ) : (
         <div className="space-y-3">
           {events.map((event) => (
@@ -1851,7 +1863,8 @@ function CouponsPanel() {
             value={form.value}
             onChange={(e) => {
               const digits = sanitizeDigitsOnly(e.target.value);
-              const clamped = digits === "" ? "" : String(Math.min(100, Number(digits)));
+              const clamped =
+                digits === "" ? "" : String(Math.min(100, Number(digits)));
               setForm({ ...form, value: clamped });
             }}
           />
@@ -1861,7 +1874,12 @@ function CouponsPanel() {
             className={`${styles.input}`}
             onKeyDown={blockNonPriceKeys}
             value={form.minAmount}
-            onChange={(e) => setForm({ ...form, minAmount: sanitizePriceString(e.target.value) })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                minAmount: sanitizePriceString(e.target.value),
+              })
+            }
           />
           <input
             placeholder="Maximum order amount (optional)"
@@ -1869,7 +1887,12 @@ function CouponsPanel() {
             className={`${styles.input}`}
             onKeyDown={blockNonPriceKeys}
             value={form.maxAmount}
-            onChange={(e) => setForm({ ...form, maxAmount: sanitizePriceString(e.target.value) })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maxAmount: sanitizePriceString(e.target.value),
+              })
+            }
           />
           {formError && <p className="text-sm text-red-600">{formError}</p>}
           <button
@@ -1893,9 +1916,7 @@ function CouponsPanel() {
       ) : isError ? (
         <p className="text-[15px] text-red-500 py-8">Could not load coupons.</p>
       ) : coupons.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">
-          You haven&apos;t created any coupons yet.
-        </p>
+         <EmptyState icon={<AiOutlineTag size={24} />} title="You haven't created any coupons yet" />
       ) : (
         <div className="space-y-3">
           {coupons.map((c) => (

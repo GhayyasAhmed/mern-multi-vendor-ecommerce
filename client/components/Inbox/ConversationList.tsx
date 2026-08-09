@@ -1,7 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import EmptyState from "@/components/ui/EmptyState";
 import type { IConversation } from "@/features/messaging/conversationApiSlice";
+import Image from "next/image";
+import { AiOutlineMessage } from "react-icons/ai";
 
 interface ConversationListProps {
   conversations: IConversation[];
@@ -35,9 +37,7 @@ export default function ConversationList({
   }
 
   if (conversations.length === 0) {
-    return (
-      <p className="p-4 text-sm text-[#00000082]">No conversations yet.</p>
-    );
+    return <EmptyState icon={<AiOutlineMessage size={24} />} title="No conversations yet" className="py-10" />;
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client";
-import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
@@ -15,7 +16,6 @@ import {
   AiOutlineMessage,
   AiOutlineShoppingCart
 } from "react-icons/ai";
-import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
 
 const ProductDetailsCard = ({ setOpen, data }) => {
   const [count, setCount] = useState(1);
@@ -80,12 +80,19 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     <div className="bg-[#0000003b] fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
       {data ? (
         <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-white rounded-md shadow-sm relative p-4 overflow-y-auto">
-          <AiOutlineClose
+          {/* <AiOutlineClose
             size={30}
             className="absolute right-3 top-3 z-50 cursor-pointer"
             onClick={() => setOpen(false)}
-          />
-
+          /> */}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close quick view"
+            className="absolute right-2 top-2 z-50 min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+          >
+            <AiOutlineClose size={26} aria-hidden="true" />
+          </button>
           <div className="block w-full md:flex p-2 md:p-6">
             {/* Left side: Product Image & Shop Meta */}
             <div className="w-full md:w-1/2">
@@ -174,23 +181,19 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                 </div>
 
                 <div>
-                  {isWishlisted ? (
-                    <AiFillHeart
-                      size={30}
-                      className="cursor-pointer"
-                      onClick={handleWishlistToggle}
-                      color="red"
-                      title="Remove from wishlist"
-                    />
-                  ) : (
-                    <AiOutlineHeart
-                      size={30}
-                      className="cursor-pointer"
-                      onClick={handleWishlistToggle}
-                      color="#333"
-                      title="Add to wishlist"
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleWishlistToggle}
+                    aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                    aria-pressed={isWishlisted}
+                    className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+                  >
+                    {isWishlisted ? (
+                      <AiFillHeart size={30} color="red" aria-hidden="true" />
+                    ) : (
+                      <AiOutlineHeart size={30} color="#333" aria-hidden="true" />
+                    )}
+                  </button>
                 </div>
               </div>
 

@@ -1,12 +1,13 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { AiOutlineBell } from "react-icons/ai";
-import { useSocket } from "@/hooks/use-socket";
-import { useAppDispatch } from "@/store/hooks";
-import { apiSlice } from "@/lib/api/apiSlice";
+import EmptyState from "@/components/ui/EmptyState";
 import { SOCKET_EVENTS } from "@/constants";
-import { useGetNotificationsQuery, useMarkNotificationReadMutation, useMarkAllNotificationsReadMutation } from "@/features/notifications/notificationApiSlice";
+import { useGetNotificationsQuery, useMarkAllNotificationsReadMutation, useMarkNotificationReadMutation } from "@/features/notifications/notificationApiSlice";
+import { useSocket } from "@/hooks/use-socket";
+import { apiSlice } from "@/lib/api/apiSlice";
+import { useAppDispatch } from "@/store/hooks";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { AiOutlineBell } from "react-icons/ai";
 
 export default function NotificationBell({ enabled, iconColor = "#333" }: { enabled: boolean; iconColor?: string }) {
   const [open, setOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function NotificationBell({ enabled, iconColor = "#333" }: { enab
             )}
           </div>
           {notifications.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-[#00000082] text-center">No notifications yet.</p>
+            <EmptyState icon={<AiOutlineBell size={22} />} title="No notifications yet" className="py-8" />
           ) : (
             notifications.map((notification) => (
               <Link

@@ -1,4 +1,5 @@
 "use client";
+import EmptyState from "@/components/ui/EmptyState";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useCreateReviewMutation, useGetReviewEligibilityQuery } from "@/features/products/productApiSlice";
@@ -41,7 +42,12 @@ const ProductReviews = ({ product, productId }) => {
       </div>
 
       {reviews.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] pb-6">No reviews yet. Be the first to review this product.</p>
+        <EmptyState
+          icon={<AiOutlineStar size={22} />}
+          title="No reviews yet"
+          description="Be the first to review this product."
+          className="py-10"
+        />
       ) : (
         <div className="space-y-4 mb-8">
           {reviews.map((review, index) => {

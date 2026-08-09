@@ -57,7 +57,7 @@ function AccountContent() {
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
+              className={`min-h-11 pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
                 tab === t
                   ? "border-b-2 border-[#3957db] text-[#3957db]"
                   : "text-gray-500"

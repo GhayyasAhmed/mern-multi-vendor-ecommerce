@@ -1,5 +1,7 @@
 "use client";
 import Cart from "@/components/Cart/Cart";
+import NotificationBell from "@/components/Layout/NotificationBell";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import Wishlist from "@/components/Wishlist/Wishlist.jsx";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -23,7 +25,6 @@ import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
-import NotificationBell from "@/components/Layout/NotificationBell"
 
 const Header = ({ activeHeading }) => {
   const cartCount = useAppSelector(selectCartCount);
@@ -215,6 +216,10 @@ const Header = ({ activeHeading }) => {
             </div>
 
             <div className={`${styles.normalFlex} mr-3.75`}>
+              <ThemeToggle className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/10 cursor-pointer" />
+            </div>
+
+            <div className={`${styles.normalFlex} mr-3.75`}>
               <NotificationBell enabled={isAuthenticated} iconColor="rgb(255 255 255 / 83%)" />
             </div>
 
@@ -350,8 +355,8 @@ const Header = ({ activeHeading }) => {
       {open && (
         <div className="fixed w-full bg-[#0000005f] z-20 h-full top-0 left-0">
           <div className="fixed w-[60%] bg-white h-full top-0 left-0 z-10 overflow-y-scroll">
-            <div className="w-full justify-between flex pr-3 pt-3">
-              <div>
+            <div className="w-full justify-between flex items-start pr-3 pt-3">
+              <div className="flex items-center gap-2">
                 <div
                   className="relative mr-3.75"
                   onClick={() => setOpenWishlist(true) || setOpen(false)}
@@ -361,6 +366,7 @@ const Header = ({ activeHeading }) => {
                     {user?.wishlist?.length ?? 0}
                   </span>
                 </div>
+                <ThemeToggle className="mt-5 min-h-11 min-w-11 inline-flex items-center justify-center rounded-full text-gray-700 hover:bg-gray-100 cursor-pointer" />
               </div>
               <RxCross1
                 size={30}

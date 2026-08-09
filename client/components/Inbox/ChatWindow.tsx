@@ -11,12 +11,14 @@ import {
 import { useSocket } from "@/hooks/use-socket";
 import { getErrorMessage } from "@/features/auth/utils";
 import { SOCKET_EVENTS } from "@/constants";
+import { AiOutlineArrowLeft } from "react-icons/ai";
 
 interface ChatWindowProps {
   conversation: IConversation;
   identityId: string;
   role: "user" | "seller";
   isPeerOnline?: boolean;
+  onBack?: () => void;
 }
 
 export default function ChatWindow({
@@ -24,6 +26,7 @@ export default function ChatWindow({
   identityId,
   role,
   isPeerOnline,
+  onBack,
 }: ChatWindowProps) {
   const peerId = role === "user" ? conversation.sellerId : conversation.userId;
   const peer = role === "user" ? conversation.seller : conversation.user;
@@ -181,6 +184,16 @@ export default function ChatWindow({
   return (
     <div className="flex h-full min-h-[60vh] flex-col">
       <div className="flex items-center gap-3 border-b px-4 py-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back to conversations"
+            className="md:hidden -ml-2 min-h-11 min-w-11 flex items-center justify-center text-gray-600 cursor-pointer"
+          >
+            <AiOutlineArrowLeft size={20} />
+          </button>
+        )}
         <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0">
           {peer?.avatar ? (
             <Image
