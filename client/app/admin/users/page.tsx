@@ -11,10 +11,12 @@ import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
 import { AiOutlineTeam } from "react-icons/ai";
+import { useToast } from "@/providers/toast-provider";
 
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const confirm = useConfirm();
+  const toast = useToast();
   const { data, isLoading, isError } = useGetAllUsersAdminQuery({
     page,
     limit: 20,
@@ -25,19 +27,15 @@ export default function AdminUsersPage() {
 
   const handleDelete = async (id: string, userName: string) => {
     setActionError(null);
-    const confirmed = await confirm({
-      title: "Delete User",
-      description: `Are you sure you want to delete "${userName}"? This action cannot be undone.`,
-      confirmLabel: "Delete",
-      variant: "danger",
-    });
-
+    const confirmed = await confirm({ title: "Delete User", description: `Are you sure you want to delete "${userName}"? This action cannot be undone.`, confirmLabel: "Delete", variant: "danger" });
     if (!confirmed) return;
-
     try {
       await deleteUser(id).unwrap();
+      toast.showToast({ title: `"${userName}" was deleted`, variant: "success" });
     } catch (err) {
-      setActionError(getErrorMessage(err, "Could not delete user."));
+      const message = getErrorMessage(err, "Could not delete user.");
+      setActionError(message);
+      toast.showToast({ title: message, variant: "error" });
     }
   };
 

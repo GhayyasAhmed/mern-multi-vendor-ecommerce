@@ -15,20 +15,20 @@ export interface ToastItem {
 
 const VARIANT_STYLES: Record<ToastVariant, { icon: React.ReactNode; className: string }> = {
   success: {
-    icon: <AiOutlineCheckCircle size={20} />,
-    className: "border-success/30 bg-success-bg text-success",
+    icon: <AiOutlineCheckCircle size={20} className="text-success" />,
+    className: "border-success/40",
   },
   error: {
-    icon: <AiOutlineCloseCircle size={20} />,
-    className: "border-error/30 bg-error-bg text-error",
+    icon: <AiOutlineCloseCircle size={20} className="text-error" />,
+    className: "border-error/40",
   },
   warning: {
-    icon: <AiOutlineWarning size={20} />,
-    className: "border-warning/30 bg-warning-bg text-warning",
+    icon: <AiOutlineWarning size={20} className="text-warning" />,
+    className: "border-warning/40",
   },
   info: {
-    icon: <AiOutlineInfoCircle size={20} />,
-    className: "border-info/30 bg-info-bg text-info",
+    icon: <AiOutlineInfoCircle size={20} className="text-info" />,
+    className: "border-info/40",
   },
 };
 

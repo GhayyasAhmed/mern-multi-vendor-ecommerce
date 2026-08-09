@@ -1,6 +1,7 @@
 "use client";
 import Pagination from "@/components/ui/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
+import { useToast } from "@/providers/toast-provider";
 import {
   useDeleteSellerAdminMutation,
   useGetAllSellersAdminQuery,
@@ -13,14 +14,17 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import { AiOutlineShop } from "react-icons/ai";
 
 export default function AdminSellersPage() {
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const confirm = useConfirm();
   const { data, isLoading, isError } = useGetAllSellersAdminQuery({
     page,
     limit: 20,
   });
-  const [deleteSeller, { isLoading: isDeleting }] = useDeleteSellerAdminMutation();
-  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateSellerStatusAdminMutation();
+  const [deleteSeller, { isLoading: isDeleting }] =
+    useDeleteSellerAdminMutation();
+  const [updateStatus, { isLoading: isUpdatingStatus }] =
+    useUpdateSellerStatusAdminMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const sellers = data?.sellers ?? [];
 
@@ -32,13 +36,36 @@ export default function AdminSellersPage() {
       confirmLabel: "Delete",
       variant: "danger",
     });
-
     if (!confirmed) return;
-
     try {
       await deleteSeller(id).unwrap();
+      toast.showToast({
+        title: `"${sellerName}" was deleted`,
+        variant: "success",
+      });
     } catch (err) {
-      setActionError(getErrorMessage(err, "Could not delete seller."));
+      const message = getErrorMessage(err, "Could not delete seller.");
+      setActionError(message);
+      toast.showToast({ title: message, variant: "error" });
+    }
+  };
+
+  const handleStatusChange = async (
+    id: string,
+    status: "pending" | "active" | "suspended",
+    sellerName: string,
+  ) => {
+    try {
+      await updateStatus({ id, status }).unwrap();
+      toast.showToast({
+        title: `${sellerName} is now ${status}`,
+        variant: "success",
+      });
+    } catch (err) {
+      toast.showToast({
+        title: getErrorMessage(err, "Could not update seller status."),
+        variant: "error",
+      });
     }
   };
 
@@ -47,10 +74,11 @@ export default function AdminSellersPage() {
       value={seller.status}
       disabled={isUpdatingStatus}
       onChange={(e) =>
-        updateStatus({
-          id: seller._id,
-          status: e.target.value as "pending" | "active" | "suspended",
-        })
+        handleStatusChange(
+          seller._id,
+          e.target.value as "pending" | "active" | "suspended",
+          seller.name,
+        )
       }
       className="min-h-11 border border-border rounded-md px-2 text-sm bg-surface"
     >
@@ -79,12 +107,19 @@ export default function AdminSellersPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium truncate">{seller.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">{seller.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {seller.email}
+                    </p>
                   </div>
-                  <p className="font-medium shrink-0">${(seller.availableBalance || 0).toFixed(2)}</p>
+                  <p className="font-medium shrink-0">
+                    ${(seller.availableBalance || 0).toFixed(2)}
+                  </p>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Joined {seller.createdAt ? new Date(seller.createdAt).toLocaleDateString() : "-"}
+                  Joined{" "}
+                  {seller.createdAt
+                    ? new Date(seller.createdAt).toLocaleDateString()
+                    : "-"}
                 </p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   {statusSelect(seller)}
@@ -119,9 +154,13 @@ export default function AdminSellersPage() {
                   <tr key={seller._id} className="border-t border-border">
                     <td className="px-4 py-3">{seller.name}</td>
                     <td className="px-4 py-3">{seller.email}</td>
-                    <td className="px-4 py-3">${(seller.availableBalance || 0).toFixed(2)}</td>
                     <td className="px-4 py-3">
-                      {seller.createdAt ? new Date(seller.createdAt).toLocaleDateString() : "-"}
+                      ${(seller.availableBalance || 0).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {seller.createdAt
+                        ? new Date(seller.createdAt).toLocaleDateString()
+                        : "-"}
                     </td>
                     <td className="px-4 py-3">{statusSelect(seller)}</td>
                     <td className="px-4 py-3 text-right">

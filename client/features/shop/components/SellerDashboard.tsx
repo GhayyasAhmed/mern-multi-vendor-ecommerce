@@ -13,6 +13,7 @@ import {
   useGetShopCouponsQuery,
 } from "@/features/coupons/couponApiSlice";
 import type { IEvent } from "@/features/events/eventApiSlice";
+import { useToast } from "@/providers/toast-provider";
 import {
   useCreateEventMutation,
   useDeleteEventMutation,
@@ -56,7 +57,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
-import { AiOutlineCalendar, AiOutlineShoppingCart, AiOutlineTag } from "react-icons/ai";
+import {
+  AiOutlineCalendar,
+  AiOutlineShoppingCart,
+  AiOutlineTag,
+} from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
 import {
@@ -71,7 +76,6 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
-
 
 type Tab =
   | "profile"
@@ -205,6 +209,7 @@ export default function SellerDashboard() {
 }
 
 function OrdersPanel({ shopId }: { shopId: string }) {
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetSellerOrdersQuery({
     id: shopId,
@@ -233,6 +238,7 @@ function OrdersPanel({ shopId }: { shopId: string }) {
     setActionError(null);
     try {
       await approveRefund({ id: orderId }).unwrap();
+      toast.showToast({ title: "Refund approved", variant: "success" });
     } catch (err) {
       setActionError(getErrorMessage(err, "Could not approve refund."));
     }
@@ -497,13 +503,14 @@ function BankDetailsForm({
 }: {
   withdrawMethod?: WithdrawMethodInput;
 }) {
+  const toast = useToast();
   const [updatePaymentMethods, { isLoading: isSaving }] =
     useUpdatePaymentMethodsMutation();
   const [deleteWithdrawMethod, { isLoading: isDeleting }] =
     useDeleteWithdrawMethodMutation();
   const [editing, setEditing] = useState(!withdrawMethod);
   const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     withdrawMethodName: "",
     bankName: "",
@@ -521,11 +528,10 @@ function BankDetailsForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSuccessMessage(null);
     try {
       await updatePaymentMethods({ withdrawMethod: form }).unwrap();
-      setSuccessMessage("Bank details saved.");
       setEditing(false);
+      toast.showToast({ title: "Bank details saved", variant: "success" });
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not save bank details."));
     }
@@ -535,8 +541,9 @@ function BankDetailsForm({
     try {
       await deleteWithdrawMethod().unwrap();
       setEditing(true);
-    } catch {
-      // best-effort
+      toast.showToast({ title: "Payout bank account removed", variant: "success" });
+    } catch (err) {
+      toast.showToast({ title: getErrorMessage(err, "Could not remove bank details."), variant: "error" });
     }
   };
 
@@ -627,9 +634,9 @@ function BankDetailsForm({
         onChange={handleChange("bankAddress")}
       />
       {formError && <p className="text-sm text-red-600">{formError}</p>}
-      {successMessage && (
+      {/* {successMessage && (
         <p className="text-sm text-green-700">{successMessage}</p>
-      )}
+      )} */}
       <button
         type="submit"
         disabled={isSaving}
@@ -644,6 +651,7 @@ function BankDetailsForm({
 }
 
 function ProfilePanel() {
+  const toast = useToast();
   const { seller } = useCurrentSeller();
   const [updateSellerInfo, { isLoading: isSavingInfo }] =
     useUpdateSellerInfoMutation();
@@ -701,13 +709,11 @@ function ProfilePanel() {
     try {
       const base64 = await readFileAsBase64(file);
       await updateShopAvatar({ avatar: base64 }).unwrap();
+      toast.showToast({ title: "Shop logo updated", variant: "success" });
     } catch (err) {
-      setAvatarError(
-        getErrorMessage(
-          err,
-          "Could not update avatar. Please try a different image.",
-        ),
-      );
+      const message = getErrorMessage(err, "Could not update avatar. Please try a different image.");
+      setAvatarError(message);
+      toast.showToast({ title: message, variant: "error" });
     } finally {
       e.target.value = "";
     }
@@ -836,6 +842,7 @@ function ProfilePanel() {
 }
 
 function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const confirm = useConfirm(); // Initialize confirmation hook
   const { data, isLoading, isError, error } = useGetShopProductsQuery({
@@ -939,6 +946,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
   const onSubmit = async (values: ProductFormValues) => {
     setFormError(null);
+    const wasEditing = Boolean(editingProduct);
 
     // Validate using the backend-aligned logic
     if (!editingProduct && images.length === 0) {
@@ -987,6 +995,10 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       setImages([]);
       setEditingProduct(null);
       setShowForm(false);
+      toast.showToast({
+        title: wasEditing ? "Product updated" : "Product created",
+        variant: "success",
+      });
     } catch (err) {
       setFormError(
         getErrorMessage(
@@ -1011,8 +1023,15 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     try {
       await deleteProduct({ id, shopId }).unwrap();
+      toast.showToast({
+        title: `"${productName}" was deleted`,
+        variant: "success",
+      });
     } catch (err) {
-      setFormError(getErrorMessage(err, "Could not delete product."));
+      toast.showToast({
+        title: getErrorMessage(err, "Could not delete product."),
+        variant: "error",
+      });
     }
   };
 
@@ -1230,7 +1249,10 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {getErrorMessage(error, "Could not load products.")}
         </p>
       ) : products.length === 0 ? (
-        <EmptyState icon={<AiOutlineShoppingCart size={24} />} title="You haven't added any products yet" />      
+        <EmptyState
+          icon={<AiOutlineShoppingCart size={24} />}
+          title="You haven't added any products yet"
+        />
       ) : (
         <div className="space-y-3">
           {products.map((product) => (
@@ -1286,6 +1308,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 }
 
 function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const confirm = useConfirm(); // Initialize confirmation hook
   const { data, isLoading, isError, error } = useGetShopEventsQuery({
@@ -1392,6 +1415,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
   const onSubmit = async (values: EventFormValues) => {
     setFormError(null);
+    const wasEditing = Boolean(editingEvent);
     if (!editingEvent && images.length === 0) {
       setFormError("At least one image is required");
       return;
@@ -1442,6 +1466,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       setImages([]);
       setEditingEvent(null);
       setShowForm(false);
+      toast.showToast({ title: wasEditing ? "Event updated" : "Event created", variant: "success" });
     } catch (err) {
       setFormError(
         getErrorMessage(
@@ -1462,10 +1487,11 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     if (!confirmed) return;
 
-    try {
+     try {
       await deleteEvent({ id, shopId }).unwrap();
+      toast.showToast({ title: `"${eventName}" was deleted`, variant: "success" });
     } catch (err) {
-      setFormError(getErrorMessage(err, "Could not delete event."));
+      toast.showToast({ title: getErrorMessage(err, "Could not delete event."), variant: "error" });
     }
   };
 
@@ -1717,7 +1743,10 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {getErrorMessage(error, "Could not load events.")}
         </p>
       ) : events.length === 0 ? (
-          <EmptyState icon={<AiOutlineCalendar size={24} />} title="You haven't created any events yet" />
+        <EmptyState
+          icon={<AiOutlineCalendar size={24} />}
+          title="You haven't created any events yet"
+        />
       ) : (
         <div className="space-y-3">
           {events.map((event) => (
@@ -1778,6 +1807,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 }
 
 function CouponsPanel() {
+  const toast = useToast();
   const { data, isLoading, isError } = useGetShopCouponsQuery();
   const confirm = useConfirm(); // Initialize confirmation hook
   const [createCouponCode, { isLoading: isCreating }] =
@@ -1806,6 +1836,7 @@ function CouponsPanel() {
       }).unwrap();
       setForm({ name: "", value: "", minAmount: "", maxAmount: "" });
       setShowForm(false);
+      toast.showToast({ title: "Coupon created", variant: "success" });
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not create coupon."));
     }
@@ -1819,11 +1850,13 @@ function CouponsPanel() {
       confirmLabel: "Delete",
       variant: "danger",
     });
-
     if (!confirmed) return;
-
     try {
       await deleteCouponCode(id).unwrap();
+      toast.showToast({
+        title: `Coupon "${couponName}" deleted`,
+        variant: "success",
+      });
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not delete coupon."));
     }
@@ -1916,7 +1949,10 @@ function CouponsPanel() {
       ) : isError ? (
         <p className="text-[15px] text-red-500 py-8">Could not load coupons.</p>
       ) : coupons.length === 0 ? (
-         <EmptyState icon={<AiOutlineTag size={24} />} title="You haven't created any coupons yet" />
+        <EmptyState
+          icon={<AiOutlineTag size={24} />}
+          title="You haven't created any coupons yet"
+        />
       ) : (
         <div className="space-y-3">
           {coupons.map((c) => (

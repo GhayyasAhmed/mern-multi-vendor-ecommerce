@@ -11,8 +11,10 @@ import { getErrorMessage } from "@/features/auth/utils";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
 import { AiOutlineDollarCircle } from "react-icons/ai";
+import { useToast } from "@/providers/toast-provider";
 
 export default function AdminWithdrawalsPage() {
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const confirm = useConfirm();
   const { data, isLoading, isError } = useGetAllWithdrawsAdminQuery({
@@ -26,34 +28,30 @@ export default function AdminWithdrawalsPage() {
 
   const handleApprove = async (id: string, sellerId: string, amount: number, sellerName: string) => {
     setActionError(null);
-    const confirmed = await confirm({
-      title: "Mark Withdrawal as Paid",
-      description: `Are you sure you want to mark the withdrawal of $${amount.toFixed(2)} for "${sellerName}" as paid?`,
-      confirmLabel: "Mark as Paid",
-      variant: "default",
-    });
+    const confirmed = await confirm({ title: "Mark Withdrawal as Paid", description: `Are you sure you want to mark the withdrawal of $${amount.toFixed(2)} for "${sellerName}" as paid?`, confirmLabel: "Mark as Paid", variant: "default" });
     if (!confirmed) return;
     try {
       await updateWithdraw({ id, sellerId }).unwrap();
+      toast.showToast({ title: `Marked $${amount.toFixed(2)} withdrawal for "${sellerName}" as paid`, variant: "success" });
     } catch (err) {
-      setActionError(getErrorMessage(err, "Could not approve withdrawal."));
+      const message = getErrorMessage(err, "Could not approve withdrawal.");
+      setActionError(message);
+      toast.showToast({ title: message, variant: "error" });
     }
   };
 
   const handleReject = async (id: string, sellerName: string) => {
     setActionError(null);
-    const confirmed = await confirm({
-      title: "Reject Withdrawal",
-      description: `Are you sure you want to reject the withdrawal request for "${sellerName}"? This action cannot be undone.`,
-      confirmLabel: "Reject",
-      variant: "danger",
-    });
+    const confirmed = await confirm({ title: "Reject Withdrawal", description: `Are you sure you want to reject the withdrawal request for "${sellerName}"? This action cannot be undone.`, confirmLabel: "Reject", variant: "danger" });
     if (!confirmed) return;
     const reason = window.prompt("Reason for rejecting this withdrawal (optional):") ?? undefined;
     try {
       await rejectWithdraw({ id, reason }).unwrap();
+      toast.showToast({ title: `Withdrawal request for "${sellerName}" rejected`, variant: "success" });
     } catch (err) {
-      setActionError(getErrorMessage(err, "Could not reject withdrawal."));
+      const message = getErrorMessage(err, "Could not reject withdrawal.");
+      setActionError(message);
+      toast.showToast({ title: message, variant: "error" });
     }
   };
 

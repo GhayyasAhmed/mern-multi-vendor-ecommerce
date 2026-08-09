@@ -8,8 +8,10 @@ import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import styles from "@/styles/styles";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useGetOrderByIdQuery, useRequestOrderRefundMutation } from "@/features/orders/orderApiSlice";
+import { useToast } from "@/providers/toast-provider"
 
 function OrderDetailsContent({ orderId }) {
+  const toast = useToast();
   const { data, isLoading, isError, error } = useGetOrderByIdQuery(orderId, {
     skip: !orderId,
   });
@@ -25,6 +27,11 @@ function OrderDetailsContent({ orderId }) {
     try {
       await requestRefund({ id: order._id }).unwrap();
       setRefundSuccess(true);
+      toast.showToast({
+        title: "Refund requested",
+        description: "We'll review your request shortly.",
+        variant: "info",
+      });
     } catch (error) {
       setRefundError(getErrorMessage(error, "Could not request a refund. Please try again."));
     }

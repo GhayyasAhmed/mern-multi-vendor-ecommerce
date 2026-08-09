@@ -114,6 +114,18 @@ function ProfileTab() {
         title: "Profile updated successfully",
         variant: "success",
       });
+      toast.showToast({
+        title: "Profile updated successfully",
+        variant: "error",
+      });
+      toast.showToast({
+        title: "Profile updated successfully",
+        variant: "info",
+      });
+      toast.showToast({
+        title: "Profile updated successfully",
+        variant: "warning",
+      });
     } catch (error) {
       setProfileError(getErrorMessage(error));
       toast.showToast({ title: getErrorMessage(error), variant: "error" });
@@ -127,13 +139,14 @@ function ProfileTab() {
     try {
       const base64 = await readFileAsBase64(file);
       await updateAvatar({ avatar: base64 }).unwrap();
+      toast.showToast({ title: "Profile photo updated", variant: "success" });
     } catch (err) {
-      setAvatarError(
-        getErrorMessage(
-          err,
-          "Could not update avatar. Please try a different image.",
-        ),
+      const message = getErrorMessage(
+        err,
+        "Could not update avatar. Please try a different image.",
       );
+      setAvatarError(message);
+      toast.showToast({ title: message, variant: "error" });
     } finally {
       e.target.value = "";
     }
@@ -237,6 +250,7 @@ function ProfileTab() {
 }
 
 function AddressesTab() {
+  const toast = useToast();
   const { user } = useCurrentUser();
   const [saveAddress, { isLoading: isSaving }] = useUpdateUserAddressMutation();
   const [deleteAddress, { isLoading: isDeleting }] =
@@ -280,20 +294,14 @@ function AddressesTab() {
     setShowForm(true);
   };
 
-  const onSubmit = async (values: AddressFormValues) => {
+   const onSubmit = async (values: AddressFormValues) => {
     setFormError(null);
+    const wasEditing = Boolean(editingId);
     try {
-      await saveAddress({
-        _id: editingId || undefined,
-        addressType: values.addressType,
-        country: values.country,
-        city: values.city,
-        address1: values.address1,
-        address2: values.address2,
-        zipCode: values.zipCode ? Number(values.zipCode) : undefined,
-      }).unwrap();
+      await saveAddress({ _id: editingId || undefined, ...values, zipCode: values.zipCode ? Number(values.zipCode) : undefined }).unwrap();
       setShowForm(false);
       setEditingId(null);
+      toast.showToast({ title: wasEditing ? "Address updated" : "Address added", variant: "success" });
     } catch (error) {
       setFormError(getErrorMessage(error));
     }
@@ -302,8 +310,12 @@ function AddressesTab() {
   const handleDelete = async (id: string) => {
     try {
       await deleteAddress(id).unwrap();
-    } catch {
-      // list stays as-is on failure; user can retry
+      toast.showToast({ title: "Address removed", variant: "success" });
+    } catch (error) {
+      toast.showToast({
+        title: getErrorMessage(error, "Could not delete address. Please try again."),
+        variant: "error",
+      });
     }
   };
 
@@ -379,17 +391,25 @@ function AddressesTab() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Zip code</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Zip code
+              </label>
               <input
                 className={`${styles.input} mt-1`}
                 inputMode="numeric"
                 maxLength={10}
                 onKeyDown={blockNonIntegerKeys}
                 {...register("zipCode", {
-                  onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
+                  onChange: (e) => {
+                    e.target.value = sanitizeDigitsOnly(e.target.value);
+                  },
                 })}
               />
-              {errors.zipCode && <p className="mt-1 text-sm text-red-600">{errors.zipCode.message}</p>}
+              {errors.zipCode && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.zipCode.message}
+                </p>
+              )}
             </div>
           </div>
           <div>
@@ -489,7 +509,9 @@ function SecurityTab() {
     reset,
     control,
     formState: { errors },
-  } = useForm<PasswordChangeFormValues>({ resolver: zodResolver(passwordChangeSchema) });
+  } = useForm<PasswordChangeFormValues>({
+    resolver: zodResolver(passwordChangeSchema),
+  });
 
   const newPasswordValue = useWatch({ control, name: "newPassword" }) || "";
   const newPasswordStrength = getPasswordStrength(newPasswordValue);
@@ -574,7 +596,9 @@ function SecurityTab() {
             </p>
           )}
           {newPasswordValue && !errors.newPassword && (
-            <p className="mt-1 text-xs text-gray-500">Password strength: {newPasswordStrength.label}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Password strength: {newPasswordStrength.label}
+            </p>
           )}
         </div>
 
