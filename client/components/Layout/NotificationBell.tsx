@@ -15,10 +15,10 @@ import { AiOutlineBell } from "react-icons/ai";
 
 export default function NotificationBell({
   enabled,
-  iconColor = "#333",
+  // iconColor = "#333",
 }: {
   enabled: boolean;
-  iconColor?: string;
+  // iconColor?: string;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -61,11 +61,11 @@ export default function NotificationBell({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative cursor-pointer"
+        className="relative cursor-pointer mt-1"
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <AiOutlineBell size={26} color={iconColor} />
+        <AiOutlineBell size={24}  aria-hidden="true" />
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 rounded-full bg-accent w-4 h-4 flex items-center justify-center text-accent-foreground text-[10px] font-semibold">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -75,15 +75,15 @@ export default function NotificationBell({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-10 w-80 max-h-96 overflow-y-auto bg-white rounded-md shadow-sm py-2 z-30 text-[#333]"
+          className="absolute right-0 top-10 w-80 max-h-96 overflow-y-auto bg-surface rounded-md shadow-sm py-2 z-30 text-foreground"
         >
-          <div className="flex items-center justify-between px-4 py-2 border-b">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border">
             <p className="text-sm font-semibold">Notifications</p>
             {unreadCount > 0 && (
               <button
                 type="button"
                 onClick={() => markAllRead()}
-                className="text-xs text-[#3957db] hover:underline cursor-pointer"
+                className="text-xs text-primary hover:underline cursor-pointer"
               >
                 Mark all read
               </button>
@@ -104,7 +104,7 @@ export default function NotificationBell({
                   if (!notification.read) markRead(notification._id);
                   setOpen(false);
                 }}
-                className={`block px-4 py-2.5 text-sm border-b last:border-b-0 hover:bg-slate-50 ${notification.read ? "text-[#00000082]" : "font-medium text-[#333]"}`}
+                className={`block px-4 py-2.5 text-sm border-b last:border-b-0 hover:bg-muted ${notification.read ? "text-muted-foreground" : "font-medium text-foreground"}`}
               >
                 <p>{notification.message}</p>
                 <p className="text-[11px] text-[#00000066] mt-0.5">

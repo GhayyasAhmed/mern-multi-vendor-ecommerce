@@ -23,7 +23,7 @@ export default function AdminProtectedRoute({ children }: { children: React.Reac
   if (isLoading || !isAuthenticated || user?.role !== "admin") {
     return (
       <div className="flex min-h-[40vh] w-full items-center justify-center">
-        <p className="text-sm text-gray-500">Checking admin access...</p>
+        <p className="text-sm text-muted-foreground">Checking admin access...</p>
       </div>
     );
   }

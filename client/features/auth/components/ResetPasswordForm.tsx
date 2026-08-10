@@ -48,9 +48,9 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
   if (successMessage) {
     return (
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-green-700">{successMessage}</p>
-        <Link href="/login" className="text-sm text-[#3957db] hover:underline">
+      <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 text-center shadow-sm">
+        <p className="text-sm text-success">{successMessage}</p>
+        <Link href="/login" className="text-sm text-primary hover:underline">
           Go to login
         </Link>
       </div>
@@ -60,11 +60,11 @@ export default function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm"
+      className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm"
       noValidate
     >
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="block text-sm font-medium text-foreground">
           New password
         </label>
         <input
@@ -74,14 +74,14 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           className={`${styles.input} mt-1`}
           {...register("password")}
         />
-        {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+        {errors.password && <p className="mt-1 text-sm text-error">{errors.password.message}</p>}
          {passwordValue && !errors.password && (
-          <p className="mt-1 text-xs text-gray-500">Password strength: {passwordStrength.label}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Password strength: {passwordStrength.label}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
           Confirm new password
         </label>
         <input
@@ -92,12 +92,12 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           {...register("confirmPassword")}
         />
         {errors.confirmPassword && (
-          <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+          <p className="mt-1 text-sm text-error">{errors.confirmPassword.message}</p>
         )}
       </div>
 
       {formError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-error">
           {formError}
         </p>
       )}

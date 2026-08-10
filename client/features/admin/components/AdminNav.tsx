@@ -33,7 +33,7 @@ export default function AdminNav() {
           href={link.href}
           onClick={onNavigate}
           className={`flex items-center justify-between gap-2 min-h-11 px-3 py-2 rounded-md text-sm ${
-            active ? "bg-white/20 font-medium" : "hover:bg-white/10"
+            active ? "bg-surface/20 font-medium" : "hover:bg-surface/10"
           }`}
         >
           <span>{link.label}</span>
@@ -47,7 +47,7 @@ export default function AdminNav() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-[#3321c8] text-white px-2 h-14">
+      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-brand text-brand-foreground px-2 h-14">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -58,20 +58,26 @@ export default function AdminNav() {
         </button>
         <h2 className="text-base font-semibold flex items-center gap-2">
           Admin
-          {pendingWithdrawCount > 0 && <Badge variant="warning">{pendingWithdrawCount}</Badge>}
+          {pendingWithdrawCount > 0 && (
+            <Badge variant="warning">{pendingWithdrawCount}</Badge>
+          )}
         </h2>
-        <ThemeToggle className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
+        <ThemeToggle className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-primary-foreground/90 hover:bg-surface/10 cursor-pointer" />
       </div>
 
       {/* Mobile drawer */}
       {open && (
         <div className="md:hidden fixed inset-0 z-40">
-          <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/50"
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+          />
           <nav
             role="dialog"
             aria-modal="true"
             aria-label="Admin navigation"
-            className="fixed top-0 left-0 h-full w-64 bg-[#3321c8] text-white p-4 space-y-1 overflow-y-auto"
+            className="fixed top-0 left-0 h-full w-64 bg-brand text-brand-foreground p-4 space-y-1 overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Admin</h2>
@@ -85,11 +91,11 @@ export default function AdminNav() {
               </button>
             </div>
             {renderLinks(() => setOpen(false))}
-            <div className="pt-4 mt-4 border-t border-white/20">
+            <div className="pt-4 mt-4 border-t border-surface/20">
               <Link
                 href="/"
                 onClick={() => setOpen(false)}
-                className="flex items-center min-h-11 px-3 py-2 rounded-md text-sm hover:bg-white/10"
+                className="flex items-center min-h-11 px-3 py-2 rounded-md text-sm hover:bg-surface/10"
               >
                 Back to Store
               </Link>
@@ -100,14 +106,17 @@ export default function AdminNav() {
       )}
 
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex md:flex-col w-56 shrink-0 bg-[#3321c8] text-white min-h-screen p-4 space-y-1">
+      <nav className="hidden md:flex md:flex-col w-56 shrink-0 bg-brand text-brand-foreground min-h-screen p-4 space-y-1">
         <div className="flex items-center justify-between mb-4 px-2">
           <h2 className="text-lg font-semibold">Admin</h2>
-          <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
+          <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-primary-foreground/90 hover:bg-surface/10 cursor-pointer" />
         </div>
         {renderLinks()}
-        <div className="pt-4 mt-4 border-t border-white/20">
-          <Link href="/" className="block px-3 py-2 rounded-md text-sm hover:bg-white/10">
+        <div className="pt-4 mt-4 border-t border-surface/20">
+          <Link
+            href="/"
+            className="block px-3 py-2 rounded-md text-sm hover:bg-surface/10"
+          >
             Back to Store
           </Link>
           <AdminLogout />
@@ -121,7 +130,7 @@ function AdminLogout({ onDone }: { onDone?: () => void }) {
   const router = useRouter();
   return (
     <LogoutButton
-      className="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/10 disabled:opacity-60"
+      className="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-surface/10 disabled:opacity-60"
       onLoggedOut={() => {
         onDone?.();
         router.push("/");

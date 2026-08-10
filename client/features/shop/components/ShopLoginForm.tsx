@@ -37,26 +37,26 @@ export default function ShopLoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm">
+    <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm">
       {/* Back Navigation Link */}
       <div>
-        <Link href="/" className="text-sm text-gray-600 hover:text-[#3957db] hover:underline inline-flex items-center gap-1">
+        <Link href="/" className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1">
           Back to Home
         </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground">
             Email
           </label>
           <input id="email" type="email" autoComplete="email" className={`${styles.input} mt-1`} {...register("email")} />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
         </div>
 
         {/* Password Field with Eye Icon */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-foreground">
             Password
           </label>
           <div className="relative mt-1">
@@ -70,16 +70,16 @@ export default function ShopLoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-error">{errors.password.message}</p>}
         </div>
 
         {formError && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-error">
             {formError}
           </p>
         )}
@@ -88,9 +88,9 @@ export default function ShopLoginForm() {
           <span className="font-[Poppins]">{isLoading ? "Logging in..." : "Login"}</span>
         </button>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have a shop yet?{" "}
-          <Link href="/seller" className="text-[#3957db] hover:underline">
+          <Link href="/seller" className="text-primary hover:underline">
             Create one
           </Link>
         </p>

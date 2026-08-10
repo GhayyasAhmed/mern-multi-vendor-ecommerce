@@ -88,7 +88,7 @@ const ProductDetails = ({ productId }) => {
       <div>
         <Header activeHeading={3} />
         <div className="w-full flex items-center justify-center py-20 min-h-[60vh]">
-          <p className="text-[18px] text-[#00000082]">Loading product...</p>
+          <p className="text-[18px] text-muted-foreground">Loading product...</p>
         </div>
         <Footer />
       </div>
@@ -100,10 +100,10 @@ const ProductDetails = ({ productId }) => {
       <div>
         <Header activeHeading={3} />
         <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
-          <p className="text-[18px] text-red-500">
+          <p className="text-[18px] text-error">
             {getErrorMessage(error, "This product could not be found.")}
           </p>
-          <Link href="/products" className="text-[#3957db] hover:underline">
+          <Link href="/products" className="text-primary hover:underline">
             Back to products
           </Link>
         </div>
@@ -116,7 +116,7 @@ const ProductDetails = ({ productId }) => {
     <div>
       <Header activeHeading={3} />
       <div className={`${styles.section} py-8`}>
-        <div className="block w-full md:flex p-2 md:p-6 bg-white rounded-md shadow-sm">
+        <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm">
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-75">
               <Image
@@ -133,7 +133,7 @@ const ProductDetails = ({ productId }) => {
                     type="button"
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${activeImage === index ? "border-[#3957db]" : "border-transparent"
+                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${activeImage === index ? "border-primary" : "border-transparent"
                       }`}
                   >
                     <Image
@@ -165,7 +165,7 @@ const ProductDetails = ({ productId }) => {
             </div>
 
             <button
-              // className="bg-black my-3 font-semibold font-Roboto text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
+              // className="bg-black my-3 font-semibold font-Roboto text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
               className="bg-primary hover:bg-primary-hover my-3 font-semibold text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
               onClick={handleMessageSubmit}
               disabled={isStartingChat}
@@ -175,7 +175,7 @@ const ProductDetails = ({ productId }) => {
               </span>
             </button>
 
-            <h5 className="text-[16px] text-red-500 mt-5 font-Roboto">
+            <h5 className="text-[16px] text-error mt-5 font-Roboto">
               ({product.sold_out || 0}) Sold
             </h5>
           </div>
@@ -191,21 +191,21 @@ const ProductDetails = ({ productId }) => {
               ) : null}
             </div>
 
-            <p className="text-[14px] text-[#00000082]">
+            <p className="text-[14px] text-muted-foreground">
               {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
             </p>
 
             <div className="flex items-center mt-12 justify-between pr-3">
               <div className="flex items-center">
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
                 </button>
-                <span className="bg-gray-200 text-gray-800 font-medium px-4 py-2.25">{count}</span>
+                <span className="bg-muted text-gray-800 font-medium px-4 py-2.25">{count}</span>
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-white font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
                   onClick={incrementCount}
                 >
                   +

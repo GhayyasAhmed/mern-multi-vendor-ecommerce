@@ -13,7 +13,7 @@ const Navbar = ({ active }) => {
               className={`${
                 active === index + 1
                 ? "text-accent"
-                : "text-foreground 800px:text-white/90"
+                : "text-foreground 800px:text-white"
               } pb-7.5 800px:pb-0 font-medium px-6 cursor-pointer font-Roboto`}
             >
               {i.title}

@@ -35,9 +35,9 @@ export default function ForgotPasswordForm() {
 
   if (successMessage) {
     return (
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-green-700">{successMessage}</p>
-        <Link href="/login" className="text-sm text-[#3957db] hover:underline">
+      <div className="w-full max-w-md space-y-4 rounded-lg bg-surface  border border-border p-8 text-center shadow-sm">
+        <p className="text-sm text-success">{successMessage}</p>
+        <Link href="/login" className="text-sm text-primary hover:underline">
           Back to login
         </Link>
       </div>
@@ -47,15 +47,15 @@ export default function ForgotPasswordForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm"
+      className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm"
       noValidate
     >
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted-foreground">
         Enter the email associated with your account and we&apos;ll send you a link to reset your password.
       </p>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="block text-sm font-medium text-foreground">
           Email
         </label>
         <input
@@ -65,11 +65,11 @@ export default function ForgotPasswordForm() {
           className={`${styles.input} mt-1`}
           {...register("email")}
         />
-        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+        {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
       </div>
 
       {formError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-error">
           {formError}
         </p>
       )}
@@ -78,9 +78,9 @@ export default function ForgotPasswordForm() {
         <span className="font-[Poppins]">{isLoading ? "Sending link..." : "Send reset link"}</span>
       </button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-muted-foreground">
         Remembered your password?{" "}
-        <Link href="/login" className="text-[#3957db] hover:underline">
+        <Link href="/login" className="text-primary hover:underline">
           Login
         </Link>
       </p>

@@ -127,7 +127,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        // className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased duration-300 bg-no-repeat`}
+        // className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-surface dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased duration-300 bg-no-repeat`}
           className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-background text-foreground antialiased duration-300 bg-no-repeat`}
       
       >

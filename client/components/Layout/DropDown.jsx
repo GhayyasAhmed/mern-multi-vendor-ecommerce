@@ -12,12 +12,13 @@ const DropDown = ({ categoriesData, setDropDown }) => {
   };
 
   return (
-    <div className="pb-4 w-67.5 bg-white absolute z-30 rounded-b-md shadow-lg">
+    <div className="pb-4 w-67.5 bg-surface border border-border absolute z-30 rounded-b-md shadow-lg">
       {categoriesData &&
         categoriesData.map((i, index) => (
-          <div
+          <button
+            type="button"
             key={index}
-            className={`${styles.normalFlex} px-3 cursor-pointer hover:bg-slate-100 py-1`}
+            className={`${styles.normalFlex} w-full text-left px-3 cursor-pointer hover:bg-surface-hover py-1 min-h-11`}
             onClick={() => submitHandle(i)}
           >
             <Image
@@ -27,9 +28,8 @@ const DropDown = ({ categoriesData, setDropDown }) => {
               alt={i.title || "Category icon"}
               className="object-contain ml-2.5 select-none"
             />
-            <h3 className="m-3 cursor-pointer select-none text-gray-900">{i.title}</h3>
-          
-          </div>
+            <h3 className="m-3 select-none text-foreground">{i.title}</h3>
+          </button>
         ))}
     </div>
   );

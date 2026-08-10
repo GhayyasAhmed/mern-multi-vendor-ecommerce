@@ -15,6 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
+import { IoBagHandleOutline } from "react-icons/io5";
+import EmptyState from "@/components/ui/EmptyState";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -215,8 +217,8 @@ function CheckoutContent() {
       <div>
         <Header activeHeading={0} />
         <div className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4 text-center px-4">
-          <p className="text-[20px] font-semibold text-[#333]">Your order has been placed!</p>
-          <p className="text-[15px] text-[#00000082]">
+          <p className="text-[20px] font-semibold text-foreground">Your order has been placed!</p>
+          <p className="text-[15px] text-muted-foreground">
             Since your cart included items from {placedOrders.length} different shops, we created {placedOrders.length} separate orders.
           </p>
           <div className="w-full max-w-md space-y-3">
@@ -224,15 +226,15 @@ function CheckoutContent() {
               <Link
                 key={order._id}
                 href={`/orders/${order._id}`}
-                className="block rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition text-left"
+                className="block rounded-lg bg-surface p-4 shadow-sm hover:shadow-md transition text-left"
               >
-                <p className="text-sm text-[#00000082]">Order {index + 1} of {placedOrders.length}</p>
-                <p className="font-medium text-[#3957db]">#{order._id.slice(-8).toUpperCase()}</p>
-                <p className="text-sm text-[#00000082]">${order.totalPrice.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Order {index + 1} of {placedOrders.length}</p>
+                <p className="font-medium text-primary">#{order._id.slice(-8).toUpperCase()}</p>
+                <p className="text-sm text-muted-foreground">${order.totalPrice.toFixed(2)}</p>
               </Link>
             ))}
           </div>
-          <Link href="/orders" className="text-[#3957db] hover:underline">
+          <Link href="/orders" className="text-primary hover:underline">
             View all my orders
           </Link>
         </div>
@@ -246,10 +248,19 @@ function CheckoutContent() {
       <div>
         <Header activeHeading={0} />
         <div className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4">
-          <p className="text-[18px] text-[#00000082]">Your cart is empty.</p>
-          <Link href="/products" className="text-[#3957db] hover:underline">
-            Browse products
-          </Link>
+          <EmptyState
+            icon={<IoBagHandleOutline size={26} />}
+            title="Your cart is empty"
+          />
+          <div className="text-center pb-8 -mt-8">
+            <Link
+              href="/products"
+              // onClick={() => setOpenCart(false)}
+              className="text-primary hover:underline"
+            >
+              Browse products
+            </Link>
+          </div>
         </div>
         <Footer />
       </div>
@@ -270,14 +281,14 @@ function CheckoutContent() {
           <div className="w-full lg:w-1/2 space-y-4 order-2 lg:order-1">
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className="w-full lg:w-1/2 space-y-4 rounded-lg bg-white p-6 shadow-sm"
+              className="w-full lg:w-1/2 space-y-4 rounded-lg bg-surface p-6 shadow-sm"
               noValidate
             >
-              <h2 className="text-lg font-semibold text-[#333]">Shipping address</h2>
+              <h2 className="text-lg font-semibold text-foreground">Shipping address</h2>
 
               {savedAddresses.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Use a saved address</label>
+                  <label className="block text-sm font-medium text-foreground">Use a saved address</label>
                   <select
                     className={`${styles.input} mt-1`}
                     value={selectedAddressId}
@@ -293,24 +304,24 @@ function CheckoutContent() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Street address</label>
+                <label className="block text-sm font-medium text-foreground">Street address</label>
                 <input className={`${styles.input} mt-1`} {...register("address1")} />
-                {errors.address1 && <p className="mt-1 text-sm text-red-600">{errors.address1.message}</p>}
+                {errors.address1 && <p className="mt-1 text-sm text-error">{errors.address1.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Apartment, suite, etc. (optional)</label>
+                <label className="block text-sm font-medium text-foreground">Apartment, suite, etc. (optional)</label>
                 <input className={`${styles.input} mt-1`} {...register("address2")} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">City</label>
+                  <label className="block text-sm font-medium text-foreground">City</label>
                   <input className={`${styles.input} mt-1`} {...register("city")} />
-                  {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
+                  {errors.city && <p className="mt-1 text-sm text-error">{errors.city.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Zip code</label>
+                  <label className="block text-sm font-medium text-foreground">Zip code</label>
                   <input
                     className={`${styles.input} mt-1`}
                     inputMode="numeric"
@@ -320,17 +331,17 @@ function CheckoutContent() {
                       onChange: (e) => { e.target.value = sanitizeDigitsOnly(e.target.value); },
                     })}
                   />
-                  {errors.zipCode && <p className="mt-1 text-sm text-red-600">{errors.zipCode.message}</p>}
+                  {errors.zipCode && <p className="mt-1 text-sm text-error">{errors.zipCode.message}</p>}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Country</label>
+                <label className="block text-sm font-medium text-foreground">Country</label>
                 <input className={`${styles.input} mt-1`} {...register("country")} />
-                {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>}
+                {errors.country && <p className="mt-1 text-sm text-error">{errors.country.message}</p>}
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={saveAddress}
@@ -340,9 +351,9 @@ function CheckoutContent() {
               </label>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Payment method</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Payment method</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -356,7 +367,7 @@ function CheckoutContent() {
                     />
                     Cash on Delivery
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -370,7 +381,7 @@ function CheckoutContent() {
               </div>
 
               {formError && (
-                <p role="alert" className="text-sm text-red-600">
+                <p role="alert" className="text-sm text-error">
                   {formError}
                 </p>
               )}
@@ -395,8 +406,8 @@ function CheckoutContent() {
             </form>
 
             {paymentMethod === "card" && cardPaymentIntent && stripePromise && (
-              <div className="rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#333] mb-4">Pay ${finalTotal.toFixed(2)}</h2>
+              <div className="rounded-lg bg-surface p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-foreground mb-4">Pay ${finalTotal.toFixed(2)}</h2>
                 <Elements stripe={stripePromise} options={{ clientSecret: cardPaymentIntent.clientSecret }}>
                   <CardPaymentForm
                     isPlacingOrder={isPlacingOrder}
@@ -409,12 +420,12 @@ function CheckoutContent() {
           </div>
 
           <div className="w-full lg:w-1/2 space-y-4 order-1 lg:order-2">
-            <div className="rounded-lg bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-[#333] mb-4">Order summary</h2>
+            <div className="rounded-lg bg-surface p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Order summary</h2>
 
               {shopGroups.map((group) => (
                 <div key={group.shopId} className="mb-4 border-b pb-3 last:border-b-0">
-                  <h3 className="text-sm font-medium text-[#3957db] mb-2">{group.shopName || "Shop"}</h3>
+                  <h3 className="text-sm font-medium text-primary mb-2">{group.shopName || "Shop"}</h3>
                   {group.items.map((item) => (
                     <div key={item.productId} className="flex justify-between text-sm py-1">
                       <span>
@@ -438,14 +449,14 @@ function CheckoutContent() {
                   type="button"
                   onClick={handleApplyCoupon}
                   disabled={isValidatingCoupon}
-                  className="px-4 py-2 rounded-md bg-black text-white text-sm disabled:opacity-60 cursor-pointer"
+                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm disabled:opacity-60 cursor-pointer"
                 >
                   {isValidatingCoupon ? "Checking..." : "Apply"}
                 </button>
               </div>
-              {couponError && <p className="mt-1 text-sm text-red-600">{couponError}</p>}
+              {couponError && <p className="mt-1 text-sm text-error">{couponError}</p>}
               {appliedDiscount > 0 && (
-                <p className="mt-1 text-sm text-green-700">Coupon applied: -${appliedDiscount.toFixed(2)}</p>
+                <p className="mt-1 text-sm text-success">Coupon applied: -${appliedDiscount.toFixed(2)}</p>
               )}
 
               <div className="mt-4 pt-4 border-t space-y-1">
@@ -454,7 +465,7 @@ function CheckoutContent() {
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
                 {appliedDiscount > 0 && (
-                  <div className="flex justify-between text-sm text-green-700">
+                  <div className="flex justify-between text-sm text-success">
                     <span>Discount</span>
                     <span>-${appliedDiscount.toFixed(2)}</span>
                   </div>

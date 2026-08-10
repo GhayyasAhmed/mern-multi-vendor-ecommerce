@@ -14,6 +14,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { AiOutlineFileText } from "react-icons/ai";
 
+function statusBadgeClass(status) {
+  if (status === "Delivered") return "bg-success-bg text-success";
+  if (status === "Refund Success") return "bg-muted text-muted-foreground";
+  return "bg-info-bg text-info";
+}
+
 function OrderListContent() {
   const { user } = useCurrentUser();
   const [page, setPage] = useState(1);
@@ -36,7 +42,7 @@ function OrderListContent() {
         {isLoading ? (
           <CardListSkeleton count={4} />
         ) : isError ? (
-          <p className="text-center text-[15px] text-red-500 py-12">
+          <p className="text-center text-[15px] text-error py-12">
             {getErrorMessage(error, "Could not load your orders.")}
           </p>
         ) : orders.length === 0 ? (
@@ -53,30 +59,23 @@ function OrderListContent() {
                 <Link
                   key={order._id}
                   href={`/orders/${order._id}`}
-                  className="block rounded-lg bg-white p-5 shadow-sm hover:shadow-md transition"
+                  className="block rounded-lg bg-surface border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm text-[#00000082]">Order #{order._id.slice(-8).toUpperCase()}</p>
-                      <p className="text-sm text-[#00000082]">
+                      <p className="text-sm text-muted-foreground">Order #{order._id.slice(-8).toUpperCase()}</p>
+                      <p className="text-sm text-muted-foreground">
                         Placed on {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${order.status === "Delivered"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "Refund Success"
-                            ? "bg-gray-100 text-gray-700"
-                            : "bg-blue-100 text-blue-700"
-                          }`}
-                      >
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusBadgeClass(order.status)}`}>
                         {order.status}
                       </span>
-                      <p className="font-semibold text-[17px] pt-1">${order.totalPrice.toFixed(2)}</p>
+                      <p className="font-semibold text-[17px] pt-1 text-foreground">${order.totalPrice.toFixed(2)}</p>
                     </div>
                   </div>
-                  <p className="mt-2 text-sm text-[#00000082]">{order.cart.length} item(s)</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{order.cart.length} item(s)</p>
                 </Link>
               ))}
             </div>

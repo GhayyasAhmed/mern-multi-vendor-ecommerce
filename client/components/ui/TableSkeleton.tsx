@@ -2,7 +2,7 @@ import Skeleton from "./Skeleton";
 
 export default function TableSkeleton({ rows = 6, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden" role="status" aria-label="Loading data">
+    <div className="bg-surface rounded-lg shadow-sm overflow-hidden" role="status" aria-label="Loading data">
       <div className="divide-y">
         {Array.from({ length: rows }).map((_, r) => (
           <div key={r} className="flex items-center gap-4 px-4 py-3.5">

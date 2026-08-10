@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-[40vh] w-full items-center justify-center">
-        <p className="text-sm text-gray-500">Checking your session...</p>
+        <p className="text-sm text-muted-foreground">Checking your session...</p>
       </div>
     );
   }

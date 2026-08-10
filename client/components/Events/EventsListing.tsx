@@ -31,7 +31,7 @@ const EventsListing = () => {
         {isLoading ? (
           <CardListSkeleton count={4} />
         ) : isError ? (
-          <p className="text-center text-[15px] text-red-500 py-12">
+          <p className="text-center text-[15px] text-error py-12">
             {getErrorMessage(error, "Could not load events.")}
           </p>
         ) : events.length === 0 ? (

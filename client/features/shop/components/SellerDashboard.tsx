@@ -2,6 +2,7 @@
 
 import InboxPanel from "@/components/Inbox/InboxPanel";
 import NotificationBell from "@/components/Layout/NotificationBell";
+import CardListSkeleton from "@/components/ui/CardListSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -13,7 +14,6 @@ import {
   useGetShopCouponsQuery,
 } from "@/features/coupons/couponApiSlice";
 import type { IEvent } from "@/features/events/eventApiSlice";
-import { useToast } from "@/providers/toast-provider";
 import {
   useCreateEventMutation,
   useDeleteEventMutation,
@@ -49,6 +49,7 @@ import {
   validateImageFile,
 } from "@/lib/validation";
 import { useConfirm } from "@/providers/confirm-provider";
+import { useToast } from "@/providers/toast-provider";
 import styles from "@/styles/styles";
 import type { IProduct, IShop } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,9 +59,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import {
-  AiOutlineCalendar,
-  AiOutlineShoppingCart,
-  AiOutlineTag,
+  AiOutlineCalendar, AiOutlineFileText, AiOutlineShoppingCart,
+  AiOutlineTag
 } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
@@ -125,11 +125,11 @@ export default function SellerDashboard() {
   if (!seller) return null;
 
   return (
-    <div className="w-full min-h-screen bg-[#f5f5f5]">
-      <div className="bg-[#3321c8] text-white">
+    <div className="w-full min-h-screen bg-background">
+      <div className="bg-brand text-brand-foreground">
         <div className="w-11/12 mx-auto py-6 flex flex-col md:flex-row items-center md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="relative w-15 h-15 rounded-full overflow-hidden border-2 border-white shrink-0">
+            <div className="relative w-15 h-15 rounded-full overflow-hidden border-2 border-brand-foreground/30 shrink-0">
               <Image
                 src={seller.avatar?.url || "/placeholder.png"}
                 alt={seller.name}
@@ -141,7 +141,7 @@ export default function SellerDashboard() {
               <h1 className="text-xl font-semibold">{seller.name}</h1>
               <Link
                 href={`/shop/preview/${seller._id}`}
-                className="text-sm text-white/80 hover:underline"
+                className="text-sm text-brand-foreground/80 hover:underline"
               >
                 View public shop page
               </Link>
@@ -154,15 +154,15 @@ export default function SellerDashboard() {
                 ${(seller.availableBalance || 0).toFixed(2)}
               </span>
             </p>
-            <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-white/90 hover:bg-white/10 cursor-pointer" />
-            <NotificationBell enabled={true} iconColor="#ffffff" />
-            <ShopLogoutButton className="text-sm font-medium text-white hover:text-red-200" />
+            <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-brand-foreground/90 hover:bg-brand-foreground/10 cursor-pointer" />
+            <NotificationBell enabled={true} />
+            <ShopLogoutButton className="text-sm font-medium text-brand-foreground hover:text-red-200" />
           </div>
         </div>
       </div>
 
       {seller.status !== "active" && (
-        <div className="w-11/12 mx-auto mt-4 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3">
+        <div className="w-11/12 mx-auto mt-4 rounded-md bg-warning-bg border border-warning/30 text-warning text-sm px-4 py-3">
           {seller.status === "pending"
             ? "Your shop is awaiting admin approval. You can't create products or events until it's approved."
             : "Your shop has been suspended. Listing management is disabled."}
@@ -170,7 +170,7 @@ export default function SellerDashboard() {
       )}
 
       <div className="w-11/12 mx-auto py-6">
-        <div className="flex gap-4 border-b mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-4 border-b border-border mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
           {TABS.map((t) => (
             <button
               key={t}
@@ -178,8 +178,8 @@ export default function SellerDashboard() {
               onClick={() => setTab(t)}
               className={`shrink-0 whitespace-nowrap min-h-11 pb-3 px-2 text-sm font-medium capitalize cursor-pointer ${
                 tab === t
-                  ? "border-b-2 border-[#3957db] text-[#3957db]"
-                  : "text-gray-500"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {t}
@@ -246,55 +246,61 @@ function OrdersPanel({ shopId }: { shopId: string }) {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-[#333] mb-4">Orders</h2>
-      {actionError && (
-        <p className="text-sm text-red-600 mb-3">{actionError}</p>
-      )}
+      <h2 className="text-lg font-semibold text-foreground mb-4">Orders</h2>
+      {actionError && <p className="text-sm text-error mb-3">{actionError}</p>}
 
       {isLoading ? (
-        <p className="text-[15px] text-[#00000082] py-8">Loading orders...</p>
+        <CardListSkeleton count={4} />
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">
+        <p className="text-[15px] text-error py-8">
           {getErrorMessage(error, "Could not load orders.")}
         </p>
       ) : orders.length === 0 ? (
-        <p className="text-[15px] text-[#00000082] py-8">
-          No orders for your shop yet.
-        </p>
+        <EmptyState
+          icon={<AiOutlineFileText size={26} />}
+          title="No orders for your shop yet"
+        />
       ) : (
         <div className="space-y-3">
           {orders.map((order) => (
-            <div key={order._id} className="bg-white rounded-lg shadow-sm p-4">
+            <div
+              key={order._id}
+              className="bg-surface border border-border rounded-lg shadow-sm p-4"
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium text-foreground">
                     Order #{order._id.slice(-8).toUpperCase()}
                   </p>
-                  <p className="text-xs text-[#00000082]">
+                  <p className="text-xs text-muted-foreground">
                     Placed {new Date(order.createdAt).toLocaleString()} &middot;{" "}
                     {order.cart.length} item(s)
                   </p>
                 </div>
-                <p className="font-semibold">${order.totalPrice.toFixed(2)}</p>
+                <p className="font-semibold text-foreground">
+                  ${order.totalPrice.toFixed(2)}
+                </p>
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {order.status === "Processing Refund" ? (
                   <>
-                    <span className="text-sm text-amber-600 font-medium">
+                    <span className="text-sm text-warning font-medium">
                       Refund requested
                     </span>
                     <button
                       type="button"
                       onClick={() => handleApproveRefund(order._id)}
                       disabled={isRefunding}
-                      className="px-3 py-1.5 rounded-md bg-black text-white text-sm disabled:opacity-60 cursor-pointer"
+                      className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60 cursor-pointer"
                     >
                       {isRefunding ? "Approving..." : "Approve refund"}
                     </button>
                   </>
                 ) : order.status === "Refund Success" ? (
-                  <span className="text-sm text-gray-500">Refunded</span>
+                  <span className="text-sm text-muted-foreground">
+                    Refunded
+                  </span>
                 ) : (
                   <select
                     value={order.status}
@@ -302,7 +308,7 @@ function OrdersPanel({ shopId }: { shopId: string }) {
                       handleStatusChange(order._id, e.target.value)
                     }
                     disabled={isUpdating || order.status === "Delivered"}
-                    className="border border-gray-300 rounded-md px-2 py-1.5 text-sm disabled:opacity-60"
+                    className="border border-input bg-surface text-foreground rounded-md px-2 py-1.5 text-sm disabled:opacity-60"
                   >
                     {ORDER_STATUSES.map((status) => (
                       <option key={status} value={status}>
@@ -333,8 +339,8 @@ function MessagesPanel({ sellerId }: { sellerId: string }) {
 }
 
 const WITHDRAW_STATUS_STYLES: Record<string, string> = {
-  Processing: "bg-amber-100 text-amber-700",
-  succeed: "bg-green-100 text-green-700",
+  Processing: "bg-warning-bg text-warning border border-warning/30",
+  succeed: "bg-success-bg text-success border border-success/30",
 };
 
 function PayoutsPanel({
@@ -393,16 +399,18 @@ function PayoutsPanel({
       {!seller?.withdrawMethod && (
         <BankDetailsForm withdrawMethod={undefined} />
       )}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-[#333] mb-1">
+      <div className="bg-surface border border-border rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-1">
           Request a payout
         </h2>
-        <p className="text-sm text-[#00000082] mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Available balance:{" "}
-          <span className="font-semibold">${availableBalance.toFixed(2)}</span>
+          <span className="font-semibold text-foreground">
+            ${availableBalance.toFixed(2)}
+          </span>
         </p>
         {Boolean(owedBalance && owedBalance > 0) && (
-          <p className="mb-4 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm px-3 py-2">
+          <p className="mb-4 rounded-md bg-warning-bg border border-warning/30 text-warning text-sm px-3 py-2">
             ${owedBalance!.toFixed(2)} from recent refunds could not be
             recovered from your available balance and will be deducted from
             future order earnings before they become available to withdraw.
@@ -438,26 +446,26 @@ function PayoutsPanel({
           Enter an amount up to your available balance of $
           {availableBalance.toFixed(2)}
         </p>
-        {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
+        {formError && <p className="mt-2 text-sm text-error">{formError}</p>}
         {successMessage && (
-          <p className="mt-2 text-sm text-green-700">{successMessage}</p>
+          <p className="mt-2 text-sm text-success">{successMessage}</p>
         )}
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-[#333] mb-4">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
           Withdrawal history
         </h2>
         {isLoading ? (
-          <p className="text-[15px] text-[#00000082] py-4">
+          <p className="text-[15px] text-muted-foreground py-4">
             Loading withdrawal requests...
           </p>
         ) : isError ? (
-          <p className="text-[15px] text-red-500 py-4">
+          <p className="text-[15px] text-error py-4">
             {getErrorMessage(error, "Could not load withdrawal requests.")}
           </p>
         ) : withdraws.length === 0 ? (
-          <p className="text-[15px] text-[#00000082] py-4">
+          <p className="text-[15px] text-muted-foreground py-4">
             You haven&apos;t requested any withdrawals yet.
           </p>
         ) : (
@@ -465,11 +473,13 @@ function PayoutsPanel({
             {withdraws.map((withdraw) => (
               <div
                 key={withdraw._id}
-                className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+                className="flex items-center justify-between bg-surface border border-border rounded-lg shadow-sm p-4"
               >
                 <div>
-                  <p className="font-medium">${withdraw.amount.toFixed(2)}</p>
-                  <p className="text-xs text-[#00000082]">
+                  <p className="font-medium text-foreground">
+                    ${withdraw.amount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
                     Requested{" "}
                     {new Date(withdraw.createdAt).toLocaleDateString()}
                   </p>
@@ -477,7 +487,7 @@ function PayoutsPanel({
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                     WITHDRAW_STATUS_STYLES[withdraw.status] ||
-                    "bg-gray-100 text-gray-700"
+                    "bg-surface border border-border text-muted-foreground"
                   }`}
                 >
                   {withdraw.status}
@@ -541,29 +551,35 @@ function BankDetailsForm({
     try {
       await deleteWithdrawMethod().unwrap();
       setEditing(true);
-      toast.showToast({ title: "Payout bank account removed", variant: "success" });
+      toast.showToast({
+        title: "Payout bank account removed",
+        variant: "success",
+      });
     } catch (err) {
-      toast.showToast({ title: getErrorMessage(err, "Could not remove bank details."), variant: "error" });
+      toast.showToast({
+        title: getErrorMessage(err, "Could not remove bank details."),
+        variant: "error",
+      });
     }
   };
 
   if (!editing && withdrawMethod) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-[#333] mb-2">
+      <div className="bg-surface border border-border rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-2">
           Payout bank account
         </h2>
-        <p className="text-sm text-[#00000082]">
+        <p className="text-sm text-muted-foreground">
           {withdrawMethod.bankHolderName} &middot; {withdrawMethod.bankName}
         </p>
-        <p className="text-sm text-[#00000082]">
+        <p className="text-sm text-muted-foreground">
           Account: {withdrawMethod.bankAccountNumber}
         </p>
         <div className="flex gap-4 mt-3">
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-sm text-[#3957db] hover:underline cursor-pointer"
+            className="text-sm text-primary hover:underline cursor-pointer"
           >
             Edit
           </button>
@@ -571,7 +587,7 @@ function BankDetailsForm({
             type="button"
             disabled={isDeleting}
             onClick={handleRemove}
-            className="text-sm text-red-600 hover:underline cursor-pointer disabled:opacity-60"
+            className="text-sm text-error hover:underline cursor-pointer disabled:opacity-60"
           >
             Remove
           </button>
@@ -583,9 +599,11 @@ function BankDetailsForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-lg shadow-sm p-6 space-y-3"
+      className="bg-surface border border-border rounded-lg shadow-sm p-6 space-y-3"
     >
-      <h2 className="text-lg font-semibold text-[#333]">Payout bank account</h2>
+      <h2 className="text-lg font-semibold text-foreground">
+        Payout bank account
+      </h2>
       <input
         required
         placeholder="Withdraw method name"
@@ -633,10 +651,7 @@ function BankDetailsForm({
         value={form.bankAddress}
         onChange={handleChange("bankAddress")}
       />
-      {formError && <p className="text-sm text-red-600">{formError}</p>}
-      {/* {successMessage && (
-        <p className="text-sm text-green-700">{successMessage}</p>
-      )} */}
+      {formError && <p className="text-sm text-error">{formError}</p>}
       <button
         type="submit"
         disabled={isSaving}
@@ -711,7 +726,10 @@ function ProfilePanel() {
       await updateShopAvatar({ avatar: base64 }).unwrap();
       toast.showToast({ title: "Shop logo updated", variant: "success" });
     } catch (err) {
-      const message = getErrorMessage(err, "Could not update avatar. Please try a different image.");
+      const message = getErrorMessage(
+        err,
+        "Could not update avatar. Please try a different image.",
+      );
       setAvatarError(message);
       toast.showToast({ title: message, variant: "error" });
     } finally {
@@ -724,11 +742,11 @@ function ProfilePanel() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           Shop logo
         </label>
         <div className="mt-2 flex items-center">
-          <span className="inline-block w-16 h-16 rounded-full overflow-hidden border border-gray-300 relative">
+          <span className="inline-block w-16 h-16 rounded-full overflow-hidden border border-border relative bg-surface">
             {seller.avatar?.url ? (
               <Image
                 src={seller.avatar.url}
@@ -737,12 +755,12 @@ function ProfilePanel() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <RxAvatar className="h-full w-full text-gray-400" />
+              <RxAvatar className="h-full w-full text-muted-foreground" />
             )}
           </span>
           <label
             htmlFor="seller-account-avatar-file-input"
-            className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+            className="ml-5 flex items-center justify-center px-4 py-2 border border-input rounded-md shadow-sm text-sm font-medium text-foreground bg-surface hover:bg-surface-hover cursor-pointer"
           >
             <span>{isSavingAvatar ? "Uploading..." : "Upload a file"}</span>
             <input
@@ -756,23 +774,23 @@ function ProfilePanel() {
           </label>
         </div>
         {avatarError && (
-          <p className="mt-1 text-sm text-red-600">{avatarError}</p>
+          <p className="mt-1 text-sm text-error">{avatarError}</p>
         )}
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 bg-white rounded-lg shadow-sm p-6"
+        className="space-y-4 bg-surface border border-border rounded-lg shadow-sm p-6"
         noValidate
       >
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Shop name
           </label>
           <input className={`${styles.input} mt-1`} {...register("name")} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Description
           </label>
           <textarea
@@ -782,14 +800,14 @@ function ProfilePanel() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Address
           </label>
           <input className={`${styles.input} mt-1`} {...register("address")} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Phone number
             </label>
             <input
@@ -805,7 +823,7 @@ function ProfilePanel() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Zip code
             </label>
             <input
@@ -822,9 +840,9 @@ function ProfilePanel() {
           </div>
         </div>
 
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
+        {formError && <p className="text-sm text-error">{formError}</p>}
         {successMessage && (
-          <p className="text-sm text-green-700">{successMessage}</p>
+          <p className="text-sm text-success">{successMessage}</p>
         )}
 
         <button
@@ -844,7 +862,7 @@ function ProfilePanel() {
 function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const toast = useToast();
   const [page, setPage] = useState(1);
-  const confirm = useConfirm(); // Initialize confirmation hook
+  const confirm = useConfirm();
   const { data, isLoading, isError, error } = useGetShopProductsQuery({
     shopId,
     page,
@@ -869,7 +887,6 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     setFormError(null);
     if (files.length === 0) return;
 
-    // Check if adding new files exceeds the 8 image limit
     if (images.length + files.length > 8) {
       setFormError("Maximum 8 images allowed");
       e.target.value = "";
@@ -891,7 +908,6 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
         files.map((file) => readFileAsBase64(file)),
       );
 
-      // Append new images to the existing ones instead of replacing
       setImages((prev) => {
         const updated = [...prev, ...encoded];
         if (updated.length > 8) {
@@ -903,7 +919,6 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     } catch (err) {
       setFormError(getErrorMessage(err, "Could not read one or more images."));
     } finally {
-      // Clear input value so selecting the same file again triggers onChange if needed
       e.target.value = "";
     }
   };
@@ -948,7 +963,6 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
     setFormError(null);
     const wasEditing = Boolean(editingProduct);
 
-    // Validate using the backend-aligned logic
     if (!editingProduct && images.length === 0) {
       setFormError("At least one image is required");
       return;
@@ -1040,12 +1054,12 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-[#333]">Your products</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your products</h2>
         <button
           type="button"
           disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add product"}
         </button>
@@ -1054,25 +1068,25 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       {showForm && (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6"
+          className="space-y-4 bg-surface border border-border rounded-lg shadow-sm p-6 mb-6"
           noValidate
         >
           {editingProduct && (
-            <p className="text-sm text-[#3957db] font-medium">
+            <p className="text-sm text-primary font-medium">
               Editing &quot;{editingProduct.name}&quot;
             </p>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Name
             </label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
             {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              <p className="mt-1 text-sm text-error">{errors.name.message}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Description
             </label>
             <textarea
@@ -1081,14 +1095,14 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               {...register("description")}
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600">
+              <p className="mt-1 text-sm text-error">
                 {errors.description.message}
               </p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Category
               </label>
               <select
@@ -1106,13 +1120,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 ))}
               </select>
               {errors.category && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.category.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Tags (optional)
               </label>
               <input className={`${styles.input} mt-1`} {...register("tags")} />
@@ -1120,7 +1134,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Original price
               </label>
               <input
@@ -1135,7 +1149,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Discount price
               </label>
               <input
@@ -1149,13 +1163,13 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 })}
               />
               {errors.discountPrice && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.discountPrice.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Stock
               </label>
               <input
@@ -1169,22 +1183,22 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 })}
               />
               {errors.stock && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.stock.message}
                 </p>
               )}
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Images{" "}
               {editingProduct && (
-                <span className="font-normal text-gray-400">
+                <span className="font-normal text-muted-foreground">
                   (leave empty to keep current images)
                 </span>
               )}
             </label>
-            <label className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-50 cursor-pointer shadow-xs transition-colors">
+            <label className="inline-flex items-center px-4 py-2 bg-surface border border-input rounded-md font-medium text-sm text-foreground hover:bg-surface-hover cursor-pointer shadow-xs transition-colors">
               Upload Images
               <input
                 type="file"
@@ -1200,7 +1214,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 {images.map((img, index) => (
                   <div
                     key={index}
-                    className="relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 shadow-xs"
+                    className="relative w-16 h-16 rounded-md overflow-hidden border border-border shadow-xs bg-surface"
                   >
                     <Image
                       src={img}
@@ -1211,7 +1225,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+                      className="absolute top-1 right-1 bg-error text-error-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs hover:opacity-90 transition-colors"
                       title="Remove image"
                     >
                       &times;
@@ -1222,7 +1236,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
             )}
           </div>
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          {formError && <p className="text-sm text-error">{formError}</p>}
 
           <button
             type="submit"
@@ -1243,9 +1257,11 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       )}
 
       {isLoading ? (
-        <p className="text-[15px] text-[#00000082] py-8">Loading products...</p>
+        <p className="text-[15px] text-muted-foreground py-8">
+          Loading products...
+        </p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">
+        <p className="text-[15px] text-error py-8">
           {getErrorMessage(error, "Could not load products.")}
         </p>
       ) : products.length === 0 ? (
@@ -1258,7 +1274,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {products.map((product) => (
             <div
               key={product._id}
-              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+              className="flex items-center justify-between bg-surface border border-border rounded-lg shadow-sm p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 shrink-0">
@@ -1270,8 +1286,8 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                   />
                 </div>
                 <div>
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-[#00000082]">
+                  <p className="font-medium text-foreground">{product.name}</p>
+                  <p className="text-sm text-muted-foreground">
                     ${product.discountPrice} &middot; {product.stock} in stock
                   </p>
                 </div>
@@ -1280,14 +1296,14 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 <button
                   type="button"
                   onClick={() => openEditForm(product)}
-                  className="text-sm text-[#3957db] hover:underline cursor-pointer"
+                  className="text-sm text-primary hover:underline cursor-pointer"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(product._id, product.name)}
-                  className="text-sm text-red-600 hover:underline cursor-pointer"
+                  className="text-sm text-error hover:underline cursor-pointer"
                 >
                   Delete
                 </button>
@@ -1310,7 +1326,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   const toast = useToast();
   const [page, setPage] = useState(1);
-  const confirm = useConfirm(); // Initialize confirmation hook
+  const confirm = useConfirm();
   const { data, isLoading, isError, error } = useGetShopEventsQuery({
     shopId,
     page,
@@ -1466,7 +1482,10 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       setImages([]);
       setEditingEvent(null);
       setShowForm(false);
-      toast.showToast({ title: wasEditing ? "Event updated" : "Event created", variant: "success" });
+      toast.showToast({
+        title: wasEditing ? "Event updated" : "Event created",
+        variant: "success",
+      });
     } catch (err) {
       setFormError(
         getErrorMessage(
@@ -1487,11 +1506,17 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 
     if (!confirmed) return;
 
-     try {
+    try {
       await deleteEvent({ id, shopId }).unwrap();
-      toast.showToast({ title: `"${eventName}" was deleted`, variant: "success" });
+      toast.showToast({
+        title: `"${eventName}" was deleted`,
+        variant: "success",
+      });
     } catch (err) {
-      toast.showToast({ title: getErrorMessage(err, "Could not delete event."), variant: "error" });
+      toast.showToast({
+        title: getErrorMessage(err, "Could not delete event."),
+        variant: "error",
+      });
     }
   };
 
@@ -1500,12 +1525,12 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-[#333]">Your events</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your events</h2>
         <button
           type="button"
           disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add event"}
         </button>
@@ -1514,25 +1539,25 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       {showForm && (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 bg-white rounded-lg shadow-sm p-6 mb-6"
+          className="space-y-4 bg-surface border border-border rounded-lg shadow-sm p-6 mb-6"
           noValidate
         >
           {editingEvent && (
-            <p className="text-sm text-[#3957db] font-medium">
+            <p className="text-sm text-primary font-medium">
               Editing &quot;{editingEvent.name}&quot;
             </p>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Name
             </label>
             <input className={`${styles.input} mt-1`} {...register("name")} />
             {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              <p className="mt-1 text-sm text-error">{errors.name.message}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Description
             </label>
             <textarea
@@ -1541,14 +1566,14 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               {...register("description")}
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600">
+              <p className="mt-1 text-sm text-error">
                 {errors.description.message}
               </p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Category
               </label>
               <select
@@ -1566,13 +1591,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 ))}
               </select>
               {errors.category && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.category.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Tags (optional)
               </label>
               <input className={`${styles.input} mt-1`} {...register("tags")} />
@@ -1580,7 +1605,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Start date
               </label>
               <input
@@ -1590,13 +1615,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 {...register("start_Date")}
               />
               {errors.start_Date && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.start_Date.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 End date
               </label>
               <input
@@ -1606,7 +1631,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 {...register("Finish_Date")}
               />
               {errors.Finish_Date && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.Finish_Date.message}
                 </p>
               )}
@@ -1614,7 +1639,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Original price
               </label>
               <input
@@ -1629,7 +1654,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Discount price
               </label>
               <input
@@ -1643,13 +1668,13 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 })}
               />
               {errors.discountPrice && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.discountPrice.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Stock
               </label>
               <input
@@ -1663,22 +1688,22 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 })}
               />
               {errors.stock && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.stock.message}
                 </p>
               )}
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Images{" "}
               {editingEvent && (
-                <span className="font-normal text-gray-400">
+                <span className="font-normal text-muted-foreground">
                   (leave empty to keep current images)
                 </span>
               )}
             </label>
-            <label className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-50 cursor-pointer shadow-xs transition-colors">
+            <label className="inline-flex items-center px-4 py-2 bg-surface border border-input rounded-md font-medium text-sm text-foreground hover:bg-surface-hover cursor-pointer shadow-xs transition-colors">
               Upload Images
               <input
                 type="file"
@@ -1694,7 +1719,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 {images.map((img, index) => (
                   <div
                     key={index}
-                    className="relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 shadow-xs"
+                    className="relative w-16 h-16 rounded-md overflow-hidden border border-border shadow-xs bg-surface"
                   >
                     <Image
                       src={img}
@@ -1705,7 +1730,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+                      className="absolute top-1 right-1 bg-error text-error-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs hover:opacity-90 transition-colors"
                       title="Remove image"
                     >
                       &times;
@@ -1716,7 +1741,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
             )}
           </div>
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          {formError && <p className="text-sm text-error">{formError}</p>}
 
           <button
             type="submit"
@@ -1737,9 +1762,11 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
       )}
 
       {isLoading ? (
-        <p className="text-[15px] text-[#00000082] py-8">Loading events...</p>
+        <p className="text-[15px] text-muted-foreground py-8">
+          Loading events...
+        </p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">
+        <p className="text-[15px] text-error py-8">
           {getErrorMessage(error, "Could not load events.")}
         </p>
       ) : events.length === 0 ? (
@@ -1752,7 +1779,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           {events.map((event) => (
             <div
               key={event._id}
-              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+              className="flex items-center justify-between bg-surface border border-border rounded-lg shadow-sm p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 shrink-0">
@@ -1764,8 +1791,8 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                   />
                 </div>
                 <div>
-                  <p className="font-medium">{event.name}</p>
-                  <p className="text-sm text-[#00000082]">
+                  <p className="font-medium text-foreground">{event.name}</p>
+                  <p className="text-sm text-muted-foreground">
                     ${event.discountPrice} &middot;{" "}
                     {event.isActive
                       ? "Active"
@@ -1779,14 +1806,14 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                 <button
                   type="button"
                   onClick={() => openEditForm(event)}
-                  className="text-sm text-[#3957db] hover:underline cursor-pointer"
+                  className="text-sm text-primary hover:underline cursor-pointer"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(event._id, event.name)}
-                  className="text-sm text-red-600 hover:underline cursor-pointer"
+                  className="text-sm text-error hover:underline cursor-pointer"
                 >
                   Delete
                 </button>
@@ -1809,7 +1836,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
 function CouponsPanel() {
   const toast = useToast();
   const { data, isLoading, isError } = useGetShopCouponsQuery();
-  const confirm = useConfirm(); // Initialize confirmation hook
+  const confirm = useConfirm();
   const [createCouponCode, { isLoading: isCreating }] =
     useCreateCouponCodeMutation();
   const [deleteCouponCode] = useDeleteCouponCodeMutation();
@@ -1865,11 +1892,11 @@ function CouponsPanel() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-[#333]">Coupons</h2>
+        <h2 className="text-lg font-semibold text-foreground">Coupons</h2>
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="px-4 py-2 rounded-md bg-black text-white text-sm cursor-pointer"
+          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer"
         >
           {showForm ? "Cancel" : "Add coupon"}
         </button>
@@ -1878,7 +1905,7 @@ function CouponsPanel() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="space-y-3 bg-white rounded-lg shadow-sm p-6 mb-6"
+          className="space-y-3 bg-surface border border-border rounded-lg shadow-sm p-6 mb-6"
         >
           <input
             required
@@ -1927,7 +1954,7 @@ function CouponsPanel() {
               })
             }
           />
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          {formError && <p className="text-sm text-error">{formError}</p>}
           <button
             type="submit"
             disabled={isCreating}
@@ -1941,13 +1968,15 @@ function CouponsPanel() {
       )}
 
       {formError && !showForm && (
-        <p className="text-sm text-red-600 mb-4">{formError}</p>
+        <p className="text-sm text-error mb-4">{formError}</p>
       )}
 
       {isLoading ? (
-        <p className="text-[15px] text-[#00000082] py-8">Loading coupons...</p>
+        <p className="text-[15px] text-muted-foreground py-8">
+          Loading coupons...
+        </p>
       ) : isError ? (
-        <p className="text-[15px] text-red-500 py-8">Could not load coupons.</p>
+        <p className="text-[15px] text-error py-8">Could not load coupons.</p>
       ) : coupons.length === 0 ? (
         <EmptyState
           icon={<AiOutlineTag size={24} />}
@@ -1958,11 +1987,11 @@ function CouponsPanel() {
           {coupons.map((c) => (
             <div
               key={c._id}
-              className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4"
+              className="flex items-center justify-between bg-surface border border-border rounded-lg shadow-sm p-4"
             >
               <div>
-                <p className="font-medium">{c.name}</p>
-                <p className="text-sm text-[#00000082]">
+                <p className="font-medium text-foreground">{c.name}</p>
+                <p className="text-sm text-muted-foreground">
                   {c.value}% off
                   {c.minAmount ? ` min $${c.minAmount}` : ""}
                   {c.maxAmount ? ` max $${c.maxAmount}` : ""}
@@ -1971,7 +2000,7 @@ function CouponsPanel() {
               <button
                 type="button"
                 onClick={() => handleDelete(c._id, c.name)}
-                className="text-sm text-red-600 hover:underline cursor-pointer"
+                className="text-sm text-error hover:underline cursor-pointer"
               >
                 Delete
               </button>

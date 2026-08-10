@@ -36,7 +36,7 @@ const EventDetails = ({ eventId }) => {
       <div>
         <Header activeHeading={4} />
         <div className="w-full flex items-center justify-center py-20 min-h-[60vh]">
-          <p className="text-[18px] text-[#00000082]">Loading event...</p>
+          <p className="text-[18px] text-muted-foreground">Loading event...</p>
         </div>
         <Footer />
       </div>
@@ -48,10 +48,10 @@ const EventDetails = ({ eventId }) => {
       <div>
         <Header activeHeading={4} />
         <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
-          <p className="text-[18px] text-red-500">
+          <p className="text-[18px] text-error">
             {getErrorMessage(error, "This event could not be found.")}
           </p>
-          <Link href="/events" className="text-[#3957db] hover:underline">
+          <Link href="/events" className="text-primary hover:underline">
             Back to events
           </Link>
         </div>
@@ -64,7 +64,7 @@ const EventDetails = ({ eventId }) => {
     <div>
       <Header activeHeading={4} />
       <div className={`${styles.section} py-8`}>
-        <div className="block w-full md:flex p-2 md:p-6 bg-white rounded-md shadow-sm">
+        <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm">
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-75">
               <Image
@@ -82,7 +82,7 @@ const EventDetails = ({ eventId }) => {
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
                     className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${
-                      activeImage === index ? "border-[#3957db]" : "border-transparent"
+                      activeImage === index ? "border-primary" : "border-transparent"
                     }`}
                   >
                     <Image src={img.url} alt={`${event.name} ${index + 1}`} fill className="object-cover rounded-md" />
@@ -104,21 +104,21 @@ const EventDetails = ({ eventId }) => {
               {event.originalPrice ? <h3 className={`${styles.price}`}>{event.originalPrice}$</h3> : null}
             </div>
 
-            <p className="text-[14px] text-[#00000082]">
+            <p className="text-[14px] text-muted-foreground">
               {event.stock > 0 ? `${event.stock} in stock` : "Out of stock"}
             </p>
 
             <div className="flex items-center mt-12 justify-between pr-3">
               <div className="flex items-center">
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
                 </button>
-                <span className="bg-gray-200 text-gray-800 font-medium px-4 py-2.25">{count}</span>
+                <span className="bg-muted text-gray-800 font-medium px-4 py-2.25">{count}</span>
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-white font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
                   onClick={incrementCount}
                 >
                   +

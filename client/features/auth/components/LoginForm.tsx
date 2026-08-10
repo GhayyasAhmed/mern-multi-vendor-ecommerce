@@ -35,23 +35,21 @@ export default function LoginForm() {
       router.push(redirectTo);
       router.refresh();
     } catch (error) {
-      console.log(error)
       setFormError(getErrorMessage(error, "Please provide the correct credentials"));
     }
   };
 
   return (
-    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm">
-      {/* Back Navigation Link */}
+    <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm">
       <div>
-        <Link href="/" className="text-sm text-gray-600 hover:text-[#3957db] hover:underline inline-flex items-center gap-1">
+        <Link href="/" className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1">
           Back to Home
         </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground">
             Email
           </label>
           <input
@@ -61,12 +59,11 @@ export default function LoginForm() {
             className={`${styles.input} mt-1`}
             {...register("email")}
           />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
         </div>
 
-        {/* Password Field with Eye Icon */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-foreground">
             Password
           </label>
           <div className="relative mt-1">
@@ -80,22 +77,23 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
             >
               {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-error">{errors.password.message}</p>}
         </div>
 
         <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-sm text-[#3957db] hover:underline">
+          <Link href="/forgot-password" className="text-sm text-primary hover:underline">
             Forgot password?
           </Link>
         </div>
 
         {formError && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-error">
             {formError}
           </p>
         )}
@@ -104,9 +102,9 @@ export default function LoginForm() {
           <span className="font-[Poppins]">{isLoading ? "Logging in..." : "Login"}</span>
         </button>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[#3957db] hover:underline">
+          <Link href="/signup" className="text-primary hover:underline">
             Sign up
           </Link>
         </p>

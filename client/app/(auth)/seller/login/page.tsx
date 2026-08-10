@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function SellerLoginPage() {
   return (
     <div className="flex w-full flex-col items-center gap-6 px-4 py-10">
-      <h1 className="text-2xl font-semibold text-[#333]">Login to your shop</h1>
+      <h1 className="text-2xl font-semibold text-foreground">Login to your shop</h1>
       <ShopLoginForm />
     </div>
   );

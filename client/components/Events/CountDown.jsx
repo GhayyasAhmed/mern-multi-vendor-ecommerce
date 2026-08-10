@@ -49,14 +49,14 @@ const CountDownOption1 = ({ data }) => {
   }, [finishDate]);
 
   if (timeDetails.expired) {
-    return <span className="text-red-600 text-sm font-semibold">Time&apos;s up!</span>;
+    return <span className="text-error text-sm font-semibold">Time&apos;s up!</span>;
   }
 
   const isUrgent = timeDetails.type === 'hours';
 
   return (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-      isUrgent ? 'bg-red-50 text-red-600 border border-red-200 animate-pulse' : 'bg-gray-200 text-gray-700'
+      isUrgent ? 'bg-red-50 text-error border border-red-200 animate-pulse' : 'bg-muted text-foreground'
     }`}>
       <span className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-gray-400'}`} />
       {timeDetails.type === 'hours' && (

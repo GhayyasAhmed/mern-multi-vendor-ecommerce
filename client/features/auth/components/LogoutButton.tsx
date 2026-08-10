@@ -41,11 +41,11 @@ const router = useRouter();
         type="button"
         onClick={handleLogout}
         disabled={isLoading}
-        className={className ?? "text-sm font-medium text-gray-700 hover:text-red-600 disabled:opacity-60"}
+        className={className ?? "text-sm font-medium text-foreground hover:text-error disabled:opacity-60"}
       >
         {isLoading ? "Logging out..." : "Logout"}
       </button>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-error">{error}</p>}
     </div>
   );
 }

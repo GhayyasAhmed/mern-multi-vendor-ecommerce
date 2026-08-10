@@ -87,9 +87,9 @@ export default function RegisterForm() {
 
   if (successMessage) {
     return (
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-green-700">{successMessage}</p>
-        <Link href="/login" className="text-sm text-[#3957db] hover:underline">
+      <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 text-center shadow-sm">
+        <p className="text-sm text-success">{successMessage}</p>
+        <Link href="/login" className="text-sm text-primary hover:underline">
           Back to login
         </Link>
       </div>
@@ -97,12 +97,12 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-sm">
+    <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm">
       {/* Back Navigation Link */}
       <div>
         <Link
           href="/"
-          className="text-sm text-gray-600 hover:text-[#3957db] hover:underline inline-flex items-center gap-1"
+          className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
         >
           Back to Home
         </Link>
@@ -112,7 +112,7 @@ export default function RegisterForm() {
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Full name
           </label>
@@ -124,14 +124,14 @@ export default function RegisterForm() {
             {...register("name")}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            <p className="mt-1 text-sm text-error">{errors.name.message}</p>
           )}
         </div>
 
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Email
           </label>
@@ -143,7 +143,7 @@ export default function RegisterForm() {
             {...register("email")}
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+            <p className="mt-1 text-sm text-error">{errors.email.message}</p>
           )}
         </div>
 
@@ -151,7 +151,7 @@ export default function RegisterForm() {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Password
           </label>
@@ -166,7 +166,7 @@ export default function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showPassword ? (
                 <AiOutlineEye size={20} />
@@ -176,7 +176,7 @@ export default function RegisterForm() {
             </button>
           </div>
           {errors.password && (
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-error">
               {errors.password.message}
             </p>
           )}
@@ -192,19 +192,26 @@ export default function RegisterForm() {
                     key={bar}
                     className={`flex-1 rounded-full transition-colors ${
                       bar < passwordStrength.score
-                        ? passwordStrength.color === "error"
+                       ? passwordStrength.color === "error"
                           ? "bg-red-500"
                           : passwordStrength.color === "warning"
                             ? "bg-amber-500"
                             : passwordStrength.color === "info"
                               ? "bg-blue-500"
                               : "bg-green-500"
-                        : "bg-gray-200"
+                        // ? passwordStrength.color === "error"
+                        //   ? "bg-error-bg"
+                        //   : passwordStrength.color === "warning"
+                        //     ? "bg-warning-bg"
+                        //     : passwordStrength.color === "info"
+                        //       ? "bg-info-bg"
+                        //       : "bg-success-bg"
+                        : "bg-muted"
                     }`}
                   />
                 ))}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {passwordStrength.label} password
               </p>
             </div>
@@ -215,7 +222,7 @@ export default function RegisterForm() {
         <div>
           <label
             htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Confirm password
           </label>
@@ -230,7 +237,7 @@ export default function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showConfirmPassword ? (
                 <AiOutlineEye size={20} />
@@ -240,7 +247,7 @@ export default function RegisterForm() {
             </button>
           </div>
           {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-error">
               {errors.confirmPassword.message}
             </p>
           )}
@@ -248,11 +255,11 @@ export default function RegisterForm() {
 
         {/* Custom Avatar Upload UI matching signup.jsx */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Profile photo
           </label>
           <div className="mt-2 flex items-center">
-            <span className="inline-block h-10 w-10 rounded-full overflow-hidden border border-gray-300">
+            <span className="inline-block h-10 w-10 rounded-full overflow-hidden border border-border">
               {avatarPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -261,12 +268,12 @@ export default function RegisterForm() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <RxAvatar className="h-full w-full text-gray-400" />
+                <RxAvatar className="h-full w-full text-muted-foreground" />
               )}
             </span>
             <label
               htmlFor="file-input"
-              className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+              className="ml-5 flex items-center justify-center px-4 py-2 border border-border rounded-md shadow-sm text-sm font-medium text-foreground bg-surface hover:bg-surface-hover cursor-pointer"
             >
               <span>Upload a file</span>
               <input
@@ -279,12 +286,12 @@ export default function RegisterForm() {
             </label>
           </div>
           {avatarError && (
-            <p className="mt-1 text-sm text-red-600">{avatarError}</p>
+            <p className="mt-1 text-sm text-error">{avatarError}</p>
           )}
         </div>
 
         {formError && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-error">
             {formError}
           </p>
         )}
@@ -299,9 +306,9 @@ export default function RegisterForm() {
           </span>
         </button>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#3957db] hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             Login
           </Link>
         </p>

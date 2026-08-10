@@ -16,7 +16,7 @@ export default async function ActivationPage({
 
   return (
     <div className="flex w-full flex-col items-center gap-6 px-4">
-      <h1 className="text-2xl font-semibold text-[#333]">Account activation</h1>
+      <h1 className="text-2xl font-semibold text-foreground">Account activation</h1>
       <ActivationHandler token={token} />
     </div>
   );

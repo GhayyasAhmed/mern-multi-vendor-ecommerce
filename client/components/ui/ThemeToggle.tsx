@@ -16,7 +16,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
         "inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground cursor-pointer"
       }
     >
-      {theme === "dark" ? <FiSun size={18} /> : <FiMoon size={18} />}
+      {theme === "dark" ? <FiSun size={22} /> : <FiMoon size={22} />}
     </button>
   );
 }

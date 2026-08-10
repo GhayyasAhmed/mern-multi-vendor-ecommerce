@@ -17,7 +17,7 @@ export default function SellerProtectedRoute({ children }: { children: React.Rea
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-[40vh] w-full items-center justify-center">
-        <p className="text-sm text-gray-500">Checking your seller session...</p>
+        <p className="text-sm text-muted-foreground">Checking your seller session...</p>
       </div>
     );
   }

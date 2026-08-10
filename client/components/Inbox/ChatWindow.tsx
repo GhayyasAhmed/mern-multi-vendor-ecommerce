@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useRef, useState, useMemo, type FormEvent } from "react";
-import Image from "next/image";
+import EmptyState from "@/components/ui/EmptyState";
+import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
+import { SOCKET_EVENTS } from "@/constants";
+import { getErrorMessage } from "@/features/auth/utils";
 import {
   useGetMessagesQuery,
   useLazyGetMessagesQuery,
@@ -9,9 +11,9 @@ import {
   type IMessage,
 } from "@/features/messaging/conversationApiSlice";
 import { useSocket } from "@/hooks/use-socket";
-import { getErrorMessage } from "@/features/auth/utils";
-import { SOCKET_EVENTS } from "@/constants";
-import { AiOutlineArrowLeft } from "react-icons/ai";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { AiOutlineArrowLeft, AiOutlineMessage } from "react-icons/ai";
 
 interface ChatWindowProps {
   conversation: IConversation;
@@ -189,12 +191,12 @@ export default function ChatWindow({
             type="button"
             onClick={onBack}
             aria-label="Back to conversations"
-            className="md:hidden -ml-2 min-h-11 min-w-11 flex items-center justify-center text-gray-600 cursor-pointer"
+            className="md:hidden -ml-2 min-h-11 min-w-11 flex items-center justify-center text-muted-foreground cursor-pointer"
           >
             <AiOutlineArrowLeft size={20} />
           </button>
         )}
-        <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0">
+        <div className="relative w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
           {peer?.avatar ? (
             <Image
               src={peer.avatar}
@@ -204,8 +206,10 @@ export default function ChatWindow({
             />
           ) : null}
         </div>
-        <p className="font-medium text-sm">{peer?.name || "Unknown"}</p>
-        <p className="text-xs text-[#00000082]">
+        <p className="font-medium text-sm text-foreground">
+          {peer?.name || "Unknown"}
+        </p>
+        <p className="text-xs text-muted-foreground">
           {isPeerOnline ? "Online" : "Offline"}
         </p>
       </div>
@@ -217,20 +221,21 @@ export default function ChatWindow({
               type="button"
               onClick={handleLoadOlder}
               disabled={isLoadingOlder}
-              className="text-xs text-[#3957db] hover:underline disabled:opacity-60 cursor-pointer"
+              className="text-xs text-primary hover:underline disabled:opacity-60 cursor-pointer"
             >
               {isLoadingOlder ? "Loading..." : "Load earlier messages"}
             </button>
           </div>
         )}
         {isLoading ? (
-          <p className="text-sm text-[#00000082]">Loading messages...</p>
+          <ProductGridSkeleton count={12} />
         ) : isError ? (
-          <p className="text-sm text-red-500">Could not load messages.</p>
+          <p className="text-sm text-error">Could not load messages.</p>
         ) : messages.length === 0 ? (
-          <p className="text-sm text-[#00000082]">
-            Say hello to start the conversation.
-          </p>
+          <EmptyState
+            icon={<AiOutlineMessage size={26} />}
+            title=" Say hello to start the conversation."
+          />
         ) : (
           messages.map((message) => {
             const isMine = message.sender === identityId;
@@ -242,8 +247,8 @@ export default function ChatWindow({
                 <div
                   className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                     isMine
-                      ? "bg-[#3957db] text-white"
-                      : "bg-slate-100 text-[#333]"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
                   }`}
                 >
                   {message.images?.url && (
@@ -260,7 +265,7 @@ export default function ChatWindow({
                   {isMine &&
                     message.text &&
                     seenMessageIds.has(message._id) && (
-                      <span className="block text-[10px] text-white/70 mt-0.5">
+                      <span className="block text-[10px] text-primary-foreground/70 mt-0.5">
                         Seen
                       </span>
                     )}
@@ -273,16 +278,16 @@ export default function ChatWindow({
       </div>
 
       {formError && (
-        <p className="px-4 pb-2 text-sm text-red-600">{formError}</p>
+        <p className="px-4 pb-2 text-sm text-error">{formError}</p>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col border-t">
+      <form onSubmit={handleSubmit} className="flex flex-col border-t border-border">
         {image && (
-          <div className="px-4 py-2 bg-slate-50 flex items-center gap-3 border-b">
-            <div className="relative w-12 h-12 rounded-md overflow-hidden border shrink-0">
+          <div className="px-4 py-2 bg-muted flex items-center gap-3 border-b border-border">
+            <div className="relative w-12 h-12 rounded-md overflow-hidden border border-border shrink-0">
               <Image src={image} alt="Preview" fill className="object-cover" />
             </div>
-            <div className="flex-1 text-xs text-slate-600 truncate">
+            <div className="flex-1 text-xs text-muted-foreground truncate">
               Image attached
             </div>
             <button
@@ -291,7 +296,7 @@ export default function ChatWindow({
                 setImage(null);
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
-              className="text-xs text-red-600 hover:text-red-800 font-medium cursor-pointer"
+              className="text-xs text-error hover:opacity-80 font-medium cursor-pointer"
             >
               Remove
             </button>
@@ -309,7 +314,7 @@ export default function ChatWindow({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-gray-500 hover:text-gray-700 transition rounded-full hover:bg-gray-100 cursor-pointer shrink-0"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-surface-hover cursor-pointer shrink-0"
             title="Attach image"
           >
             <svg
@@ -331,12 +336,12 @@ export default function ChatWindow({
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 border border-border bg-surface text-foreground placeholder-muted-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-primary"
           />
           <button
             type="submit"
             disabled={isSending || (!text.trim() && !image)}
-            className="px-4 py-2 rounded-md bg-[#3957db] text-white text-sm disabled:opacity-60 cursor-pointer shrink-0"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 cursor-pointer shrink-0"
           >
             Send
           </button>

@@ -53,9 +53,9 @@ const ProductReviews = ({ product, productId }) => {
           {reviews.map((review, index) => {
             const reviewer = typeof review.user === "object" ? review.user : null;
             return (
-              <div key={review._id || index} className="bg-white rounded-lg shadow-sm p-4">
+              <div key={review._id || index} className="bg-surface rounded-lg shadow-sm p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                  <div className="relative w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
                     {reviewer?.avatar?.url ? (
                       <Image src={reviewer.avatar.url} alt={reviewer?.name || "Reviewer"} fill className="object-cover" />
                     ) : null}
@@ -81,8 +81,8 @@ const ProductReviews = ({ product, productId }) => {
       )}
 
       {user && !isCheckingEligibility && eligibility?.canReview && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6 max-w-xl space-y-3">
-          <h3 className="text-sm font-semibold text-[#333]">
+        <form onSubmit={handleSubmit} className="bg-surface rounded-lg shadow-sm p-6 max-w-xl space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">
             {eligibility.existingReview ? "Update your review" : "Write a review"}
           </h3>
           <div className="flex items-center gap-1">
@@ -96,9 +96,9 @@ const ProductReviews = ({ product, productId }) => {
             })}
           </div>
           <textarea rows={3} placeholder="Share your experience with this product..." value={comment} onChange={(e) => setComment(e.target.value)} className={`${styles.input}`} />
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
-          {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
-          <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-black text-white text-sm disabled:opacity-60 cursor-pointer">
+          {formError && <p className="text-sm text-error">{formError}</p>}
+          {successMessage && <p className="text-sm text-success">{successMessage}</p>}
+          <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm disabled:opacity-60 cursor-pointer">
             {isSubmitting ? "Submitting..." : eligibility.existingReview ? "Update review" : "Submit review"}
           </button>
         </form>

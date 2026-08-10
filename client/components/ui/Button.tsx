@@ -19,7 +19,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: "bg-secondary text-secondary-foreground hover:bg-surface-hover",
   outline: "border border-border bg-transparent text-foreground hover:bg-surface-hover",
   ghost: "bg-transparent text-foreground hover:bg-surface-hover",
-  danger: "bg-error text-white hover:opacity-90",
+  danger: "bg-error text-primary-foreground hover:opacity-90",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

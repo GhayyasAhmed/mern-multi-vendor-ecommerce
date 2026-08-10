@@ -4,9 +4,12 @@ import { useGetAdminStatsQuery } from "../adminApiSlice";
 
 function Card({ label, value, href }: { label: string; value: number | string; href: string }) {
   return (
-    <Link href={href} className="block bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
-      <p className="text-sm text-[#00000082]">{label}</p>
-      <p className="text-2xl font-semibold mt-1">{value}</p>
+    <Link
+      href={href}
+      className="block bg-surface border border-border rounded-lg shadow-sm p-6 hover:shadow-md hover:border-primary/40 transition-all"
+    >
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-2xl font-semibold mt-1 text-foreground">{value}</p>
     </Link>
   );
 }
@@ -17,7 +20,7 @@ export default function AdminOverview() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-6">Dashboard overview</h1>
+      <h1 className="text-2xl font-semibold mb-6 text-foreground">Dashboard overview</h1>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card label="Users" value={isLoading ? "-" : stats?.userCount ?? 0} href="/admin/users" />
         <Card label="Sellers" value={isLoading ? "-" : stats?.sellerCount ?? 0} href="/admin/sellers" />

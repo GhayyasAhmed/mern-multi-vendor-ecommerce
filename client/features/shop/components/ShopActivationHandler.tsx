@@ -57,15 +57,15 @@ export default function ShopActivationHandler({ token }: { token: string }) {
   }, [activateShop, token]);
 
   return (
-    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 text-center shadow-sm">
+    <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 text-center shadow-sm">
       <p
         role="status"
         className={
           status === "error"
-            ? "text-sm text-red-600"
+            ? "text-sm text-error"
             : status === "success"
-              ? "text-sm text-green-700"
-              : "text-sm text-gray-600"
+              ? "text-sm text-success"
+              : "text-sm text-muted-foreground"
         }
       >
         {message}
@@ -73,7 +73,7 @@ export default function ShopActivationHandler({ token }: { token: string }) {
       {status === "success" && (
         <Link
           href="/seller/login"
-          className="text-sm text-[#3957db] hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           Continue
         </Link>
@@ -82,14 +82,14 @@ export default function ShopActivationHandler({ token }: { token: string }) {
         <div className="space-y-4 text-left">
           <Link
             href="/seller"
-            className="block text-center text-sm text-[#3957db] hover:underline"
+            className="block text-center text-sm text-primary hover:underline"
           >
             Back to shop signup
           </Link>
           <form onSubmit={handleResend} className="space-y-2 border-t pt-4">
             <label
               htmlFor="resend-email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-foreground"
             >
               Resend activation link
             </label>
@@ -100,20 +100,20 @@ export default function ShopActivationHandler({ token }: { token: string }) {
               value={resendEmail}
               onChange={(e) => setResendEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
             <button
               type="submit"
               disabled={isResending}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-blue-700 disabled:opacity-60"
             >
               {isResending ? "Sending..." : "Resend activation email"}
             </button>
             {resendMessage && (
-              <p className="text-sm text-green-700">{resendMessage}</p>
+              <p className="text-sm text-success">{resendMessage}</p>
             )}
             {resendError && (
-              <p className="text-sm text-red-600">{resendError}</p>
+              <p className="text-sm text-error">{resendError}</p>
             )}
           </form>
         </div>

@@ -37,7 +37,7 @@ const BestSellingListing = () => {
           <ProductGridSkeleton count={12} />
         ) : isError ? (
           <div className="w-full flex items-center justify-center py-20">
-            <p className="text-[18px] text-red-500">
+            <p className="text-[18px] text-error">
               {getErrorMessage(error, "Failed to load best sellers. Please try again.")}
             </p>
           </div>

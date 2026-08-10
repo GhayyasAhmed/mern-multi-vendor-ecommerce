@@ -63,7 +63,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
     return (
       <div>
         <Header activeHeading={0} />
-        <p className="text-center text-[15px] text-[#00000082] py-20 min-h-[50vh]">
+        <p className="text-center text-[15px] text-muted-foreground py-20 min-h-[50vh]">
           Loading shop...
         </p>
         <Footer />
@@ -76,7 +76,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
       <div>
         <Header activeHeading={0} />
         <div className="w-full flex flex-col items-center justify-center py-20 min-h-[50vh] gap-4">
-          <p className="text-[18px] text-red-500">
+          <p className="text-[18px] text-error">
             {getErrorMessage(shopError, "This shop could not be found.")}
           </p>
         </div>
@@ -89,7 +89,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
     <div>
       <Header activeHeading={0} />
       <div className={`${styles.section} py-8`}>
-        <div className="w-full flex flex-col md:flex-row items-center md:items-start gap-6 bg-white rounded-lg shadow-sm p-6 mb-10">
+        <div className="w-full flex flex-col md:flex-row items-center md:items-start gap-6 bg-surface rounded-lg shadow-sm p-6 mb-10">
           <div className="relative w-25 h-25 rounded-full overflow-hidden shrink-0">
             <Image
               src={shop.avatar?.url || "/placeholder.png"}
@@ -107,9 +107,9 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
                 {shop.description}
               </p>
             )}
-            <p className="text-[14px] text-[#00000082] pt-2">{shop.address}</p>
+            <p className="text-[14px] text-muted-foreground pt-2">{shop.address}</p>
             {shop.createdAt && (
-              <p className="text-[13px] text-[#00000082] pt-1">
+              <p className="text-[13px] text-muted-foreground pt-1">
                 Joined {new Date(shop.createdAt).toLocaleDateString()}
               </p>
             )}
@@ -117,7 +117,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
               type="button"
               onClick={handleMessageShop}
               disabled={isStartingChat}
-              className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-black text-white text-sm font-medium cursor-pointer disabled:opacity-60"
+              className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm font-medium cursor-pointer disabled:opacity-60"
             >
               <AiOutlineMessage />
               {isStartingChat ? "Starting chat..." : "Message Shop"}
@@ -142,11 +142,11 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
           <h1>Shop Products</h1>
         </div>
         {isProductsLoading ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">
+          <p className="text-center text-[15px] text-muted-foreground py-12">
             Loading products...
           </p>
         ) : products.length === 0 ? (
-          <p className="text-center text-[15px] text-[#00000082] py-12">
+          <p className="text-center text-[15px] text-muted-foreground py-12">
             This shop has no products yet.
           </p>
         ) : (

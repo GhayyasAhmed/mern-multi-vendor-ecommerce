@@ -57,7 +57,7 @@ const ProductsListing = () => {
           <ProductGridSkeleton count={12} />
         ) : isError ? (
           <div className="w-full flex items-center justify-center py-20">
-            <p className="text-[18px] text-red-500">
+            <p className="text-[18px] text-error">
               {getErrorMessage(error, "Failed to load products. Please try again.")}
             </p>
           </div>
@@ -81,7 +81,7 @@ const ProductsListing = () => {
                   type="button"
                   disabled={pagination.currentPage <= 1 || isFetching}
                   onClick={() => goToPage(pagination.currentPage - 1)}
-                  className="px-4 py-2 rounded-md bg-[#3957db] text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -92,7 +92,7 @@ const ProductsListing = () => {
                   type="button"
                   disabled={pagination.currentPage >= pagination.totalPages || isFetching}
                   onClick={() => goToPage(pagination.currentPage + 1)}
-                  className="px-4 py-2 rounded-md bg-[#3957db] text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

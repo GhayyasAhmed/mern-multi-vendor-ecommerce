@@ -98,7 +98,6 @@ const Cart = ({ setOpenCart }) => {
     router.push("/checkout");
   };
 
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") setOpenCart(false);
@@ -113,30 +112,34 @@ const Cart = ({ setOpenCart }) => {
   }, [setOpenCart]);
 
   return (
-    <div className="fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-50">
+    <div className="fixed top-0 left-0 w-full bg-black/50 h-screen z-50">
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Shopping cart"
-        className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-white flex flex-col justify-between shadow-sm overflow-y-scroll"
+        className="fixed top-0 right-0 h-full w-[80%] 800px:w-[25%] bg-surface border-l border-border-strong flex flex-col justify-between shadow-lg overflow-y-auto"
       >
         <div>
-          <div className="flex w-full justify-end pt-5 pr-5">
-            <button type="button" onClick={() => setOpenCart(false)} aria-label="Close cart">
-              <RxCross1 size={25} className="cursor-pointer" aria-hidden="true" />
+          {/* Header with item count and close button on the same line */}
+          <div className="flex w-full items-center justify-between p-4 pt-5">
+            <div className={`${styles.normalFlex}`}>
+              <IoBagHandleOutline size={25} className="text-foreground" />
+              <h5 className="pl-2 text-[20px] font-medium text-foreground">
+                {cartData.length} items
+              </h5>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenCart(false)}
+              aria-label="Close cart"
+              className="min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <RxCross1 size={22} aria-hidden="true" />
             </button>
           </div>
 
-          <div className={`${styles.normalFlex} p-4`}>
-            <IoBagHandleOutline size={25} />
-            <h5 className="pl-2 text-[20px] font-medium">
-              {cartData.length} items
-            </h5>
-          </div>
-
-          <br />
           {cartData.length === 0 ? (
-             <div>
+            <div>
               <EmptyState
                 icon={<IoBagHandleOutline size={26} />}
                 title="Your cart is empty"
@@ -145,14 +148,14 @@ const Cart = ({ setOpenCart }) => {
                 <Link
                   href="/products"
                   onClick={() => setOpenCart(false)}
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline text-sm font-medium"
                 >
                   Browse products
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="w-full border-t">
+            <div className="w-full border-t border-border-strong">
               {cartData.map((item) => (
                 <CartSingle
                   key={item.productId}
@@ -171,17 +174,16 @@ const Cart = ({ setOpenCart }) => {
         </div>
 
         {cartData.length > 0 && (
-          <div className="px-5 mb-3">
+          <div className="p-4 border-t border-border-strong bg-surface shrink-0">
             <button
+              type="button"
               onClick={handleCheckout}
               disabled={hasBlockingStockIssues}
-              className="h-11.25 flex items-center justify-center w-full bg-[#e44343] rounded-[5px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-md font-medium text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary flex items-center justify-center"
             >
-              <h1 className="text-white text-[18px] font-semibold">
-                {hasBlockingStockIssues
-                  ? "Resolve stock issues to continue"
-                  : `Checkout Now (USD $${subtotal.toFixed(2)})`}
-              </h1>
+              {hasBlockingStockIssues
+                ? "Resolve stock issues to continue"
+                : `Checkout Now (USD $${subtotal.toFixed(2)})`}
             </button>
           </div>
         )}
@@ -194,7 +196,7 @@ const CartSingle = ({ data, warning, onRemove, onQtyChange }) => {
   const totalPrice = data.price * data.qty;
 
   return (
-    <div className="border-b p-4">
+    <div className="border-b border-border-strong p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex flex-col items-center">
@@ -207,50 +209,57 @@ const CartSingle = ({ data, warning, onRemove, onQtyChange }) => {
               }
               className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="bg-[#e44343] border border-[#e44343c3] rounded-full w-6.25 h-6.25 flex items-center justify-center">
-                <HiPlus size={18} color="#fff" />
+              <span className="bg-primary rounded-full w-6.25 h-6.25 flex items-center justify-center">
+                <HiPlus size={18} className="text-primary-foreground" />
               </span>
             </button>
-            <span className="text-sm">{data.qty}</span>
+            <span className="text-sm text-foreground">{data.qty}</span>
             <button
               type="button"
               aria-label={`Decrease quantity of ${data.name}`}
               onClick={() => onQtyChange(data.qty > 1 ? data.qty - 1 : 1)}
               className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
             >
-              <span className="bg-[#a7abb14d] rounded-full w-6.25 h-6.25 flex items-center justify-center">
-                <HiOutlineMinus size={16} color="#7d879c" />
+              <span className="bg-muted rounded-full w-6.25 h-6.25 flex items-center justify-center">
+                <HiOutlineMinus size={16} className="text-muted-foreground" />
               </span>
             </button>
           </div>
 
-          <div className="relative w-20 h-20 ml-3">
+          <div className="relative w-20 h-20 ml-3 rounded-md overflow-hidden bg-muted shrink-0">
             <Image
               src={data.image}
               alt={data.name}
               fill
-              className="object-cover rounded-[5px]"
+              className="object-cover"
             />
           </div>
 
-          <div className="pl-1.25">
-            <h1>
+          <div className="pl-2.5">
+            <h1 className="text-[15px] font-medium text-foreground">
               {data.name?.length > 20
                 ? `${data.name.slice(0, 20)}...`
                 : data.name}
             </h1>
-            <h4 className="font-normal text-[15px] text-[#00000082]">
+            <h4 className="font-normal text-[13px] text-muted-foreground">
               ${data.price} x {data.qty}
             </h4>
-            <h4 className="font-semibold text-[17px] pt-0.75 text-[#d02222] font-Roboto">
+            <h4 className="font-semibold text-[17px] pt-0.75 text-foreground font-Roboto">
               US${totalPrice.toFixed(2)}
             </h4>
           </div>
         </div>
-        <RxCross1 className="cursor-pointer font-bold" onClick={onRemove} />
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${data.name} from cart`}
+          className="min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-error cursor-pointer"
+        >
+          <RxCross1 className="font-bold" aria-hidden="true" />
+        </button>
       </div>
       {warning && (
-        <p className="mt-2 text-xs text-amber-600 font-medium">{warning}</p>
+        <p className="mt-2 text-xs text-warning font-medium">{warning}</p>
       )}
     </div>
   );

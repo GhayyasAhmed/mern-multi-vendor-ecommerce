@@ -26,13 +26,13 @@ export default function ConversationList({
 }: ConversationListProps) {
   if (isLoading) {
     return (
-      <p className="p-4 text-sm text-[#00000082]">Loading conversations...</p>
+      <p className="p-4 text-sm text-muted-foreground">Loading conversations...</p>
     );
   }
 
   if (isError) {
     return (
-      <p className="p-4 text-sm text-red-500">Could not load conversations.</p>
+      <p className="p-4 text-sm text-error">Could not load conversations.</p>
     );
   }
 
@@ -41,7 +41,7 @@ export default function ConversationList({
   }
 
   return (
-    <ul className="divide-y max-h-[70vh] overflow-y-auto">
+    <ul className="divide-y divide-border max-h-[70vh] overflow-y-auto">
       {conversations.map((conversation) => {
         const peer = role === "user" ? conversation.seller : conversation.user;
         const isActive = conversation._id === activeConversationId;
@@ -52,11 +52,11 @@ export default function ConversationList({
             <button
               type="button"
               onClick={() => onSelect(conversation._id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer ${
-                isActive ? "bg-slate-100" : "hover:bg-slate-50"
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors ${
+                isActive ? "bg-muted" : "hover:bg-surface-hover"
               }`}
             >
-              <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
                 {peer?.avatar ? (
                   <Image
                     src={peer.avatar}
@@ -66,21 +66,21 @@ export default function ConversationList({
                   />
                 ) : null}
                 {isOnline && (
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-success border-2 border-surface" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium text-sm truncate">
+                  <p className="font-medium text-sm truncate text-foreground">
                     {peer?.name || "Unknown"}
                   </p>
                   {conversation.unreadCount > 0 && (
-                    <span className="shrink-0 rounded-full bg-[#3bc177] text-white text-[11px] px-1.5 py-0.5 leading-none">
+                    <span className="shrink-0 rounded-full bg-accent text-accent-foreground text-[11px] px-1.5 py-0.5 leading-none">
                       {conversation.unreadCount}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#00000082] truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {conversation.lastMessage || "No messages yet"}
                 </p>
               </div>
