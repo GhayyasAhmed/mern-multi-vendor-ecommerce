@@ -41,7 +41,7 @@ const router = useRouter();
         type="button"
         onClick={handleLogout}
         disabled={isLoading}
-        className={className ?? "text-sm font-medium text-foreground hover:text-error disabled:opacity-60"}
+        className={className ?? "text-sm font-medium cursor-pointer text-foreground hover:text-error disabled:opacity-60"}
       >
         {isLoading ? "Logging out..." : "Logout"}
       </button>

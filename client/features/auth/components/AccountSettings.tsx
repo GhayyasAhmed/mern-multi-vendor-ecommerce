@@ -48,7 +48,7 @@ function AccountContent() {
       <Header activeHeading={0} />
       <div className={`${styles.section} py-8 min-h-[60vh]`}>
         <div className={`${styles.heading}`}>
-          <h1>Account settings</h1>
+          <h1>Account Settings</h1>
         </div>
 
         <div className="flex gap-4 border-b mb-6">
@@ -114,18 +114,6 @@ function ProfileTab() {
         title: "Profile updated successfully",
         variant: "success",
       });
-      toast.showToast({
-        title: "Profile updated successfully",
-        variant: "error",
-      });
-      toast.showToast({
-        title: "Profile updated successfully",
-        variant: "info",
-      });
-      toast.showToast({
-        title: "Profile updated successfully",
-        variant: "warning",
-      });
     } catch (error) {
       setProfileError(getErrorMessage(error));
       toast.showToast({ title: getErrorMessage(error), variant: "error" });
@@ -158,7 +146,7 @@ function ProfileTab() {
     <div className="max-w-2xl space-y-6">
       <div>
         <label className="block text-sm font-medium text-foreground">
-          Profile photo
+          Profile Photo
         </label>
         <div className="mt-2 flex items-center">
           <span className="inline-block h-16 w-16 rounded-full overflow-hidden border border-border relative">
@@ -199,7 +187,7 @@ function ProfileTab() {
         noValidate
       >
         <h2 className="text-lg font-semibold text-foreground">
-          Personal information
+          Personal information 
         </h2>
         <div>
           <label className="block text-sm font-medium text-foreground">
@@ -214,6 +202,17 @@ function ProfileTab() {
               {profileErrors.name.message}
             </p>
           )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground">
+            Email address
+          </label>
+          <input
+            type="email"
+            disabled
+            value={user?.email || ""}
+            className={`${styles.input} mt-1 opacity-75 cursor-not-allowed`}
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground">
@@ -325,7 +324,7 @@ function AddressesTab() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Saved addresses</h2>
+        <h2 className="text-lg font-semibold text-foreground">Saved Addresses</h2>
         <button
           type="button"
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}

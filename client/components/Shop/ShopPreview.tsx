@@ -103,7 +103,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
               {shop.name}
             </h1>
             {shop.description && (
-              <p className="text-[14px] text-[#555] leading-6 pt-2 max-w-2xl">
+              <p className="text-[14px]  text-muted-foreground leading-6 pt-2 max-w-2xl">
                 {shop.description}
               </p>
             )}
@@ -117,7 +117,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
               type="button"
               onClick={handleMessageShop}
               disabled={isStartingChat}
-              className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm font-medium cursor-pointer disabled:opacity-60"
+              className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-white hover:bg-primary-hover text-sm font-medium cursor-pointer disabled:opacity-60"
             >
               <AiOutlineMessage />
               {isStartingChat ? "Starting chat..." : "Message Shop"}

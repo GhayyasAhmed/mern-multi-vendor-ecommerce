@@ -162,3 +162,11 @@ body {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
+
+
+
+iframe[title*="Secure payment input"] ~ div,
+.StripeElement iframe + div,
+div[style*="position: fixed"][style*="z-index: 2147483647"] {
+  display: none !important;
+}

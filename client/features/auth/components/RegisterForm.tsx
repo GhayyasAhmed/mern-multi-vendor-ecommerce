@@ -102,7 +102,7 @@ export default function RegisterForm() {
       <div>
         <Link
           href="/"
-          className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+          className="text-sm text-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
         >
           Back to Home
         </Link>
@@ -256,7 +256,7 @@ export default function RegisterForm() {
         {/* Custom Avatar Upload UI matching signup.jsx */}
         <div>
           <label className="block text-sm font-medium text-foreground">
-            Profile photo
+            Profile Photo
           </label>
           <div className="mt-2 flex items-center">
             <span className="inline-block h-10 w-10 rounded-full overflow-hidden border border-border">

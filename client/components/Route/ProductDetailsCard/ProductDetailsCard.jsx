@@ -32,7 +32,8 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   const handleWishlistToggle = () => {
     if (!data?._id) return;
     if (!user) {
-      router.push("/login");
+      setOpen(false);
+      router.push(`/login?redirect=${encodeURIComponent(`/product/${data._id}`)}`);
       return;
     }
     if (isWishlisted) {
@@ -49,7 +50,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   };
 
   const handleMessageSubmit = async () => {
-    if (!data?.shop?._id) return;
+    if (!data?.shopId) return;
 
     if (!user) {
       setOpen(false);
@@ -58,7 +59,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     }
 
     try {
-      const result = await createConversation({ sellerId: data.shop._id }).unwrap();
+      const result = await createConversation({ sellerId: data.shopId }).unwrap();
       setOpen(false);
       router.push(`/inbox?conversation=${result.conversation._id}`);
     } catch {
@@ -79,12 +80,12 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   return (
     <div className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
       {data ? (
-        <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface rounded-md shadow-lg relative p-4 overflow-y-auto">
+        <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface text-foreground rounded-md shadow-lg relative p-4 overflow-y-auto border border-border">
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close quick view"
-            className="absolute right-2 top-2 z-50 min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+            className="absolute right-2 top-2 z-50 min-h-11 min-w-11 flex items-center justify-center cursor-pointer text-foreground hover:text-primary transition-colors"
           >
             <AiOutlineClose size={26} aria-hidden="true" />
           </button>
@@ -101,7 +102,8 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </div>
               <div className="flex pt-4 items-center">
                 <Link
-                  href={`/shop/preview/${data?.shop?._id}`}
+                  href={`/shop/preview/${data?.shopId}`}
+                  onClick={() => setOpen(false)}
                   className="flex items-center"
                 >
                   <div className="relative w-12.5 h-12.5 rounded-full overflow-hidden mr-2">
@@ -116,7 +118,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                     <h3 className={`${styles.shop_name}`}>
                       {data?.shop?.name}
                     </h3>
-                    <h5 className="pb-1 text-[15px]">
+                    <h5 className="pb-1 text-[15px] text-muted-foreground">
                       ({data?.shop?.ratings || 0}) Ratings
                     </h5>
                   </div>
@@ -124,7 +126,8 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               </div>
 
               <button
-                className="bg-primary hover:bg-primary-hover my-3 font-semibold text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
+                type="button"
+                className="bg-primary hover:bg-primary-hover my-3 font-semibold text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
                 onClick={handleMessageSubmit}
                 disabled={isStartingChat}
               >
@@ -133,21 +136,21 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                 </span>
               </button>
 
-              <h5 className="text-xs text-muted-foreground mt-5">   
+              <h5 className="text-sm text-muted-foreground mt-5">
                 ({data?.sold_out ?? 0}) Sold
               </h5>
             </div>
 
             {/* Right side: Product Details & Actions */}
             <div className="w-full md:w-1/2 pt-5 md:pt-0 pl-0 md:pl-5">
-              <h1 className={`${styles.productTitle} text-[20px]`}>
+              <h1 className={`${styles.productTitle} text-[20px] text-foreground`}>
                 {data?.name}
               </h1>
               <p className="py-3 text-[14px] text-muted-foreground leading-6">
                 {data?.description}
               </p>
 
-              <div className="flex pt-3">
+              <div className="flex pt-3 items-center">
                 <h4 className={`${styles.productDiscountPrice}`}>
                   {data?.discountPrice}$
                 </h4>
@@ -159,16 +162,20 @@ const ProductDetailsCard = ({ setOpen, data }) => {
               <div className="flex items-center mt-12 justify-between pr-3">
                 <div className="flex items-center">
                   <button
-                    className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                    type="button"
+                    aria-label="Decrease quantity"
+                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                     onClick={decrementCount}
                   >
                     -
                   </button>
-                  <span className="bg-muted text-gray-800 font-medium px-4 py-2.25">
+                  <span className="bg-muted text-foreground font-medium px-4 py-2.25">
                     {count}
                   </span>
                   <button
-                    className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                    type="button"
+                    aria-label="Increase quantity"
+                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                     onClick={incrementCount}
                   >
                     +
@@ -184,17 +191,19 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                     className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
                   >
                     {isWishlisted ? (
-                      <AiFillHeart size={30} color="red" aria-hidden="true" />
+                      <AiFillHeart size={30} className="text-error" aria-hidden="true" />
                     ) : (
-                      <AiOutlineHeart size={30} color="#333" aria-hidden="true" />
+                      <AiOutlineHeart size={30} className="text-foreground hover:text-primary transition-colors" aria-hidden="true" />
                     )}
                   </button>
                 </div>
               </div>
 
               <button
-                className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                type="button"
+                className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center w-full ${
+                  outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
                 onClick={handleAddToCart}
                 disabled={outOfStock}
               >

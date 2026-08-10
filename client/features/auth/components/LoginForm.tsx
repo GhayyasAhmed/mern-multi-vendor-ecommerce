@@ -42,7 +42,7 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm">
       <div>
-        <Link href="/" className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1">
+        <Link href="/" className="text-sm text-foreground hover:text-primary hover:underline inline-flex items-center gap-1">
           Back to Home
         </Link>
       </div>

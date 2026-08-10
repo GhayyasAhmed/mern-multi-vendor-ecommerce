@@ -2,7 +2,6 @@
 import EventCard from "@/components/Events/EventCard";
 import Footer from "@/components/Layout/Footer";
 import Header from "@/components/Layout/Header";
-import CardListSkeleton from "@/components/ui/CardListSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import { getErrorMessage } from "@/features/auth/utils";
@@ -10,6 +9,7 @@ import { useGetAllEventsQuery } from "@/features/events/eventApiSlice";
 import styles from "@/styles/styles";
 import { useState } from "react";
 import { AiOutlineCalendar } from "react-icons/ai";
+import EventCardSkeleton from "../ui/EventCardSkeleton";
 
 const EventsListing = () => {
   const [page, setPage] = useState(1);
@@ -29,13 +29,21 @@ const EventsListing = () => {
         </div>
 
         {isLoading ? (
-          <CardListSkeleton count={4} />
+          <>
+            <EventCardSkeleton />
+            <EventCardSkeleton />
+            <EventCardSkeleton />
+            <EventCardSkeleton />
+          </>
         ) : isError ? (
           <p className="text-center text-[15px] text-error py-12">
             {getErrorMessage(error, "Could not load events.")}
           </p>
         ) : events.length === 0 ? (
-           <EmptyState icon={<AiOutlineCalendar size={26} />} title="No active events right now" />        
+          <EmptyState
+            icon={<AiOutlineCalendar size={26} />}
+            title="No active events right now"
+          />
         ) : (
           <>
             <div className="w-full grid">

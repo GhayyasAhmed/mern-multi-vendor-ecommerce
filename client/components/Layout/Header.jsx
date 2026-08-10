@@ -296,7 +296,7 @@ const Header = ({ activeHeading }) => {
                         Account settings
                       </Link>
                       <LogoutButton
-                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface-hover disabled:opacity-60"
+                        className="block w-full text-left px-4 py-2 text-sm cursor-pointer text-foreground hover:bg-surface-hover disabled:opacity-60"
                         onLoggedOut={() => setAccountMenuOpen(false)}
                       />
                     </div>
@@ -505,7 +505,7 @@ const Header = ({ activeHeading }) => {
                 </Link>
                 <div className="w-full pt-2 mt-2 border-t border-border flex justify-center">
                   <LogoutButton
-                    className="text-[16px] text-foreground font-medium disabled:opacity-60 py-1"
+                    className="text-sm cursor-pointer text-foreground font-medium disabled:opacity-60 py-1"
                     onLoggedOut={() => setOpen(false)}
                   />
                 </div>

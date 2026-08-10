@@ -11,7 +11,7 @@ import styles from "@/styles/styles";
 import { useState } from "react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 15;
 
 const BestSellingListing = () => {
   const [page, setPage] = useState(1);
@@ -34,7 +34,7 @@ const BestSellingListing = () => {
         </div>
 
         {isLoading ? (
-          <ProductGridSkeleton count={12} />
+          <ProductGridSkeleton count={PRODUCTS_PER_PAGE} />
         ) : isError ? (
           <div className="w-full flex items-center justify-center py-20">
             <p className="text-[18px] text-error">

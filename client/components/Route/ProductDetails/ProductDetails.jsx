@@ -4,12 +4,14 @@ import Header from "@/components/Layout/Header";
 import ProductCard from "@/components/Route/ProductCard/ProductCard";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { getErrorMessage } from "@/features/auth/utils";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
 import {
   useGetProductByIdQuery,
   useGetRelatedProductsQuery,
 } from "@/features/products/productApiSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
+import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +29,7 @@ const ProductDetails = ({ productId }) => {
   const [count, setCount] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { user } = useCurrentUser();
   const [createConversation, { isLoading: isStartingChat }] = useCreateConversationMutation();
   const [addToWishlist] = useAddToWishlistMutation();
@@ -38,8 +41,9 @@ const ProductDetails = ({ productId }) => {
     isError,
     error,
   } = useGetProductByIdQuery(productId, { skip: !productId });
-
+  console.log("productData", productData)
   const product = productData?.product;
+  const outOfStock = (product?.stock ?? 0) <= 0;
 
   const isWishlisted = Boolean(product?._id && user?.wishlist?.includes(product._id));
 
@@ -54,6 +58,11 @@ const ProductDetails = ({ productId }) => {
     } else {
       addToWishlist(product._id);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (outOfStock || !product) return;
+    dispatch(addItem({ item: productToCartItem(product, count) }));
   };
 
   const { data: relatedData } = useGetRelatedProductsQuery(
@@ -116,7 +125,7 @@ const ProductDetails = ({ productId }) => {
     <div>
       <Header activeHeading={3} />
       <div className={`${styles.section} py-8`}>
-        <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm">
+        <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm border border-border">
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-75">
               <Image
@@ -133,8 +142,9 @@ const ProductDetails = ({ productId }) => {
                     type="button"
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${activeImage === index ? "border-primary" : "border-transparent"
-                      }`}
+                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 cursor-pointer ${
+                      activeImage === index ? "border-primary" : "border-transparent"
+                    }`}
                   >
                     <Image
                       src={img.url}
@@ -148,7 +158,7 @@ const ProductDetails = ({ productId }) => {
             )}
 
             <div className="flex pt-4 items-center">
-              <Link href={`/shop/preview/${product.shop?._id}`} className="flex items-center">
+              <Link href={`/shop/preview/${product.shopId}`} className="flex items-center">
                 <div className="relative w-12.5 h-12.5 rounded-full overflow-hidden mr-2">
                   <Image
                     src={product.shop?.avatar?.url || "/placeholder.png"}
@@ -159,14 +169,14 @@ const ProductDetails = ({ productId }) => {
                 </div>
                 <div>
                   <h3 className={`${styles.shop_name}`}>{product.shop?.name}</h3>
-                  <h5 className="pb-1 text-[15px]">({product.shop?.ratings || 0}) Ratings</h5>
+                  <h5 className="pb-1 text-[15px] text-muted-foreground">({product.shop?.ratings || 0}) Ratings</h5>
                 </div>
               </Link>
             </div>
 
             <button
-              // className="bg-black my-3 font-semibold font-Roboto text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer disabled:opacity-60"
-              className="bg-primary hover:bg-primary-hover my-3 font-semibold text-primary-foreground rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
+              type="button"
+              className="bg-primary hover:bg-primary-hover my-3 font-semibold text-white rounded-md h-11 flex items-center justify-center px-4 cursor-pointer transition-colors disabled:opacity-60"
               onClick={handleMessageSubmit}
               disabled={isStartingChat}
             >
@@ -182,30 +192,34 @@ const ProductDetails = ({ productId }) => {
 
           <div className="w-full md:w-1/2 pt-5 md:pt-0 pl-0 md:pl-5">
             <h1 className={`${styles.productTitle} text-[20px]`}>{product.name}</h1>
-            <p className="py-3 text-[14px] text-[#555] leading-6">{product.description}</p>
+            <p className="py-3 text-[14px] text-muted-foreground leading-6">{product.description}</p>
 
-            <div className="flex pt-3">
+            <div className="flex pt-3 items-center">
               <h4 className={`${styles.productDiscountPrice}`}>{product.discountPrice}$</h4>
               {product.originalPrice ? (
                 <h3 className={`${styles.price}`}>{product.originalPrice}$</h3>
               ) : null}
             </div>
 
-            <p className="text-[14px] text-muted-foreground">
+            <p className="text-[14px] text-muted-foreground mt-1">
               {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
             </p>
 
             <div className="flex items-center mt-12 justify-between pr-3">
               <div className="flex items-center">
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  type="button"
+                  aria-label="Decrease quantity"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
                 </button>
-                <span className="bg-muted text-gray-800 font-medium px-4 py-2.25">{count}</span>
+                <span className="bg-surface border-y border-border text-foreground font-medium px-4 py-2">{count}</span>
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  type="button"
+                  aria-label="Increase quantity"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                   onClick={incrementCount}
                 >
                   +
@@ -218,23 +232,25 @@ const ProductDetails = ({ productId }) => {
                   onClick={handleWishlistToggle}
                   aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                   aria-pressed={isWishlisted}
-                  className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
+                  className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer rounded-full hover:bg-surface-hover transition-colors"
                 >
                   {isWishlisted ? (
-                    <AiFillHeart size={30} color="red" aria-hidden="true" />
+                    <AiFillHeart size={30} className="text-error" aria-hidden="true" />
                   ) : (
-                    <AiOutlineHeart size={30} color="#333" aria-hidden="true" />
+                    <AiOutlineHeart size={30} className="text-foreground hover:text-primary transition-colors" aria-hidden="true" />
                   )}
                 </button>
               </div>
             </div>
 
             <button
-              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center cursor-pointer`}
-              disabled={product.stock <= 0}
+              type="button"
+              onClick={handleAddToCart}
+              disabled={outOfStock}
+              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               <span className="flex items-center">
-                Add to cart <AiOutlineShoppingCart className="ml-1" />
+                {outOfStock ? "Out of stock" : "Add to cart"} <AiOutlineShoppingCart className="ml-1" />
               </span>
             </button>
           </div>

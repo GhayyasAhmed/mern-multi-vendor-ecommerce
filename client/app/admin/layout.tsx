@@ -8,7 +8,8 @@ export default function AdminLayout({
 }) {
   return (
     <AdminProtectedRoute>
-      <div className="min-h-screen bg-[#f5f5f5] flex flex-col md:flex-row">
+      {/* bg-background text-foreground antialiased duration-300 bg-no-repeat */}
+      <div className="min-h-screen bg-background/10 text-foreground duration-100 flex flex-col md:flex-row">
         <AdminNav />
         <main className="flex-1 p-4 md:p-6 min-w-0">{children}</main>
       </div>

@@ -108,7 +108,7 @@ export default function RegisterShopForm() {
       <div>
         <Link
           href="/"
-          className="text-sm text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+          className="text-sm text-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
         >
           Back to Home
         </Link>

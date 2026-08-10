@@ -156,7 +156,7 @@ export default function SellerDashboard() {
             </p>
             <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-brand-foreground/90 hover:bg-brand-foreground/10 cursor-pointer" />
             <NotificationBell enabled={true} />
-            <ShopLogoutButton className="text-sm font-medium text-brand-foreground hover:text-red-200" />
+            <ShopLogoutButton className="text-sm font-medium cursor-pointer text-brand-foreground hover:text-red-200" />
           </div>
         </div>
       </div>
@@ -1059,7 +1059,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           type="button"
           disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add product"}
         </button>
@@ -1530,7 +1530,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
           type="button"
           disabled={seller?.status !== "active"}
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {showForm ? "Cancel" : "Add event"}
         </button>
@@ -1896,7 +1896,7 @@ function CouponsPanel() {
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm cursor-pointer"
+          className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 text-sm cursor-pointer"
         >
           {showForm ? "Cancel" : "Add coupon"}
         </button>

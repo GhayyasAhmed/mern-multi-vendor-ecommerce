@@ -13,7 +13,8 @@ const Footer = () => {
   return (
     <footer className="bg-surface border-t border-border text-foreground transition-colors duration-300">
       <div className={`${styles.section} py-6`}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pb-6 border-b border-border text-sm">
+        {/* Grid updated to 2 columns since Customer Care was removed */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-border text-sm">
           {/* Column 1: Shop Links */}
           <div className="flex flex-col space-y-2">
             <h3 className="font-semibold text-foreground">Shop</h3>
@@ -31,26 +32,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 2: Customer Care */}
-          <div className="flex flex-col space-y-2">
-            <h3 className="font-semibold text-foreground">Customer Care</h3>
-            <ul className="flex flex-col space-y-1.5 text-muted-foreground">
-              <li>
-                <Link href="/faq" className="hover:text-accent transition-colors">Help Center & FAQ</Link>
-              </li>
-              <li>
-                <Link href="/order" className="hover:text-accent transition-colors">Track Your Order</Link>
-              </li>
-              <li>
-                <Link href="/terms" className="hover:text-accent transition-colors">Terms & Conditions</Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: Connect & Socials */}
+          {/* Column 2: Connect & Socials */}
           <div className="flex flex-col space-y-3">
             <h3 className="font-semibold text-foreground">Connect With Us</h3>
             <p className="text-xs text-muted-foreground">

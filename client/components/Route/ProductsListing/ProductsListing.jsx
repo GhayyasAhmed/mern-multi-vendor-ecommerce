@@ -11,7 +11,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 15;
 
 const ProductsListing = () => {
   const searchParams = useSearchParams();
@@ -54,7 +54,7 @@ const ProductsListing = () => {
         </div>
 
         {isLoading ? (
-          <ProductGridSkeleton count={12} />
+          <ProductGridSkeleton count={PRODUCTS_PER_PAGE} />
         ) : isError ? (
           <div className="w-full flex items-center justify-center py-20">
             <p className="text-[18px] text-error">
