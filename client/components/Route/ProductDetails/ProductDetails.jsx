@@ -41,7 +41,6 @@ const ProductDetails = ({ productId }) => {
     isError,
     error,
   } = useGetProductByIdQuery(productId, { skip: !productId });
-  console.log("productData", productData)
   const product = productData?.product;
   const outOfStock = (product?.stock ?? 0) <= 0;
 
