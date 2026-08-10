@@ -107,7 +107,7 @@ export default function NotificationBell({
                 className={`block px-4 py-2.5 text-sm border-b last:border-b-0 hover:bg-muted ${notification.read ? "text-muted-foreground" : "font-medium text-foreground"}`}
               >
                 <p>{notification.message}</p>
-                <p className="text-[11px] text-[#00000066] mt-0.5">
+                <p className="text-[11px] mt-0.5">
                   {new Date(notification.createdAt).toLocaleString()}
                 </p>
               </Link>

@@ -100,7 +100,7 @@ function OrderDetailsContent({ orderId }) {
                     type="button"
                     onClick={handleRequestRefund}
                     disabled={isRequestingRefund}
-                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 cursor-pointer"
+                    className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 cursor-pointer"
                   >
                     {isRequestingRefund ? "Requesting..." : "Request refund"}
                   </button>
