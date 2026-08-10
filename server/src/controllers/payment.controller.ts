@@ -30,7 +30,8 @@ export const processPayment = catchAsyncErrors(
     const myPayment = await stripe.paymentIntents.create({
       amount: Math.round(amount), // Ensure amount is an integer representing smallest currency unit
       currency: paymentCurrency.toLowerCase(),
-      automatic_payment_methods: { enabled: true },
+      // automatic_payment_methods: { enabled: false },
+      payment_method_types: ["card"],
       metadata: {
         company: companyName,
       },
