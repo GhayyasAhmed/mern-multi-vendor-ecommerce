@@ -130,7 +130,7 @@ function AdminLogout({ onDone }: { onDone?: () => void }) {
   const router = useRouter();
   return (
     <LogoutButton
-      className="block w-full text-left px-3 py-2 rounded-md text-sm cursor-pointer text-brand-foreground hover:bg-white/10 disabled:opacity-60 transition-colors cursor-pointer"
+      className="block w-full text-left px-3 py-2 rounded-md text-sm cursor-pointer text-brand-foreground hover:bg-white/10 disabled:opacity-60 transition-colors"
       onLoggedOut={() => {
         onDone?.();
         router.push("/");

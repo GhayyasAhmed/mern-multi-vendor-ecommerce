@@ -7,7 +7,6 @@ import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 export default function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useCurrentUser();
   const router = useRouter();
-  console.log("user, isAuthenticated, isLoading", user, isAuthenticated, isLoading)
 
   useEffect(() => {
     if (isLoading) return;
