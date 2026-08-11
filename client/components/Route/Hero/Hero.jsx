@@ -19,7 +19,7 @@ const Hero = () => {
         >
           Best Collection for <br /> home Decoration
         </h1>
-        <p className="pt-5 text-[16px] font-[Poppins] font-normal text-muted-foreground">
+        <p className="pt-5 text-[16px] font-[Poppins] font-normal text-foreground">
           Discover top-quality items carefully curated to transform your living spaces.
         </p>
         <Link href="/products" className="inline-block">

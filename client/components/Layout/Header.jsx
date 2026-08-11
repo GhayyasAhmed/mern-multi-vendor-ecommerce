@@ -161,11 +161,10 @@ const Header = ({ activeHeading }) => {
 
       {/* Dynamic Desktop Navbar */}
       <div
-        className={`${
-          active
+        className={`${active
             ? "fixed top-0 left-0 z-40 bg-brand shadow-md"
             : "relative bg-brand"
-        } transition hidden 800px:flex items-center justify-between w-full text-brand-foreground h-17.5`}
+          } transition hidden 800px:flex items-center justify-between w-full text-brand-foreground h-17.5`}
       >
         <div className={`${styles.section} relative ${styles.normalFlex} justify-between w-full h-full`}>
           {/* Categories */}
@@ -227,7 +226,7 @@ const Header = ({ activeHeading }) => {
               <NotificationBell enabled={isAuthenticated} />
             </div>
 
-             <div className={`${styles.normalFlex} mr-3.75`}>
+            <div className={`${styles.normalFlex} mr-3.75`}>
               <ThemeToggle className="inline-flex h-9 w-9 items-center justify-center rounded-full  cursor-pointer" />
             </div>
 
@@ -412,7 +411,7 @@ const Header = ({ activeHeading }) => {
           </button>
 
           <NotificationBell enabled={isAuthenticated} />
-          
+
           <ThemeToggle className="inline-flex h-7 w-7 items-center justify-center rounded-full text-foreground hover:bg-surface-hover cursor-pointer" />
         </div>
       </div>
@@ -459,50 +458,52 @@ const Header = ({ activeHeading }) => {
                 <Link
                   href="/seller"
                   onClick={() => setOpen(false)}
-                  className="w-full flex items-center justify-center py-2.5 px-4 bg-primary text-primary-foreground rounded-md font-medium text-sm transition-colors hover:bg-primary/90 shadow-sm"
+                  className="w-full flex items-center justify-center py-2.5 px-4 bg-primary text-white rounded-md font-medium text-sm transition-colors hover:bg-primary/90 shadow-sm"
                 >
                   <span>Become Seller</span>
                   <IoIosArrowForward className="ml-1.5" size={16} />
                 </Link>
               </div>
             </div>
-            
+
             <br />
             {isAuthenticated ? (
-              <div className="flex w-full flex-col items-center gap-2 mb-8 px-4">
+              <div className="flex w-full flex-col items-center gap-2 mb-8 px-4 ">
                 {user?.name && (
                   <span className="text-[16px] font-medium text-foreground mb-1">{user.name}</span>
                 )}
-                {user?.role === "admin" && (
+                <div className="w-full pt-2 mt-2 border-t border-border-strong flex flex-col items-center justify-center">
+                  {user?.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      className="text-[15px] text-primary py-1"
+                      onClick={() => setOpen(false)}
+                    >
+                      Admin panel
+                    </Link>
+                  )}
                   <Link
-                    href="/admin"
+                    href="/orders"
                     className="text-[15px] text-primary py-1"
                     onClick={() => setOpen(false)}
                   >
-                    Admin panel
+                    My Orders
                   </Link>
-                )}
-                <Link
-                  href="/orders"
-                  className="text-[15px] text-primary py-1"
-                  onClick={() => setOpen(false)}
-                >
-                  My Orders
-                </Link>
-                <Link
-                  href="/inbox"
-                  className="text-[15px] text-primary py-1"
-                  onClick={() => setOpen(false)}
-                >
-                  Inbox
-                </Link>
-                <Link
-                  href="/account"
-                  className="text-[15px] text-primary py-1"
-                  onClick={() => setOpen(false)}
-                >
-                  Account settings
-                </Link>
+                  <Link
+                    href="/inbox"
+                    className="text-[15px] text-primary py-1"
+                    onClick={() => setOpen(false)}
+                  >
+                    Inbox
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="text-[15px] text-primary py-1"
+                    onClick={() => setOpen(false)}
+                  >
+                    Account settings
+                  </Link>
+                </div>
                 <div className="w-full pt-2 mt-2 border-t border-border flex justify-center">
                   <LogoutButton
                     className="text-sm cursor-pointer text-foreground font-medium disabled:opacity-60 py-1"
@@ -519,8 +520,8 @@ const Header = ({ activeHeading }) => {
                 >
                   Login /
                 </Link>
-                <Link 
-                  href="/signup" 
+                <Link
+                  href="/signup"
                   className="text-[16px] text-foreground font-medium"
                   onClick={() => setOpen(false)}
                 >
