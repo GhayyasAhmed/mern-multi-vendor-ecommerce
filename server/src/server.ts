@@ -9,10 +9,6 @@ import { initSocketServer } from "./socket/index.js";
 const server = http.createServer(app);
 const io = initSocketServer(server);
 
-console.log(
-  "Connecting to Mongo URI:",
-  env.mongoUri.replace(/:([^@]+)@/, ":****@")
-);
 
 process.on("unhandledRejection", (reason: any) => {
   console.error("Unhandled promise rejection:", reason?.message || reason);

@@ -10,14 +10,11 @@ async function cleanupOrphanedUploads() {
   const expiredPublicIds = await getExpiredPendingUploads(now);
 
   if (expiredPublicIds.length === 0) {
-    console.log("No orphaned avatar uploads to clean up.");
+    return
   } else {
-    console.log(`Found ${expiredPublicIds.length} orphaned avatar upload(s). Deleting from Cloudinary...`);
-
     for (const publicId of expiredPublicIds) {
       try {
         await deleteFromCloudinary(publicId);
-        console.log(`Deleted orphaned avatar: ${publicId}`);
       } catch (error) {
         console.error(`Failed to delete orphaned avatar ${publicId}:`, error);
       }

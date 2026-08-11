@@ -3,8 +3,6 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { env } from "../config/env.js";
 
 const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
-    // console.log("err.statusCode", err.statusCode)
-    // console.log("err.message", err.message)
     if(!err.message || !err.statusCode){
         console.log("error", err)
     }
