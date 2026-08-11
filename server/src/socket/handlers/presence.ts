@@ -1,49 +1,49 @@
+import { redis } from "../../config/redis.js";
 import type { AppSocket, AppSocketServer } from "../types.js";
 import { getIdentityId } from "../utils.js";
 
+// Kept in Redis instead of a local Map: with multiple backend copies
+// running at once, "who is online" has to be shared, not per-copy memory.
+const ONLINE_COUNTS_KEY = "socket:online_counts";
 
-const onlineUsers = new Map<string, Set<string>>();
-
-function addOnlineSocket(userId: string, socketId: string): boolean {
-  const existing = onlineUsers.get(userId);
-  if (existing) {
-    existing.add(socketId);
-    return false; // already online
-  }
-  onlineUsers.set(userId, new Set([socketId]));
-  return true; // just came online
+async function addOnlineSocket(userId: string): Promise<boolean> {
+  const count = await redis.hincrby(ONLINE_COUNTS_KEY, userId, 1);
+  return count === 1; // just came online
 }
 
-function removeOnlineSocket(userId: string, socketId: string): boolean {
-  const existing = onlineUsers.get(userId);
-  if (!existing) return false;
-
-  existing.delete(socketId);
-  if (existing.size === 0) {
-    onlineUsers.delete(userId);
+async function removeOnlineSocket(userId: string): Promise<boolean> {
+  const count = await redis.hincrby(ONLINE_COUNTS_KEY, userId, -1);
+  if (count <= 0) {
+    await redis.hdel(ONLINE_COUNTS_KEY, userId);
     return true; // just went offline
   }
   return false;
 }
 
-function getOnlineUserIds(): string[] {
-  return Array.from(onlineUsers.keys());
+async function getOnlineUserIds(): Promise<string[]> {
+  return redis.hkeys(ONLINE_COUNTS_KEY);
 }
 
 export function registerPresenceHandlers(io: AppSocketServer, socket: AppSocket): void {
   const identityId = getIdentityId(socket);
 
-  // All sockets for this identity share a room, so chat handlers can reach
-  // every open tab/device with a single emit instead of tracking raw ids.
   socket.join(identityId);
 
-  if (addOnlineSocket(identityId, socket.id)) {
-    io.emit("getUsers", getOnlineUserIds());
-  }
+  addOnlineSocket(identityId)
+    .then((justCameOnline) => {
+      if (justCameOnline) {
+        return getOnlineUserIds().then((ids) => io.emit("getUsers", ids));
+      }
+    })
+    .catch((err) => console.error("presence: failed to mark online", err));
 
   socket.on("disconnect", () => {
-    if (removeOnlineSocket(identityId, socket.id)) {
-      io.emit("getUsers", getOnlineUserIds());
-    }
+    removeOnlineSocket(identityId)
+      .then((justWentOffline) => {
+        if (justWentOffline) {
+          return getOnlineUserIds().then((ids) => io.emit("getUsers", ids));
+        }
+      })
+      .catch((err) => console.error("presence: failed to mark offline", err));
   });
 }

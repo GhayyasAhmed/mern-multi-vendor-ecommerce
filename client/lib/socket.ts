@@ -38,8 +38,8 @@ export function getSocket(): Socket {
         socketConfigWarningLogged = true;
         console.error(
           "NEXT_PUBLIC_SOCKET_URL is missing or invalid. Real-time features " +
-            "(chat, notifications, presence) are disabled. It must point to " +
-            "the persistent backend origin (e.g. the Render deployment)."
+          "(chat, notifications, presence) are disabled. It must point to " +
+          "the persistent backend origin (e.g. the Render deployment)."
         );
       }
       // A disabled, never-connecting socket keeps the Socket interface
@@ -54,6 +54,7 @@ export function getSocket(): Socket {
 
     socket = io(env.socketUrl, {
       autoConnect: false,
+      transports: ["websocket"],
       auth: (callback) => {
         fetchSocketTicket()
           .then((ticket) => callback({ ticket }))
