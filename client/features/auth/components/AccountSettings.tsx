@@ -34,8 +34,6 @@ import {
   getPasswordStrength,
   sanitizeDigitsOnly,
 } from "@/lib/validation";
-import { socket } from "@/lib/socket";
-import { Socket } from "socket.io-client";
 
 type Tab = "profile" | "addresses" | "security";
 
@@ -90,16 +88,16 @@ function ProfileTab() {
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const onNewNotification = (payload: unknown) => {
-      if (payload) console.log("payload", payload);
-      // playNotificationSound();
-    };
-    socket.on("pong", onNewNotification);
-    return () => {
-      socket.off("pong", onNewNotification);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const onNewNotification = (payload: unknown) => {
+  //     if (payload) console.log("payload", payload);
+  //     // playNotificationSound();
+  //   };
+  //   socket.on("pong", onNewNotification);
+  //   return () => {
+  //     socket.off("pong", onNewNotification);
+  //   };
+  // }, []);
 
   const {
     register: registerProfile,
@@ -128,7 +126,7 @@ function ProfileTab() {
         variant: "success",
       });
 
-      socket.emit("ping", { name: values.name });
+      // socket.emit("ping", { name: values.name });
 
     } catch (error) {
       setProfileError(getErrorMessage(error));

@@ -10,6 +10,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 import { stripe } from "../config/stripe.js";
+import { emitOrderCreated } from "../socket/index.js";
 // import { createNotification } from "../utils/notifications.js";
 
 interface ICartItem {
@@ -158,6 +159,14 @@ export const createOrder = catchAsyncErrors(
     } finally {
       await session.endSession();
     }
+
+    const shopIds = Array.from(shopItemsMap.keys());
+    shopIds.forEach((shopId, index) => {
+      const order = orders[index];
+      if (order) {
+        emitOrderCreated(shopId, order);
+      }
+    });
 
     // for (const [shopId] of shopItemsMap) {
     //   createNotification(shopId, "seller", "new_order", "You have received a new order.", "/seller/dashboard?tab=orders").catch(() => { });

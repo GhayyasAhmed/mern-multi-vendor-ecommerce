@@ -76,6 +76,8 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
+import { useEffect } from "react";
+import { getSocket, disconnectSocket } from "@/lib/socket";
 
 type Tab =
   | "profile"
@@ -121,6 +123,30 @@ export default function SellerDashboard() {
     }
     router.replace(`/seller/dashboard?${params.toString()}`, { scroll: false });
   };
+
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!seller?._id) return;
+
+    const socket = getSocket();
+    socket.connect();
+
+    const handleOrderCreated = (payload: { orderId: string; totalPrice: number }) => {
+      toast.showToast({
+        title: "New order received",
+        description: `Order #${payload.orderId.slice(-8).toUpperCase()} — $${payload.totalPrice.toFixed(2)}`,
+        variant: "success",
+      });
+    };
+
+    socket.on("ORDER_CREATED", handleOrderCreated);
+
+    return () => {
+      socket.off("ORDER_CREATED", handleOrderCreated);
+      disconnectSocket();
+    };
+  }, [seller?._id, toast]);
 
   if (!seller) return null;
 
