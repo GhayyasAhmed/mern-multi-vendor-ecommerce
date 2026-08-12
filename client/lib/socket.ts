@@ -71,12 +71,13 @@
 // }
 
 
-// import { io } from "socket.io-client";
-import socketIO from "socket.io-client";
+import { io } from "socket.io-client";
+// import socketIO from "socket.io-client";
 
 
 
-export const socket = socketIO(process.env.NEXT_PUBLIC_SOCKET_URL, {
+export const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+  path: '/api/socket-io/socket.io',
   transports:["websocket"],
   withCredentials: true,
 })
