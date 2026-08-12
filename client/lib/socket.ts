@@ -77,7 +77,7 @@ import { io } from "socket.io-client";
 
 
 export const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-  path: '/api/socket-io/socket.io',
+  // path: '/api/socket-io/socket.io',
   transports:["websocket"],
   withCredentials: true,
 })
