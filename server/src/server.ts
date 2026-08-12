@@ -4,11 +4,8 @@ import app from "./app.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 import { redis } from "./config/redis.js";
-import { initSocketServer } from "./socket/index.js";
 
 const server = http.createServer(app);
-const io = initSocketServer(server);
-
 
 process.on("unhandledRejection", (reason: any) => {
   console.error("Unhandled promise rejection:", reason?.message || reason);
@@ -44,13 +41,6 @@ async function gracefulShutdown(signal: string): Promise<void> {
   console.log(`${signal} received. Starting graceful shutdown...`);
 
   try {
-    if (io) {
-      await new Promise<void>((resolve) => {
-        io.close(() => resolve());
-      });
-      console.log("HTTP server and Socket.IO connections closed. No longer accepting new requests.");
-    }
-
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
       console.log("MongoDB connection closed.");
@@ -74,11 +64,6 @@ process.on("SIGINT", () => {
   void gracefulShutdown("SIGINT");
 });
 
-// On Vercel there is no long-running process — the platform invokes this
-// module per request/connection instead. Calling .listen() would do
-// nothing useful there, so only start the traditional listener for local
-// dev / a real persistent host, and hand the raw server to Vercel's
-// WebSocket support otherwise.
 if (!process.env.VERCEL) {
   void startServer();
 }
