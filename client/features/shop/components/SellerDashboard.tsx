@@ -6,7 +6,7 @@ import CardListSkeleton from "@/components/ui/CardListSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { PRODUCT_CATEGORIES } from "@/constants";
+import { NOTIFICATION_SOUND, PRODUCT_CATEGORIES } from "@/constants";
 import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
 import {
   useCreateCouponCodeMutation,
@@ -40,6 +40,8 @@ import {
   useCreateWithdrawRequestMutation,
   useGetMyWithdrawRequestsQuery,
 } from "@/features/withdraw/withdrawApiSlice";
+import { apiSlice } from "@/lib/api/apiSlice";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
 import {
   blockNonIntegerKeys,
   blockNonPriceKeys,
@@ -50,13 +52,14 @@ import {
 } from "@/lib/validation";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useToast } from "@/providers/toast-provider";
+import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import type { IProduct, IShop } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import {
   AiOutlineCalendar, AiOutlineFileText, AiOutlineShoppingCart,
@@ -76,10 +79,6 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
-import { useEffect } from "react";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
-import { useAppDispatch } from "@/store/hooks";
-import { apiSlice } from "@/lib/api/apiSlice";
 
 type Tab =
   | "profile"
@@ -109,6 +108,7 @@ const ORDER_STATUSES = [
 ];
 
 export default function SellerDashboard() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { seller } = useCurrentSeller();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,6 +128,16 @@ export default function SellerDashboard() {
   };
 
   const toast = useToast();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+    }
+  }, []);
+
+   const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!seller?._id) return;
@@ -158,6 +168,8 @@ export default function SellerDashboard() {
       } else if (payload.type === "new_message") {
         dispatch(apiSlice.util.invalidateTags([{ type: "Conversation", id: "SELLER-LIST" }]));
       }
+
+      playNotificationSound();
     };
 
     socket.on("notification", handleNotification);
@@ -166,7 +178,7 @@ export default function SellerDashboard() {
       socket.off("notification", handleNotification);
       disconnectSocket();
     };
-  }, [seller?._id, toast, dispatch]);
+  }, [seller?._id, toast, dispatch, playNotificationSound]);
 
   if (!seller) return null;
 

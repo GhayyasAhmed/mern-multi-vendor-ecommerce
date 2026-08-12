@@ -1,6 +1,6 @@
 "use client";
 import EmptyState from "@/components/ui/EmptyState";
-import { SOCKET_EVENTS } from "@/constants";
+import { NOTIFICATION_SOUND, SOCKET_EVENTS } from "@/constants";
 import {
   useGetNotificationsQuery,
   useMarkAllNotificationsReadMutation,
@@ -10,7 +10,7 @@ import { useSocket } from "@/hooks/use-socket";
 import { apiSlice } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AiOutlineBell } from "react-icons/ai";
 
 export default function NotificationBell({
@@ -22,6 +22,7 @@ export default function NotificationBell({
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const dispatch = useAppDispatch();
   const socket = useSocket(enabled);
 
@@ -33,16 +34,28 @@ export default function NotificationBell({
   const unreadCount = data?.unreadCount ?? 0;
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!enabled) return;
-    const handleNotification = () =>
+    const handleNotification = () => {
       dispatch(
         apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]),
       );
+      playNotificationSound();
+    };
     socket.on(SOCKET_EVENTS.NOTIFICATION, handleNotification);
     return () => {
       socket.off(SOCKET_EVENTS.NOTIFICATION, handleNotification);
     };
-  }, [socket, enabled, dispatch]);
+  }, [socket, enabled, dispatch, playNotificationSound]);
 
   useEffect(() => {
     if (!open) return;
@@ -65,7 +78,7 @@ export default function NotificationBell({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <AiOutlineBell size={24}  aria-hidden="true" />
+        <AiOutlineBell size={24} aria-hidden="true" />
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 rounded-full bg-accent w-4 h-4 flex items-center justify-center text-accent-foreground text-[10px] font-semibold">
             {unreadCount > 9 ? "9+" : unreadCount}

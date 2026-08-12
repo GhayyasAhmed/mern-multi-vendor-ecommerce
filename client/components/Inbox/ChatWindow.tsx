@@ -1,7 +1,7 @@
 "use client";
 import EmptyState from "@/components/ui/EmptyState";
 import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
-import { SOCKET_EVENTS } from "@/constants";
+import { NOTIFICATION_SOUND, SOCKET_EVENTS } from "@/constants";
 import { getErrorMessage } from "@/features/auth/utils";
 import {
   useGetMessagesQuery,
@@ -12,7 +12,7 @@ import {
 } from "@/features/messaging/conversationApiSlice";
 import { useSocket } from "@/hooks/use-socket";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiOutlineArrowLeft, AiOutlineMessage } from "react-icons/ai";
 
 interface ChatWindowProps {
@@ -64,6 +64,7 @@ export default function ChatWindow({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const socket = useSocket(true);
 
   const messages = useMemo(() => {
@@ -118,6 +119,17 @@ export default function ChatWindow({
   }, [messages.length]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(
+        NOTIFICATION_SOUND,      );
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
     const handleGetMessage = (payload: {
       senderId: string;
       receiverId: string;
@@ -125,13 +137,14 @@ export default function ChatWindow({
       if (payload.senderId === peerId && payload.receiverId === identityId) {
         refetch();
       }
+      playNotificationSound()
     };
 
     socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
     return () => {
       socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
     };
-  }, [socket, peerId, identityId, refetch]);
+  }, [socket, peerId, identityId, refetch, playNotificationSound]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -277,11 +290,12 @@ export default function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {formError && (
-        <p className="px-4 pb-2 text-sm text-error">{formError}</p>
-      )}
+      {formError && <p className="px-4 pb-2 text-sm text-error">{formError}</p>}
 
-      <form onSubmit={handleSubmit} className="flex flex-col border-t border-border">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col border-t border-border"
+      >
         {image && (
           <div className="px-4 py-2 bg-muted flex items-center gap-3 border-b border-border">
             <div className="relative w-12 h-12 rounded-md overflow-hidden border border-border shrink-0">
