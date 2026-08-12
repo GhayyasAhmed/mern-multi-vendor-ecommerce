@@ -2,11 +2,17 @@
 
 import Footer from "@/components/Layout/Footer";
 import Header from "@/components/Layout/Header";
+import {
+  blockNonIntegerKeys,
+  getPasswordStrength,
+  sanitizeDigitsOnly,
+} from "@/lib/validation";
+import { useToast } from "@/providers/toast-provider";
 import styles from "@/styles/styles";
 import type { IAddress } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { useState, type ChangeEvent, useRef, useEffect } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
@@ -28,12 +34,6 @@ import {
   type ProfileFormValues,
 } from "../validators";
 import ProtectedRoute from "./ProtectedRoute";
-import { useToast } from "@/providers/toast-provider";
-import {
-  blockNonIntegerKeys,
-  getPasswordStrength,
-  sanitizeDigitsOnly,
-} from "@/lib/validation";
 
 type Tab = "profile" | "addresses" | "security";
 

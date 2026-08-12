@@ -355,7 +355,7 @@ export default function ChatWindow({
           <button
             type="submit"
             disabled={isSending || (!text.trim() && !image)}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 cursor-pointer shrink-0"
+            className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 cursor-pointer shrink-0"
           >
             Send
           </button>
