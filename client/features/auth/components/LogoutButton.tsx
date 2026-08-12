@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLogoutUserMutation } from "../authApiSlice";
 import { getErrorMessage } from "../utils";
-// import { disconnectSocket } from "@/lib/socket";
+import { disconnectSocket } from "@/lib/socket";
 import { useAppDispatch } from "@/store/hooks";
 import { switchUser } from "@/features/cart/cartSlice";
 
@@ -23,7 +23,7 @@ const router = useRouter();
     setError(null);
     try {
       await logoutUser().unwrap();
-      // disconnectSocket();
+      disconnectSocket();
       // Immediately drop back to the guest-scoped cart so this account's
       // items never remain visible/checkable by whoever uses the device next.
       dispatch(switchUser({ userId: null }));

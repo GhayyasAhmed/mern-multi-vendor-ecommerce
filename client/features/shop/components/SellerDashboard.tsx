@@ -77,7 +77,9 @@ import {
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
 import { useEffect } from "react";
-import { getSocket, disconnectSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { useAppDispatch } from "@/store/hooks";
+import { apiSlice } from "@/lib/api/apiSlice";
 
 type Tab =
   | "profile"
@@ -110,7 +112,8 @@ export default function SellerDashboard() {
   const { seller } = useCurrentSeller();
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  const dispatch = useAppDispatch();
+  
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const tab: Tab =
     tabFromUrl && TABS.includes(tabFromUrl) ? tabFromUrl : "profile";
@@ -129,24 +132,41 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (!seller?._id) return;
 
-    const socket = getSocket();
-    socket.connect();
+    const socket = connectSocket();
 
-    const handleOrderCreated = (payload: { orderId: string; totalPrice: number }) => {
-      toast.showToast({
-        title: "New order received",
-        description: `Order #${payload.orderId.slice(-8).toUpperCase()} — $${payload.totalPrice.toFixed(2)}`,
-        variant: "success",
-      });
+    const handleNotification = (payload: { type: string; message: string; link?: string }) => {
+      dispatch(apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]));
+
+      if (payload.type === "new_order") {
+        dispatch(apiSlice.util.invalidateTags([
+          { type: "Order", id: "SELLER-LIST" },
+          { type: "AdminStats", id: "OVERVIEW" },
+        ]));
+        toast.showToast({ title: "New order received", description: payload.message, variant: "success" });
+      } else if (payload.type === "refund_requested") {
+        dispatch(apiSlice.util.invalidateTags([{ type: "Order", id: "SELLER-LIST" }]));
+        toast.showToast({ title: "Refund requested", description: payload.message, variant: "warning" });
+      } else if (payload.type === "withdraw_approved" || payload.type === "withdraw_rejected") {
+        dispatch(apiSlice.util.invalidateTags([{ type: "Withdraw", id: "MY-LIST" }]));
+        toast.showToast({
+          title: payload.message,
+          variant: payload.type === "withdraw_approved" ? "success" : "warning",
+        });
+      } else if (payload.type === "shop_status") {
+        dispatch(apiSlice.util.invalidateTags(["Shop"]));
+        toast.showToast({ title: payload.message, variant: "info" });
+      } else if (payload.type === "new_message") {
+        dispatch(apiSlice.util.invalidateTags([{ type: "Conversation", id: "SELLER-LIST" }]));
+      }
     };
 
-    socket.on("ORDER_CREATED", handleOrderCreated);
+    socket.on("notification", handleNotification);
 
     return () => {
-      socket.off("ORDER_CREATED", handleOrderCreated);
+      socket.off("notification", handleNotification);
       disconnectSocket();
     };
-  }, [seller?._id, toast]);
+  }, [seller?._id, toast, dispatch]);
 
   if (!seller) return null;
 

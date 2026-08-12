@@ -21,7 +21,7 @@ import userRouter from "./routes/user.routes.js";
 import withdrawRouter from "./routes/withdraw.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
-// import socketRouter from "./routes/socket.routes.js";
+import socketRouter from "./routes/socket.routes.js";
 
 const app = express();
 
@@ -102,7 +102,7 @@ app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/withdraw", withdrawRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/notification", notificationRouter);
-// app.use("/api/v1/socket", socketRouter);
+app.use("/api/v1/socket", socketRouter);
 app.use("/api/v1/admin", adminRouter);
 
 app.get("/api/v1/health-check", (req, res) => {

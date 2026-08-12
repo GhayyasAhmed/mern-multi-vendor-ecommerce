@@ -80,24 +80,11 @@ function AccountContent() {
 function ProfileTab() {
   const toast = useToast();
   const { user } = useCurrentUser();
-  const [updateProfile, { isLoading: isSavingProfile }] =
-    useUpdateUserProfileMutation();
-  const [updateAvatar, { isLoading: isSavingAvatar }] =
-    useUpdateUserAvatarMutation();
+  const [updateProfile, { isLoading: isSavingProfile }] = useUpdateUserProfileMutation();
+  const [updateAvatar, { isLoading: isSavingAvatar }] = useUpdateUserAvatarMutation();
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-
-  // useEffect(() => {
-  //   const onNewNotification = (payload: unknown) => {
-  //     if (payload) console.log("payload", payload);
-  //     // playNotificationSound();
-  //   };
-  //   socket.on("pong", onNewNotification);
-  //   return () => {
-  //     socket.off("pong", onNewNotification);
-  //   };
-  // }, []);
 
   const {
     register: registerProfile,

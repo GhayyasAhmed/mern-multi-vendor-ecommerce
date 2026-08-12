@@ -1,7 +1,7 @@
 "use client";
 import EmptyState from "@/components/ui/EmptyState";
 import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
-// import { SOCKET_EVENTS } from "@/constants";
+import { SOCKET_EVENTS } from "@/constants";
 import { getErrorMessage } from "@/features/auth/utils";
 import {
   useGetMessagesQuery,
@@ -10,7 +10,7 @@ import {
   type IConversation,
   type IMessage,
 } from "@/features/messaging/conversationApiSlice";
-// import { useSocket } from "@/hooks/use-socket";
+import { useSocket } from "@/hooks/use-socket";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiOutlineArrowLeft, AiOutlineMessage } from "react-icons/ai";
@@ -30,7 +30,7 @@ export default function ChatWindow({
   isPeerOnline,
   onBack,
 }: ChatWindowProps) {
-  // const peerId = role === "user" ? conversation.sellerId : conversation.userId;
+  const peerId = role === "user" ? conversation.sellerId : conversation.userId;
   const peer = role === "user" ? conversation.seller : conversation.user;
   const [seenMessageIds, setSeenMessageIds] = useState<Set<string>>(new Set());
 
@@ -64,7 +64,7 @@ export default function ChatWindow({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // const socket = useSocket(true);
+  const socket = useSocket(true);
 
   const messages = useMemo(() => {
     return [...olderMessages, ...(data?.messages ?? [])];
@@ -85,53 +85,53 @@ export default function ChatWindow({
     }
   };
 
-  // useEffect(() => {
-  //   const handleMessageSeen = (payload: {
-  //     senderId: string;
-  //     receiverId: string;
-  //     messageId: string;
-  //   }) => {
-  //     if (payload.receiverId === peerId) {
-  //       setSeenMessageIds((prev) => new Set(prev).add(payload.messageId));
-  //     }
-  //   };
-  //   socket.on(SOCKET_EVENTS.MESSAGE_SEEN, handleMessageSeen);
-  //   return () => {
-  //     socket.off(SOCKET_EVENTS.MESSAGE_SEEN, handleMessageSeen);
-  //   };
-  // }, [socket, peerId]);
+  useEffect(() => {
+    const handleMessageSeen = (payload: {
+      senderId: string;
+      receiverId: string;
+      messageId: string;
+    }) => {
+      if (payload.receiverId === peerId) {
+        setSeenMessageIds((prev) => new Set(prev).add(payload.messageId));
+      }
+    };
+    socket.on(SOCKET_EVENTS.MESSAGE_SEEN, handleMessageSeen);
+    return () => {
+      socket.off(SOCKET_EVENTS.MESSAGE_SEEN, handleMessageSeen);
+    };
+  }, [socket, peerId]);
 
-  // useEffect(() => {
-  //   const lastFromPeer = [...messages]
-  //     .reverse()
-  //     .find((m) => m.sender === peerId);
-  //   if (lastFromPeer) {
-  //     socket.emit(SOCKET_EVENTS.MESSAGE_SEEN, {
-  //       senderId: peerId,
-  //       messageId: lastFromPeer._id,
-  //     });
-  //   }
-  // }, [messages, peerId, socket]);
+  useEffect(() => {
+    const lastFromPeer = [...messages]
+      .reverse()
+      .find((m) => m.sender === peerId);
+    if (lastFromPeer) {
+      socket.emit(SOCKET_EVENTS.MESSAGE_SEEN, {
+        senderId: peerId,
+        messageId: lastFromPeer._id,
+      });
+    }
+  }, [messages, peerId, socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // useEffect(() => {
-  //   const handleGetMessage = (payload: {
-  //     senderId: string;
-  //     receiverId: string;
-  //   }) => {
-  //     if (payload.senderId === peerId && payload.receiverId === identityId) {
-  //       refetch();
-  //     }
-  //   };
+  useEffect(() => {
+    const handleGetMessage = (payload: {
+      senderId: string;
+      receiverId: string;
+    }) => {
+      if (payload.senderId === peerId && payload.receiverId === identityId) {
+        refetch();
+      }
+    };
 
-    // socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
-    // return () => {
-    //   socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
-    // };
-  // }, [socket, peerId, identityId, refetch]);
+    socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
+    return () => {
+      socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
+    };
+  }, [socket, peerId, identityId, refetch]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

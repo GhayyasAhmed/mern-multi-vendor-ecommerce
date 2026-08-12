@@ -10,8 +10,8 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 import { stripe } from "../config/stripe.js";
-import { emitOrderCreated } from "../socket/index.js";
-// import { createNotification } from "../utils/notifications.js";
+// import { emitOrderCreated } from "../socket/index.js";
+import { createNotification } from "../utils/notifications.js";
 
 interface ICartItem {
   _id: string;
@@ -163,9 +163,14 @@ export const createOrder = catchAsyncErrors(
     const shopIds = Array.from(shopItemsMap.keys());
     shopIds.forEach((shopId, index) => {
       const order = orders[index];
-      if (order) {
-        emitOrderCreated(shopId, order);
-      }
+      if (!order) return;
+      createNotification(
+        shopId,
+        "seller",
+        "new_order",
+        `You received a new order for $${order.totalPrice.toFixed(2)}.`,
+        "/seller/dashboard?tab=orders"
+      ).catch(() => {});
     });
 
     // for (const [shopId] of shopItemsMap) {
@@ -304,15 +309,15 @@ export const updateOrderStatus = catchAsyncErrors(
       await existingOrder.save({ validateBeforeSave: false });
 
       const buyerIdForNotif = (existingOrder.user as { _id?: unknown })?._id;
-      // if (buyerIdForNotif) {
-      //   createNotification(
-      //     String(buyerIdForNotif),
-      //     "user",
-      //     "order_status",
-      //     `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
-      //     `/orders/${existingOrder._id}`
-      //   ).catch(() => { });
-      // }
+      if (buyerIdForNotif) {
+        createNotification(
+          String(buyerIdForNotif),
+          "user",
+          "order_status",
+          `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
+          `/orders/${existingOrder._id}`
+        ).catch(() => { });
+      }
 
       res.status(200).json({ success: true, order: existingOrder });
       return;
@@ -373,15 +378,15 @@ export const updateOrderStatus = catchAsyncErrors(
     const finalOrder = deliveredOrder as unknown as IOrder;
 
     const buyerIdForNotif = (finalOrder.user as { _id?: unknown })?._id;
-    // if (buyerIdForNotif) {
-    //   createNotification(
-    //     String(buyerIdForNotif),
-    //     "user",
-    //     "order_status",
-    //     `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
-    //     `/orders/${finalOrder._id}`
-    //   ).catch(() => { });
-    // }
+    if (buyerIdForNotif) {
+      createNotification(
+        String(buyerIdForNotif),
+        "user",
+        "order_status",
+        `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
+        `/orders/${finalOrder._id}`
+      ).catch(() => { });
+    }
 
     res.status(200).json({ success: true, order: finalOrder });
   }
@@ -413,6 +418,18 @@ export const orderRefund = catchAsyncErrors(
 
     if (!updated) {
       return next(new ErrorHandler("Only delivered orders can be refunded", 400));
+    }
+
+    const cartItemsForNotif = updated.cart as ICartItem[];
+    const sellerIdForNotif = cartItemsForNotif[0]?.shopId;
+    if (sellerIdForNotif) {
+      createNotification(
+        String(sellerIdForNotif),
+        "seller",
+        "refund_requested",
+        `A refund was requested for order #${String(updated._id).slice(-8).toUpperCase()}.`,
+        "/seller/dashboard?tab=orders"
+      ).catch(() => {});
     }
 
     res.status(200).json({
@@ -503,6 +520,18 @@ export const orderRefundSuccess = catchAsyncErrors(
       });
     } finally {
       await session.endSession();
+    }
+
+    const finalRefundedOrder = refundedOrder as unknown as IOrder;
+    const buyerIdForRefundNotif = (finalRefundedOrder.user as { _id?: unknown })?._id;
+    if (buyerIdForRefundNotif) {
+      createNotification(
+        String(buyerIdForRefundNotif),
+        "user",
+        "order_status",
+        `Your order #${String(finalRefundedOrder._id).slice(-8).toUpperCase()} refund is complete.`,
+        `/orders/${finalRefundedOrder._id}`
+      ).catch(() => {});
     }
 
     res.status(200).json({

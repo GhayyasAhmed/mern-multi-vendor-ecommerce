@@ -15,7 +15,7 @@ import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS, trackPendingUpload } from "../utils/pendingUploads.js";
 import sendEmail from "../utils/sendEmail.js";
 import sendShopToken, { buildSellerCookieOptions } from "../utils/shopToken.js";
-
+import { createNotification } from "../utils/notifications.js"
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -485,6 +485,13 @@ export const updateShopStatus = catchAsyncErrors(
         subject: "Your shop status has been updated",
         message: `Hello ${shop.name}, your shop status is now "${status}".`,
       });
+      createNotification(
+        String(shop._id),
+        "seller",
+        "shop_status",
+        `Your shop status has been updated to "${status}".`,
+        "/seller/dashboard?tab=profile"
+      ).catch(() => { });
     } catch {
       // best-effort
     }
