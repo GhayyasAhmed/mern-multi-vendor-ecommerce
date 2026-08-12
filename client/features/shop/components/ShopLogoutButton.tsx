@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLogoutShopMutation } from "../shopApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
-import { disconnectSocket } from "@/lib/socket";
+// import { disconnectSocket } from "@/lib/socket";
 
 interface ShopLogoutButtonProps {
   className?: string;
@@ -19,7 +19,7 @@ export default function ShopLogoutButton({ className, onLoggedOut }: ShopLogoutB
     setError(null);
     try {
       await logoutShop().unwrap();
-      disconnectSocket();
+      // disconnectSocket();
       onLoggedOut?.();
       router.push("/seller/login");
       router.refresh();

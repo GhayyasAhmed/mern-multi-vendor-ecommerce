@@ -1,14 +1,14 @@
 "use client";
 import EmptyState from "@/components/ui/EmptyState";
-import { SOCKET_EVENTS } from "@/constants";
+// import { SOCKET_EVENTS } from "@/constants";
 import {
   useGetNotificationsQuery,
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from "@/features/notifications/notificationApiSlice";
-import { useSocket } from "@/hooks/use-socket";
-import { apiSlice } from "@/lib/api/apiSlice";
-import { useAppDispatch } from "@/store/hooks";
+// import { useSocket } from "@/hooks/use-socket";
+// import { apiSlice } from "@/lib/api/apiSlice";
+// import { useAppDispatch } from "@/store/hooks";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineBell } from "react-icons/ai";
@@ -22,8 +22,8 @@ export default function NotificationBell({
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const dispatch = useAppDispatch();
-  const socket = useSocket(enabled);
+  // const dispatch = useAppDispatch();
+  // const socket = useSocket(enabled);
 
   const { data } = useGetNotificationsQuery({ limit: 10 }, { skip: !enabled });
   const [markRead] = useMarkNotificationReadMutation();
@@ -32,17 +32,17 @@ export default function NotificationBell({
   const notifications = data?.notifications ?? [];
   const unreadCount = data?.unreadCount ?? 0;
 
-  useEffect(() => {
-    if (!enabled) return;
-    const handleNotification = () =>
-      dispatch(
-        apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]),
-      );
-    socket.on(SOCKET_EVENTS.NOTIFICATION, handleNotification);
-    return () => {
-      socket.off(SOCKET_EVENTS.NOTIFICATION, handleNotification);
-    };
-  }, [socket, enabled, dispatch]);
+  // useEffect(() => {
+  //   if (!enabled) return;
+  //   const handleNotification = () =>
+  //     dispatch(
+  //       apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]),
+  //     );
+  //   socket.on(SOCKET_EVENTS.NOTIFICATION, handleNotification);
+  //   return () => {
+  //     socket.off(SOCKET_EVENTS.NOTIFICATION, handleNotification);
+  //   };
+  // }, [socket, enabled, dispatch]);
 
   useEffect(() => {
     if (!open) return;

@@ -6,7 +6,7 @@ import styles from "@/styles/styles";
 import type { IAddress } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, useRef, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
@@ -34,6 +34,8 @@ import {
   getPasswordStrength,
   sanitizeDigitsOnly,
 } from "@/lib/validation";
+import { socket } from "@/lib/socket";
+import { Socket } from "socket.io-client";
 
 type Tab = "profile" | "addresses" | "security";
 
@@ -88,6 +90,17 @@ function ProfileTab() {
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const onNewNotification = (payload: unknown) => {
+      if (payload) console.log("payload", payload);
+      // playNotificationSound();
+    };
+    socket.on("pong", onNewNotification);
+    return () => {
+      socket.off("pong", onNewNotification);
+    };
+  }, []);
+
   const {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
@@ -114,6 +127,9 @@ function ProfileTab() {
         title: "Profile updated successfully",
         variant: "success",
       });
+
+      socket.emit("ping", { name: values.name });
+
     } catch (error) {
       setProfileError(getErrorMessage(error));
       toast.showToast({ title: getErrorMessage(error), variant: "error" });
@@ -187,7 +203,7 @@ function ProfileTab() {
         noValidate
       >
         <h2 className="text-lg font-semibold text-foreground">
-          Personal information 
+          Personal information
         </h2>
         <div>
           <label className="block text-sm font-medium text-foreground">
@@ -293,14 +309,21 @@ function AddressesTab() {
     setShowForm(true);
   };
 
-   const onSubmit = async (values: AddressFormValues) => {
+  const onSubmit = async (values: AddressFormValues) => {
     setFormError(null);
     const wasEditing = Boolean(editingId);
     try {
-      await saveAddress({ _id: editingId || undefined, ...values, zipCode: values.zipCode ? Number(values.zipCode) : undefined }).unwrap();
+      await saveAddress({
+        _id: editingId || undefined,
+        ...values,
+        zipCode: values.zipCode ? Number(values.zipCode) : undefined,
+      }).unwrap();
       setShowForm(false);
       setEditingId(null);
-      toast.showToast({ title: wasEditing ? "Address updated" : "Address added", variant: "success" });
+      toast.showToast({
+        title: wasEditing ? "Address updated" : "Address added",
+        variant: "success",
+      });
     } catch (error) {
       setFormError(getErrorMessage(error));
     }
@@ -312,7 +335,10 @@ function AddressesTab() {
       toast.showToast({ title: "Address removed", variant: "success" });
     } catch (error) {
       toast.showToast({
-        title: getErrorMessage(error, "Could not delete address. Please try again."),
+        title: getErrorMessage(
+          error,
+          "Could not delete address. Please try again.",
+        ),
         variant: "error",
       });
     }
@@ -324,7 +350,9 @@ function AddressesTab() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Saved Addresses</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Saved Addresses
+        </h2>
         <button
           type="button"
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
@@ -384,9 +412,7 @@ function AddressesTab() {
               </label>
               <input className={`${styles.input} mt-1`} {...register("city")} />
               {errors.city && (
-                <p className="mt-1 text-sm text-error">
-                  {errors.city.message}
-                </p>
+                <p className="mt-1 text-sm text-error">{errors.city.message}</p>
               )}
             </div>
             <div>
@@ -534,7 +560,9 @@ function SecurityTab() {
         className="space-y-4 bg-surface border border-border rounded-lg shadow-sm p-6"
         noValidate
       >
-        <h2 className="text-lg font-semibold text-foreground">Change password</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Change password
+        </h2>
 
         {/* Current Password Field with Eye Icon */}
         <div>

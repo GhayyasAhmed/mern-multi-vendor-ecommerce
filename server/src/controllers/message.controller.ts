@@ -4,7 +4,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import MessageModel, { IMessageImage } from "../models/message.model.js";
 import ConversationModel from "../models/conversation.model.js";
 import { uploadToCloudinary } from "../config/cloudinary.js";
-import { createNotification } from "../utils/notifications.js";
+// import { createNotification } from "../utils/notifications.js";
 
 const getIdentityId = (req: Request): string | undefined => {
   if (req.user?._id) return String(req.user._id);
@@ -77,13 +77,13 @@ export const createNewMessage = catchAsyncErrors(
         receiverRole === "seller"
           ? `/seller/dashboard?tab=messages&conversation=${String(conversation._id)}`
           : `/inbox?conversation=${String(conversation._id)}`;
-      createNotification(
-        memberId,
-        receiverRole,
-        "new_message",
-        text?.trim() ? `New message: "${text.trim().slice(0, 60)}"` : "You received a new image message.",
-        link
-      ).catch(() => { });
+      // createNotification(
+      //   memberId,
+      //   receiverRole,
+      //   "new_message",
+      //   text?.trim() ? `New message: "${text.trim().slice(0, 60)}"` : "You received a new image message.",
+      //   link
+      // ).catch(() => { });
     }
 
     res.status(201).json({

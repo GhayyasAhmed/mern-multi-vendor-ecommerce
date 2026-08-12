@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ShopModel from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import { createNotification } from "../utils/notifications.js";
+// import { createNotification } from "../utils/notifications.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import sendEmail from "../utils/sendEmail.js";
 import WithdrawModel, { IWithdraw } from "../models/withdraw.model.js";
@@ -147,13 +147,13 @@ export const updateWithdrawRequest = catchAsyncErrors(
 
     await seller.save();
 
-    createNotification(
-      String(seller._id),
-      "seller",
-      "withdraw_approved",
-      `Your withdrawal request of $${withdraw.amount} has been approved and is on its way.`,
-      "/seller/dashboard?tab=payouts"
-    ).catch(() => { });
+    // createNotification(
+    //   String(seller._id),
+    //   "seller",
+    //   "withdraw_approved",
+    //   `Your withdrawal request of $${withdraw.amount} has been approved and is on its way.`,
+    //   "/seller/dashboard?tab=payouts"
+    // ).catch(() => { });
 
     await sendEmail({
       email: seller.email,
@@ -217,13 +217,13 @@ export const rejectWithdrawRequest = catchAsyncErrors(
       } catch {
         // best-effort
       }
-      createNotification(
-        String(seller._id),
-        "seller",
-        "withdraw_rejected",
-        `Your withdrawal request of $${withdraw.amount} was rejected${reason ? `: ${reason}` : "."}`,
-        "/seller/dashboard?tab=payouts"
-      ).catch(() => { });
+      // createNotification(
+      //   String(seller._id),
+      //   "seller",
+      //   "withdraw_rejected",
+      //   `Your withdrawal request of $${withdraw.amount} was rejected${reason ? `: ${reason}` : "."}`,
+      //   "/seller/dashboard?tab=payouts"
+      // ).catch(() => { });
     }
 
     res.status(200).json({ success: true, withdraw });

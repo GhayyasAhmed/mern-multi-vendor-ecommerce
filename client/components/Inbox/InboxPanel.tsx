@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+// import { useEffect, useState } from "react";
 import {
-  useGetUserConversationsQuery,
   useGetSellerConversationsQuery,
+  useGetUserConversationsQuery,
 } from "@/features/messaging/conversationApiSlice";
-import { useSocket } from "@/hooks/use-socket";
-import { useAppDispatch } from "@/store/hooks";
-import { apiSlice } from "@/lib/api/apiSlice";
-import { SOCKET_EVENTS } from "@/constants";
-import ConversationList from "./ConversationList";
-import ChatWindow from "./ChatWindow";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+// import { useSocket } from "@/hooks/use-socket";
+// import { useAppDispatch } from "@/store/hooks";
+// import { apiSlice } from "@/lib/api/apiSlice";
+// import { SOCKET_EVENTS } from "@/constants";
 import Pagination from "@/components/ui/Pagination";
+import ChatWindow from "./ChatWindow";
+import ConversationList from "./ConversationList";
 
 interface InboxPanelProps {
   role: "user" | "seller";
@@ -24,8 +25,8 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeConversationId = searchParams.get("conversation");
-  const dispatch = useAppDispatch();
-  const socket = useSocket(Boolean(identityId));
+  // const dispatch = useAppDispatch();
+  // const socket = useSocket(Boolean(identityId));
   const [page, setPage] = useState(1);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
@@ -44,27 +45,27 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
 
   const activeConversation = conversations.find((c) => c._id === activeConversationId) ?? null;
 
-  useEffect(() => {
-    if (!identityId) return;
+  // useEffect(() => {
+    // if (!identityId) return;
 
-    const listTag = { type: "Conversation" as const, id: role === "user" ? "USER-LIST" : "SELLER-LIST" };
-    const refreshList = () => dispatch(apiSlice.util.invalidateTags([listTag]));
+    // const listTag = { type: "Conversation" as const, id: role === "user" ? "USER-LIST" : "SELLER-LIST" };
+    // const refreshList = () => dispatch(apiSlice.util.invalidateTags([listTag]));
 
-    socket.on(SOCKET_EVENTS.GET_MESSAGE, refreshList);
-    socket.on(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
+    // socket.on(SOCKET_EVENTS.GET_MESSAGE, refreshList);
+    // socket.on(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
 
-    return () => {
-      socket.off(SOCKET_EVENTS.GET_MESSAGE, refreshList);
-      socket.off(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
-    };
-  }, [socket, dispatch, identityId, role]);
+    // return () => {
+    //   socket.off(SOCKET_EVENTS.GET_MESSAGE, refreshList);
+    //   socket.off(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
+    // };
+  // }, [socket, dispatch, identityId, role]);
 
-  useEffect(() => {
-  if (!identityId) return;
-  const handleGetUsers = (ids: string[]) => setOnlineUserIds(ids);
-  socket.on(SOCKET_EVENTS.GET_USERS, handleGetUsers);
-  return () => { socket.off(SOCKET_EVENTS.GET_USERS, handleGetUsers); };
-}, [socket, identityId]);
+  // useEffect(() => {
+  // if (!identityId) return;
+  // const handleGetUsers = (ids: string[]) => setOnlineUserIds(ids);
+  // socket.on(SOCKET_EVENTS.GET_USERS, handleGetUsers);
+  // return () => { socket.off(SOCKET_EVENTS.GET_USERS, handleGetUsers); };
+// }, [socket, identityId]);
 
   const handleSelect = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());

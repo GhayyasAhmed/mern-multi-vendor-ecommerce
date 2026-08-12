@@ -10,7 +10,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import { calculateCouponDiscount } from "./couponCode.controller.js";
 import { stripe } from "../config/stripe.js";
-import { createNotification } from "../utils/notifications.js";
+// import { createNotification } from "../utils/notifications.js";
 
 interface ICartItem {
   _id: string;
@@ -159,9 +159,9 @@ export const createOrder = catchAsyncErrors(
       await session.endSession();
     }
 
-    for (const [shopId] of shopItemsMap) {
-      createNotification(shopId, "seller", "new_order", "You have received a new order.", "/seller/dashboard?tab=orders").catch(() => { });
-    }
+    // for (const [shopId] of shopItemsMap) {
+    //   createNotification(shopId, "seller", "new_order", "You have received a new order.", "/seller/dashboard?tab=orders").catch(() => { });
+    // }
 
     res.status(201).json({
       success: true,
@@ -295,15 +295,15 @@ export const updateOrderStatus = catchAsyncErrors(
       await existingOrder.save({ validateBeforeSave: false });
 
       const buyerIdForNotif = (existingOrder.user as { _id?: unknown })?._id;
-      if (buyerIdForNotif) {
-        createNotification(
-          String(buyerIdForNotif),
-          "user",
-          "order_status",
-          `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
-          `/orders/${existingOrder._id}`
-        ).catch(() => { });
-      }
+      // if (buyerIdForNotif) {
+      //   createNotification(
+      //     String(buyerIdForNotif),
+      //     "user",
+      //     "order_status",
+      //     `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
+      //     `/orders/${existingOrder._id}`
+      //   ).catch(() => { });
+      // }
 
       res.status(200).json({ success: true, order: existingOrder });
       return;
@@ -364,15 +364,15 @@ export const updateOrderStatus = catchAsyncErrors(
     const finalOrder = deliveredOrder as unknown as IOrder;
 
     const buyerIdForNotif = (finalOrder.user as { _id?: unknown })?._id;
-    if (buyerIdForNotif) {
-      createNotification(
-        String(buyerIdForNotif),
-        "user",
-        "order_status",
-        `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
-        `/orders/${finalOrder._id}`
-      ).catch(() => { });
-    }
+    // if (buyerIdForNotif) {
+    //   createNotification(
+    //     String(buyerIdForNotif),
+    //     "user",
+    //     "order_status",
+    //     `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
+    //     `/orders/${finalOrder._id}`
+    //   ).catch(() => { });
+    // }
 
     res.status(200).json({ success: true, order: finalOrder });
   }
