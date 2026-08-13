@@ -6,7 +6,8 @@ export async function createNotification(
   recipientRole: NotificationRecipientRole,
   type: string,
   message: string,
-  link?: string
+  link?: string,
+  data?: Record<string, unknown>
 ): Promise<void> {
   const notification = await NotificationModel.create({ recipientId, recipientRole, type, message, link });
   emitNotification(recipientId, {
@@ -16,5 +17,6 @@ export async function createNotification(
     link: notification.link,
     read: notification.read,
     createdAt: notification.createdAt.toISOString(),
+    data,
   });
 }

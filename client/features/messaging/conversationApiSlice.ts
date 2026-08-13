@@ -158,8 +158,8 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, body) => [
         { type: "Message", id: body.conversationId },
-        { type: "Conversation", id: "USER-LIST" },
-        { type: "Conversation", id: "SELLER-LIST" },
+        // { type: "Conversation", id: "USER-LIST" },
+        // { type: "Conversation", id: "SELLER-LIST" },
       ],
     }),
   }),

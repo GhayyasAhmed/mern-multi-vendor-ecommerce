@@ -78,6 +78,7 @@ export const createOrder = catchAsyncErrors(
 
     const session = await mongoose.startSession();
     const orders: IOrder[] = [];
+    const stockUpdates: Array<{ id: string; stock: number; kind: "product" | "event" }> = [];
 
     try {
       await session.withTransaction(async () => {
@@ -109,6 +110,12 @@ export const createOrder = catchAsyncErrors(
                 400
               );
             }
+
+            stockUpdates.push({
+              id: String(item._id),
+              stock: reserved.stock,
+              kind: isEvent ? "event" : "product",
+            });
           }
         }
 
@@ -170,13 +177,20 @@ export const createOrder = catchAsyncErrors(
         "seller",
         "new_order",
         `You received a new order for $${order.totalPrice.toFixed(2)}.`,
-        "/seller/dashboard?tab=orders"
-      ).catch(() => {});
+        "/seller/dashboard?tab=orders",
+        { order } // <-- lets seller client patch cache instead of refetching
+      ).catch(() => { });
     });
 
-    // for (const [shopId] of shopItemsMap) {
-    //   createNotification(shopId, "seller", "new_order", "You have received a new order.", "/seller/dashboard?tab=orders").catch(() => { });
-    // }
+    void publishSocketEvent("admin", "notification", {
+      type: "admin_new_order",
+      message: `New order${orders.length > 1 ? "s" : ""} placed ($${orders.reduce((s, o) => s + o.totalPrice, 0).toFixed(2)} total)`,
+      data: { orders },
+    });
+
+    for (const update of stockUpdates) {
+      void publishSocketEvent("public", "stockUpdated", update);
+    }
 
     res.status(201).json({
       success: true,
@@ -268,7 +282,6 @@ export const getOrderById = catchAsyncErrors(
 );
 
 // update order status for seller
-// update order status for seller
 export const updateOrderStatus = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const existingOrder = await OrderModel.findById(req.params.id);
@@ -336,6 +349,7 @@ export const updateOrderStatus = catchAsyncErrors(
 
     const session = await mongoose.startSession();
     let deliveredOrder: IOrder | null = null;
+    let updatedBalance: { availableBalance: number; owedBalance: number } | null = null;
 
     try {
       await session.withTransaction(async () => {
@@ -375,6 +389,11 @@ export const updateOrderStatus = catchAsyncErrors(
           { session }
         );
 
+        updatedBalance = {
+          availableBalance: (shop.availableBalance || 0) + toAvailable,
+          owedBalance: (shop.owedBalance || 0) - repayment,
+        };
+
         deliveredOrder = updated;
       });
     } finally {
@@ -382,6 +401,10 @@ export const updateOrderStatus = catchAsyncErrors(
     }
 
     const finalOrder = deliveredOrder as unknown as IOrder;
+
+    if (updatedBalance) {
+      void publishSocketEvent(String(sellerId), "sellerBalanceUpdated", updatedBalance);
+    }
 
     const buyerIdForNotif = (finalOrder.user as { _id?: unknown })?._id;
     if (buyerIdForNotif) {
@@ -434,8 +457,9 @@ export const orderRefund = catchAsyncErrors(
         "seller",
         "refund_requested",
         `A refund was requested for order #${String(updated._id).slice(-8).toUpperCase()}.`,
-        "/seller/dashboard?tab=orders"
-      ).catch(() => {});
+        "/seller/dashboard?tab=orders",
+        { order: updated }
+      ).catch(() => { });
     }
 
     res.status(200).json({
@@ -469,6 +493,7 @@ export const orderRefundSuccess = catchAsyncErrors(
 
     const session = await mongoose.startSession();
     let refundedOrder: IOrder | null = null;
+    let updatedBalance: { availableBalance: number; owedBalance: number } | null = null;
 
     try {
       await session.withTransaction(async () => {
@@ -508,6 +533,11 @@ export const orderRefundSuccess = catchAsyncErrors(
             { $inc: { availableBalance: -recoverable, owedBalance: shortfall } },
             { session }
           );
+
+          updatedBalance = {
+            availableBalance: (shop.availableBalance || 0) - recoverable,
+            owedBalance: (shop.owedBalance || 0) + shortfall,
+          };
         }
 
         // Restock inside the same transaction so inventory and the
@@ -528,6 +558,10 @@ export const orderRefundSuccess = catchAsyncErrors(
       await session.endSession();
     }
 
+    if (updatedBalance) {
+      void publishSocketEvent(String(sellerId), "sellerBalanceUpdated", updatedBalance);
+    }
+
     const finalRefundedOrder = refundedOrder as unknown as IOrder;
     const buyerIdForRefundNotif = (finalRefundedOrder.user as { _id?: unknown })?._id;
     if (buyerIdForRefundNotif) {
@@ -537,7 +571,7 @@ export const orderRefundSuccess = catchAsyncErrors(
         "order_status",
         `Your order #${String(finalRefundedOrder._id).slice(-8).toUpperCase()} refund is complete.`,
         `/orders/${finalRefundedOrder._id}`
-      ).catch(() => {});
+      ).catch(() => { });
 
       void publishSocketEvent(String(buyerIdForRefundNotif), "orderStatusUpdated", {
         orderId: String(finalRefundedOrder._id),

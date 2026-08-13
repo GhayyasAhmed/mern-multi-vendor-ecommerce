@@ -222,7 +222,7 @@ export default function ChatWindow({
         <p className="font-medium text-sm text-foreground">
           {peer?.name || "Unknown"}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className={`text-xs font-bold ${isPeerOnline ? "text-success" : "text-muted-foreground"} `}>
           {isPeerOnline ? "Online" : "Offline"}
         </p>
       </div>

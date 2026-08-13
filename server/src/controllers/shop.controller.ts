@@ -16,6 +16,7 @@ import { clearPendingUpload, PENDING_SIGNUP_TTL_SECONDS, trackPendingUpload } fr
 import sendEmail from "../utils/sendEmail.js";
 import sendShopToken, { buildSellerCookieOptions } from "../utils/shopToken.js";
 import { createNotification } from "../utils/notifications.js"
+import { publishSocketEvent } from "../socket/index.js";
 
 export interface IShopActivationToken {
   activationToken: string;
@@ -170,6 +171,11 @@ export const activateShop = catchAsyncErrors(
     await redis.del(`activation:${activation_token}`);
     await redis.del(`pending_signup:shop:${sellerData.email}`);
     await clearPendingUpload(sellerData.avatar.public_id);
+    void publishSocketEvent("admin", "notification", {
+      type: "admin_new_seller",
+      message: `New seller signed up: ${seller.name}`,
+      data: { seller },
+    });
     await sendShopToken(seller, 201, res, "Shop activated successfully!");
   }
 );

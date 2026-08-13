@@ -27,7 +27,10 @@ export function createPresenceHandlers(io: AppSocketServer, redisClient: RedisCl
     const identityId = socket.data.identity.id;
 
     socket.join(identityId);
-
+    socket.join("public");
+    if (socket.data.identity.role === "admin") {
+      socket.join("admin"); 
+    }
     addOnlineSocket(identityId)
       .then((justCameOnline) => {
         if (justCameOnline) {

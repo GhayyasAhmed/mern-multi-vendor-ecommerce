@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Pagination from "@/components/ui/Pagination";
+import { SOCKET_EVENTS } from "@/constants";
 import {
+  conversationApiSlice,
   useGetSellerConversationsQuery,
   useGetUserConversationsQuery,
 } from "@/features/messaging/conversationApiSlice";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-// import { useState } from "react";
 import { useSocket } from "@/hooks/use-socket";
 import { useAppDispatch } from "@/store/hooks";
-import { apiSlice } from "@/lib/api/apiSlice";
-import { SOCKET_EVENTS } from "@/constants";
-import Pagination from "@/components/ui/Pagination";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import ChatWindow from "./ChatWindow";
 import ConversationList from "./ConversationList";
 
@@ -48,22 +47,74 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
     conversations.find((c) => c._id === activeConversationId) ?? null;
 
   useEffect(() => {
+    if (!activeConversationId || !identityId) return;
+    const listEndpoint =
+      role === "user" ? "getUserConversations" : "getSellerConversations";
+
+    dispatch(
+      conversationApiSlice.util.updateQueryData(
+        listEndpoint,
+        { id: identityId, page },
+        (draft) => {
+          const conv = draft?.conversations?.find(
+            (c) => c._id === activeConversationId,
+          );
+          if (conv && conv.unreadCount !== 0) conv.unreadCount = 0;
+        },
+      ),
+    );
+  }, [activeConversationId, identityId, role, page, dispatch]);
+
+  useEffect(() => {
     if (!identityId) return;
+    const listEndpoint = role === "user" ? "getUserConversations" : "getSellerConversations";
 
-    const listTag = {
-      type: "Conversation" as const,
-      id: role === "user" ? "USER-LIST" : "SELLER-LIST",
+    const handleLastMessage = (payload: {
+      conversationId: string;
+      lastMessage: string;
+      lastMessageId: string;
+      updatedAt: string;
+    }) => {
+      dispatch(
+        conversationApiSlice.util.updateQueryData(
+          listEndpoint,
+          { id: identityId, page },
+          (draft) => {
+            const conv = draft?.conversations?.find(
+              (c) => c._id === payload.conversationId,
+            );
+            if (!conv) return;
+            conv.lastMessage = payload.lastMessage;
+            conv.lastMessageId = payload.lastMessageId;
+            conv.updatedAt = payload.updatedAt;
+          },
+        ),
+      );
     };
-    const refreshList = () => dispatch(apiSlice.util.invalidateTags([listTag]));
 
-    socket.on(SOCKET_EVENTS.GET_MESSAGE, refreshList);
-    socket.on(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
+    const handleGetMessage = (payload: { conversationId: string }) => {
+      if (payload.conversationId === activeConversationId) return;
+      dispatch(
+          conversationApiSlice.util.updateQueryData(
+            listEndpoint,
+            { id: identityId, page },
+            (draft) => {
+              const conv = draft?.conversations?.find(
+                (c) => c._id === payload.conversationId,
+              );
+              if (conv) conv.unreadCount = (conv.unreadCount ?? 0) + 1;
+            },
+          ),
+        );
+    };
 
+    socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
+    socket.on(SOCKET_EVENTS.GET_LAST_MESSAGE, handleLastMessage);
     return () => {
-      socket.off(SOCKET_EVENTS.GET_MESSAGE, refreshList);
-      socket.off(SOCKET_EVENTS.GET_LAST_MESSAGE, refreshList);
+      socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
+      socket.off(SOCKET_EVENTS.GET_LAST_MESSAGE, handleLastMessage);
     };
-  }, [socket, dispatch, identityId, role]);
+  }, [socket, dispatch, identityId, role, page, activeConversationId]);
 
   useEffect(() => {
     if (!identityId) return;

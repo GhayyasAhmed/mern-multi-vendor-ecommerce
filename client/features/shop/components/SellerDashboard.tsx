@@ -21,6 +21,7 @@ import {
   useUpdateEventMutation,
 } from "@/features/events/eventApiSlice";
 import {
+  orderApiSlice,
   useGetSellerOrdersQuery,
   useOrderRefundSuccessMutation,
   useUpdateOrderStatusMutation,
@@ -60,11 +61,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useForm } from "react-hook-form";
 import {
-  AiOutlineCalendar, AiOutlineFileText, AiOutlineShoppingCart,
-  AiOutlineTag
+  AiOutlineCalendar,
+  AiOutlineFileText,
+  AiOutlineShoppingCart,
+  AiOutlineTag,
 } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
 import { useCurrentSeller } from "../hooks/useCurrentSeller";
@@ -80,6 +90,7 @@ import {
   type ProductFormValues,
 } from "../validators";
 import ShopLogoutButton from "./ShopLogoutButton";
+import type { IOrder } from "@/features/orders/orderApiSlice";
 
 type Tab =
   | "profile"
@@ -114,7 +125,7 @@ export default function SellerDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  
+
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const tab: Tab =
     tabFromUrl && TABS.includes(tabFromUrl) ? tabFromUrl : "profile";
@@ -136,7 +147,7 @@ export default function SellerDashboard() {
     }
   }, []);
 
-   const playNotificationSound = useCallback(() => {
+  const playNotificationSound = useCallback(() => {
     audioRef.current?.play().catch(() => {});
   }, []);
 
@@ -145,30 +156,94 @@ export default function SellerDashboard() {
 
     const socket = connectSocket();
 
-    const handleNotification = (payload: { type: string; message: string; link?: string }) => {
+    const handleNotification = (payload: {
+      type: string;
+      message: string;
+      link?: string;
+      data?: { order?: IOrder };
+    }) => {
       // dispatch(apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]));
 
       if (payload.type === "new_order") {
-        dispatch(apiSlice.util.invalidateTags([
-          { type: "Order", id: "SELLER-LIST" },
-          { type: "AdminStats", id: "OVERVIEW" },
-        ]));
-        toast.showToast({ title: "New order received", description: payload.message, variant: "success" });
+        dispatch(
+          apiSlice.util.invalidateTags([
+            { type: "Order", id: "SELLER-LIST" },
+            { type: "AdminStats", id: "OVERVIEW" },
+          ]),
+        );
+
+        const order = payload.data?.order;
+        if (order) {
+          dispatch(
+            orderApiSlice.util.updateQueryData(
+              "getSellerOrders",
+              { id: seller._id, page: 1, limit: 10 },
+              (draft) => {
+                if (draft.orders.some((o) => o._id === order._id)) return;
+                draft.orders.unshift(order);
+                draft.pagination.totalItems += 1;
+                draft.pagination.totalPages = Math.max(
+                  Math.ceil(
+                    draft.pagination.totalItems / draft.pagination.limit,
+                  ),
+                  1,
+                );
+              },
+            ),
+          );
+        }
+        dispatch(
+          apiSlice.util.invalidateTags([
+            { type: "AdminStats", id: "OVERVIEW" },
+          ]),
+        );
+        toast.showToast({
+          title: "New order received",
+          description: payload.message,
+          variant: "success",
+        });
       } else if (payload.type === "refund_requested") {
-        dispatch(apiSlice.util.invalidateTags([{ type: "Order", id: "SELLER-LIST" }]));
-        toast.showToast({ title: "Refund requested", description: payload.message, variant: "warning" });
-      } else if (payload.type === "withdraw_approved" || payload.type === "withdraw_rejected") {
-        dispatch(apiSlice.util.invalidateTags([{ type: "Withdraw", id: "MY-LIST" }]));
+        const order = payload.data?.order;
+        if (order) {
+          dispatch(
+            orderApiSlice.util.updateQueryData(
+              "getSellerOrders",
+              { id: seller._id, page: 1, limit: 10 },
+              (draft) => {
+                const existing = draft.orders.find((o) => o._id === order._id);
+                if (existing) existing.status = order.status;
+              },
+            ),
+          );
+        }
+        toast.showToast({
+          title: "Refund requested",
+          description: payload.message,
+          variant: "warning",
+        });
+      } else if (
+        payload.type === "withdraw_approved" ||
+        payload.type === "withdraw_rejected"
+      ) {
+        dispatch(
+          apiSlice.util.invalidateTags([{ type: "Withdraw", id: "MY-LIST" }]),
+        );
         toast.showToast({
           title: payload.message,
-          variant: payload.type === "withdraw_approved" ? "success" : "warning",
+          variant: payload.type === "withdraw_approved" ? "success" : "error",
         });
       } else if (payload.type === "shop_status") {
         dispatch(apiSlice.util.invalidateTags(["Shop"]));
         toast.showToast({ title: payload.message, variant: "info" });
-      } else if (payload.type === "new_message") {
-        dispatch(apiSlice.util.invalidateTags([{ type: "Conversation", id: "SELLER-LIST" }]));
-      }
+      } 
+      
+      // else if (payload.type === "new_message") {
+      //   dispatch(
+      //     apiSlice.util.invalidateTags([
+      //       { type: "Conversation", id: "SELLER-LIST" },
+      //     ]),
+      //   );
+      // }
 
       playNotificationSound();
     };
@@ -176,16 +251,25 @@ export default function SellerDashboard() {
     // Real-time balance sync: patches the cached seller/shop details
     // directly (no manual refetch) e.g. when an admin rejects a withdrawal
     // and the reserved amount is returned to availableBalance.
-    const handleBalanceUpdated = (payload: { availableBalance: number; owedBalance?: number }) => {
+    const handleBalanceUpdated = (payload: {
+      availableBalance: number;
+      owedBalance?: number;
+    }) => {
       dispatch(
-        shopApiSlice.util.updateQueryData("getSellerDetails", undefined, (draft) => {
-          draft.seller.availableBalance = payload.availableBalance;
-          if (payload.owedBalance !== undefined) draft.seller.owedBalance = payload.owedBalance;
-        })
+        shopApiSlice.util.updateQueryData(
+          "getSellerDetails",
+          undefined,
+          (draft) => {
+             if (draft.seller) {
+               draft.seller.availableBalance = payload.availableBalance;
+               if (payload.owedBalance !== undefined)
+                draft.seller.owedBalance = payload.owedBalance;
+            }
+          }
+        ),
       );
     };
 
-   
     socket.on("notification", handleNotification);
     socket.on("sellerBalanceUpdated", handleBalanceUpdated);
 

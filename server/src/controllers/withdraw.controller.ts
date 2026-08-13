@@ -52,6 +52,11 @@ export const createWithdrawRequest = catchAsyncErrors(
         subject: "Withdraw Request",
         message: `Hello ${seller.name}, Your withdraw request of $${amount} is processing. It will take 3 to 7 days to process!`,
       });
+      void publishSocketEvent("admin", "notification", {
+        type: "admin_new_withdrawal",
+        message: `New withdrawal request of $${amount.toFixed(2)} from ${seller.name}`,
+        data: { withdraw },
+      });
     } catch {
       // best-effort notification
     }

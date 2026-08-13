@@ -2,18 +2,60 @@
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import TableSkeleton from "@/components/ui/TableSkeleton";
-import { useGetAllOrdersAdminQuery } from "@/features/admin/adminApiSlice";
+import {
+  adminApiSlice,
+  useGetAllOrdersAdminQuery,
+} from "@/features/admin/adminApiSlice";
 import Link from "next/link";
-import { useState } from "react";
 import { AiOutlineFileText } from "react-icons/ai";
+import { useEffect, useState } from "react";
+import { useSocket } from "@/hooks/use-socket";
+import { useAppDispatch } from "@/store/hooks";
+import { apiSlice } from "@/lib/api/apiSlice";
+import type { IOrder } from "@/features/orders/orderApiSlice";
 
 export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
+  const socket = useSocket(true);
+  const dispatch = useAppDispatch();
   const { data, isLoading, isError } = useGetAllOrdersAdminQuery({
     page,
     limit: 20,
   });
   const orders = data?.orders ?? [];
+
+  useEffect(() => {
+    const handleNotification = (payload: {
+      type: string;
+      data?: { orders?: IOrder[] };
+    }) => {
+      if (payload.type !== "admin_new_order" || !payload.data?.orders) return;
+      dispatch(
+        adminApiSlice.util.updateQueryData(
+          "getAllOrdersAdmin",
+          { page: 1, limit: 20 },
+          (draft) => {
+            for (const order of payload.data!.orders!) {
+              if (draft.orders.some((o) => o._id === order._id)) continue;
+              draft.orders.unshift(order);
+              draft.pagination.totalItems += 1;
+            }
+            draft.pagination.totalPages = Math.max(
+              Math.ceil(draft.pagination.totalItems / draft.pagination.limit),
+              1,
+            );
+          },
+        ),
+      );
+      dispatch(
+        apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
+      );
+    };
+    socket.on("notification", handleNotification);
+    return () => {
+      socket.off("notification", handleNotification);
+    };
+  }, [socket, dispatch]);
 
   return (
     <div>
@@ -23,7 +65,10 @@ export default function AdminOrdersPage() {
       ) : isError ? (
         <p className="text-sm text-error">Could not load orders.</p>
       ) : orders.length === 0 ? (
-        <EmptyState icon={<AiOutlineFileText size={26} />} title="No orders yet" />
+        <EmptyState
+          icon={<AiOutlineFileText size={26} />}
+          title="No orders yet"
+        />
       ) : (
         <>
           {/* Mobile: card list */}
@@ -38,7 +83,9 @@ export default function AdminOrdersPage() {
                   <span className="font-medium text-primary">
                     #{order._id.slice(-8).toUpperCase()}
                   </span>
-                  <span className="font-semibold">${order.totalPrice.toFixed(2)}</span>
+                  <span className="font-semibold">
+                    ${order.totalPrice.toFixed(2)}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-sm text-muted-foreground">
                   <span>{order.status}</span>
@@ -63,13 +110,20 @@ export default function AdminOrdersPage() {
                 {orders.map((order) => (
                   <tr key={order._id} className="border-t border-border">
                     <td className="px-4 py-3">
-                      <Link href={`/orders/${order._id}`} className="text-primary hover:underline">
+                      <Link
+                        href={`/orders/${order._id}`}
+                        className="text-primary hover:underline"
+                      >
                         #{order._id.slice(-8).toUpperCase()}
                       </Link>
                     </td>
                     <td className="px-4 py-3">{order.status}</td>
-                    <td className="px-4 py-3">${order.totalPrice.toFixed(2)}</td>
-                    <td className="px-4 py-3">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">
+                      ${order.totalPrice.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>

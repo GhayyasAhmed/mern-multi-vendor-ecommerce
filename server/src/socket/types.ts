@@ -1,4 +1,4 @@
-export type SocketRole = "user" | "seller";
+export type SocketRole = "user" | "seller" | "admin";
 
 export interface SocketIdentity {
   role: SocketRole;
@@ -43,4 +43,5 @@ export interface NotificationPayload {
   link?: string;
   read: boolean;
   createdAt: string;
+  data?: Record<string, unknown>;
 }

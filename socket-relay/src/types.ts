@@ -1,6 +1,6 @@
 import type { Server as SocketIOServer, Socket as SocketIOSocket } from "socket.io";
 
-export type SocketRole = "user" | "seller";
+export type SocketRole = "user" | "seller" | "admin";
 
 export interface SocketIdentity {
     role: SocketRole;
