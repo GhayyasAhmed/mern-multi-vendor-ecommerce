@@ -1,5 +1,6 @@
 "use client";
 import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
@@ -8,6 +9,7 @@ import CountDown from "./CountDown";
 
 const EventCard = ({ active = true, data }) => {
   const dispatch = useAppDispatch();
+  const toast = useToast();
   const outOfStock = (data?.stock ?? 0) <= 0;
   const discountPercent =
     data?.originalPrice && data.originalPrice > data.discountPrice
@@ -15,15 +17,24 @@ const EventCard = ({ active = true, data }) => {
       : null;
 
   const handleAddToCart = () => {
-    if (outOfStock || !data) return;
+    if (outOfStock || !data) {
+      toast.showToast({
+      title: `"${data?.name ?? "Event"}" out of stock or not available for sell.`,
+      variant: "error",
+    });
+      return
+    };;
     dispatch(addItem({ item: productToCartItem(data, 1, "event") }));
+    toast.showToast({
+      title: `"${data?.name ?? "Event"}" added to cart`,
+      variant: "success",
+    });
   };
 
   return (
     <div
-      className={`w-full block bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-        active ? "unset" : "mb-12"
-      } lg:flex p-2`}
+      className={`w-full block bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow ${active ? "unset" : "mb-12"
+        } lg:flex p-2`}
     >
       <div className="w-full lg:w-[50%] m-auto relative h-75 bg-muted rounded-md overflow-hidden">
         {discountPercent ? (

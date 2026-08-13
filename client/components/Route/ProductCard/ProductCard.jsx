@@ -1,8 +1,9 @@
 "use client";
 import ProductDetailsCard from "@/components/Route/ProductDetailsCard/ProductDetailsCard";
-import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
+import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
@@ -20,7 +21,7 @@ import {
 
 const ProductCard = ({ data }) => {
   const [open, setOpen] = useState(false);
-
+  const toast = useToast();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useCurrentUser();
@@ -35,8 +36,18 @@ const ProductCard = ({ data }) => {
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    if (outOfStock || !data) return;
+    if (outOfStock || !data) {
+      toast.showToast({
+      title: `"${data?.name ?? "Product"}" out of stock or not available for sell.`,
+      variant: "error",
+    });
+      return
+    };
     dispatch(addItem({ item: productToCartItem(data, 1) }));
+    toast.showToast({
+      title: `"${data?.name ?? "Product"}" added to cart`,
+      variant: "success",
+    });
   };
 
   const handleWishlistToggle = (e) => {

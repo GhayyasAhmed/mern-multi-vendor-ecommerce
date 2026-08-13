@@ -3,6 +3,7 @@ import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useCreateConversationMutation } from "@/features/messaging/conversationApiSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
+import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
@@ -19,7 +20,7 @@ import {
 
 const ProductDetailsCard = ({ setOpen, data }) => {
   const [count, setCount] = useState(1);
-
+  const toast = useToast();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useCurrentUser();
@@ -44,8 +45,18 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   };
 
   const handleAddToCart = () => {
-    if (outOfStock || !data) return;
+    if (outOfStock || !data) {
+      toast.showToast({
+        title: `"${data?.name ?? "Product"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
+      return
+    };
     dispatch(addItem({ item: productToCartItem(data, count) }));
+    toast.showToast({
+      title: `"${data?.name ?? "Product"}" added to cart`,
+      variant: "success",
+    });
     setOpen(false);
   };
 
@@ -201,9 +212,8 @@ const ProductDetailsCard = ({ setOpen, data }) => {
 
               <button
                 type="button"
-                className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center w-full ${
-                  outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                }`}
+                className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center w-full ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  }`}
                 onClick={handleAddToCart}
                 disabled={outOfStock}
               >

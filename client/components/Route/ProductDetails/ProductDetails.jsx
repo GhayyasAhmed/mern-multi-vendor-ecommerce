@@ -11,6 +11,7 @@ import {
   useGetRelatedProductsQuery,
 } from "@/features/products/productApiSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
+import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
 import styles from "@/styles/styles";
 import Image from "next/image";
@@ -27,6 +28,7 @@ import ProductReviews from "./ProductReviews";
 
 const ProductDetails = ({ productId }) => {
   const [count, setCount] = useState(1);
+  const toast = useToast();
   const [activeImage, setActiveImage] = useState(0);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -60,8 +62,18 @@ const ProductDetails = ({ productId }) => {
   };
 
   const handleAddToCart = () => {
-    if (outOfStock || !product) return;
+    if (outOfStock || !product) {
+      toast.showToast({
+        title: `"${product?.name ?? "Product"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
+      return
+    };
     dispatch(addItem({ item: productToCartItem(product, count) }));
+    toast.showToast({
+      title: `"${product?.name ?? "Product"}" added to cart`,
+      variant: "success",
+    });
   };
 
   const { data: relatedData } = useGetRelatedProductsQuery(
@@ -141,9 +153,8 @@ const ProductDetails = ({ productId }) => {
                     type="button"
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 cursor-pointer ${
-                      activeImage === index ? "border-primary" : "border-transparent"
-                    }`}
+                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 cursor-pointer ${activeImage === index ? "border-primary" : "border-transparent"
+                      }`}
                   >
                     <Image
                       src={img.url}

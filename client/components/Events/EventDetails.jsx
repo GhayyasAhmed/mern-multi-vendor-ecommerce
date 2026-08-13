@@ -1,18 +1,20 @@
 "use client";
-import { useState } from "react";
+import Footer from "@/components/Layout/Footer";
+import Header from "@/components/Layout/Header";
+import { getErrorMessage } from "@/features/auth/utils";
+import { addItem, productToCartItem } from "@/features/cart/cartSlice";
+import { useGetEventByIdQuery } from "@/features/events/eventApiSlice";
+import { useToast } from "@/providers/toast-provider";
+import { useAppDispatch } from "@/store/hooks";
+import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
-import styles from "@/styles/styles";
-import { useGetEventByIdQuery } from "@/features/events/eventApiSlice";
-import { useAppDispatch } from "@/store/hooks";
-import { addItem, productToCartItem } from "@/features/cart/cartSlice";
-import { getErrorMessage } from "@/features/auth/utils";
+import { useState } from "react";
 import CountDown from "./CountDown";
 
 const EventDetails = ({ eventId }) => {
   const [count, setCount] = useState(1);
+  const toast = useToast();
   const [activeImage, setActiveImage] = useState(0);
   const dispatch = useAppDispatch();
 
@@ -27,8 +29,18 @@ const EventDetails = ({ eventId }) => {
   const outOfStock = (event?.stock ?? 0) <= 0;
 
   const handleAddToCart = () => {
-    if (outOfStock || !event) return;
+    if (outOfStock || !event) {
+      toast.showToast({
+      title: `"${event?.name ?? "Event"}" out of stock or not available for sell.`,
+      variant: "error",
+    });
+      return
+    };
     dispatch(addItem({ item: productToCartItem(event, count, "event") }));
+    toast.showToast({
+      title: `"${event?.name ?? "Event"}" added to cart`,
+      variant: "success",
+    });
   };
 
   if (isLoading) {
