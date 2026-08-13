@@ -7,6 +7,7 @@ import { createNotification } from "../utils/notifications.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 import sendEmail from "../utils/sendEmail.js";
 import WithdrawModel, { IWithdraw } from "../models/withdraw.model.js";
+import { publishSocketEvent } from "../socket/index.js";
 
 // replace entire createWithdrawRequest export with:
 export const createWithdrawRequest = catchAsyncErrors(
@@ -224,6 +225,11 @@ export const rejectWithdrawRequest = catchAsyncErrors(
         `Your withdrawal request of $${withdraw.amount} was rejected${reason ? `: ${reason}` : "."}`,
         "/seller/dashboard?tab=payouts"
       ).catch(() => { });
+
+      void publishSocketEvent(String(seller._id), "sellerBalanceUpdated", {
+        availableBalance: seller.availableBalance,
+        owedBalance: seller.owedBalance,
+      });
     }
 
     res.status(200).json({ success: true, withdraw });

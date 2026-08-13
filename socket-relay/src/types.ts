@@ -15,6 +15,8 @@ export interface SocketData {
 
 export interface ClientToServerEvents {
     messageSeen: (payload: { receiverId: string; messageId: string }) => void;
+    sendMessage: (payload: { receiverId: string; text?: string }) => void;
+    updateLastMessage: (payload: { receiverId: string; lastMessage: string; lastMessageId: string }) => void;
 }
 
 export interface ServerToClientEvents {
@@ -23,6 +25,12 @@ export interface ServerToClientEvents {
     getLastMessage: (payload: unknown) => void;
     messageSeen: (payload: { senderId: string; receiverId: string; messageId: string }) => void;
     notification: (payload: unknown) => void;
+}
+
+export interface ClientToServerEvents {
+    messageSeen: (payload: { receiverId: string; messageId: string }) => void;
+    sendMessage: (payload: { receiverId: string; text?: string }) => void;
+    updateLastMessage: (payload: { receiverId: string; lastMessage: string; lastMessageId: string }) => void;
 }
 
 export type InterServerEvents = Record<string, never>;

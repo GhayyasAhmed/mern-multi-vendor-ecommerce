@@ -12,6 +12,7 @@ import { calculateCouponDiscount } from "./couponCode.controller.js";
 import { stripe } from "../config/stripe.js";
 // import { emitOrderCreated } from "../socket/index.js";
 import { createNotification } from "../utils/notifications.js";
+import { publishSocketEvent } from "../socket/index.js";
 
 interface ICartItem {
   _id: string;
@@ -317,6 +318,11 @@ export const updateOrderStatus = catchAsyncErrors(
           `Your order #${String(existingOrder._id).slice(-8).toUpperCase()} is now "${existingOrder.status}"`,
           `/orders/${existingOrder._id}`
         ).catch(() => { });
+
+        void publishSocketEvent(String(buyerIdForNotif), "orderStatusUpdated", {
+          orderId: String(existingOrder._id),
+          status: existingOrder.status,
+        });
       }
 
       res.status(200).json({ success: true, order: existingOrder });
@@ -532,6 +538,11 @@ export const orderRefundSuccess = catchAsyncErrors(
         `Your order #${String(finalRefundedOrder._id).slice(-8).toUpperCase()} refund is complete.`,
         `/orders/${finalRefundedOrder._id}`
       ).catch(() => {});
+
+      void publishSocketEvent(String(buyerIdForRefundNotif), "orderStatusUpdated", {
+        orderId: String(finalRefundedOrder._id),
+        status: "Refund Success",
+      });
     }
 
     res.status(200).json({

@@ -3,10 +3,14 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useStore } from "react-redux";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useAppDispatch } from "@/store/hooks";
+import type { RootState } from "@/store";
 import { switchUser } from "@/features/cart/cartSlice";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { orderApiSlice } from "@/features/orders/orderApiSlice";
+import { SOCKET_EVENTS } from "@/constants";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -14,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { user, isLoading } = useCurrentUser({ skip: isSellerOnlyRoute });
   const dispatch = useAppDispatch();
+  const store = useStore<RootState>();
 
   useEffect(() => {
     if (isSellerOnlyRoute) return;
@@ -30,6 +35,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       disconnectSocket();
     }
   }, [isSellerOnlyRoute, isLoading, user?._id]);
+
+  // Real-time order status sync: patches cached order queries directly
+  // (no refetch of the order list) whenever the seller changes an order's
+  // status, so "My Orders" / order details stay in sync live.
+  useEffect(() => {
+    if (isSellerOnlyRoute || !user?._id) return;
+
+    const socket = getSocket();
+    const handleOrderStatusUpdated = (payload: {
+      orderId: string;
+      status: string;
+      deliveredAt?: string;
+    }) => {
+      dispatch(
+        orderApiSlice.util.updateQueryData("getOrderById", payload.orderId, (draft) => {
+          draft.order.status = payload.status;
+          if (payload.deliveredAt) draft.order.deliveredAt = payload.deliveredAt;
+        })
+      );
+
+      const cachedArgs = orderApiSlice.util.selectCachedArgsForQuery(
+        store.getState(),
+        "getMyOrders"
+      );
+      cachedArgs.forEach((arg) => {
+        dispatch(
+          orderApiSlice.util.updateQueryData("getMyOrders", arg, (draft) => {
+            const order = draft.orders.find((o) => o._id === payload.orderId);
+            if (order) {
+              order.status = payload.status;
+              if (payload.deliveredAt) order.deliveredAt = payload.deliveredAt;
+            }
+          })
+        );
+      });
+    };
+
+    socket.on(SOCKET_EVENTS.ORDER_STATUS_UPDATED, handleOrderStatusUpdated);
+    return () => {
+      socket.off(SOCKET_EVENTS.ORDER_STATUS_UPDATED, handleOrderStatusUpdated);
+    };
+  }, [isSellerOnlyRoute, user?._id, dispatch, store]);
 
   return <>{children}</>;
 }

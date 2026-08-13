@@ -40,6 +40,7 @@ import {
   useCreateWithdrawRequestMutation,
   useGetMyWithdrawRequestsQuery,
 } from "@/features/withdraw/withdrawApiSlice";
+import { shopApiSlice } from "@/features/shop/shopApiSlice";
 import { apiSlice } from "@/lib/api/apiSlice";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import {
@@ -145,7 +146,7 @@ export default function SellerDashboard() {
     const socket = connectSocket();
 
     const handleNotification = (payload: { type: string; message: string; link?: string }) => {
-      dispatch(apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]));
+      // dispatch(apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]));
 
       if (payload.type === "new_order") {
         dispatch(apiSlice.util.invalidateTags([
@@ -172,10 +173,25 @@ export default function SellerDashboard() {
       playNotificationSound();
     };
 
+    // Real-time balance sync: patches the cached seller/shop details
+    // directly (no manual refetch) e.g. when an admin rejects a withdrawal
+    // and the reserved amount is returned to availableBalance.
+    const handleBalanceUpdated = (payload: { availableBalance: number; owedBalance?: number }) => {
+      dispatch(
+        shopApiSlice.util.updateQueryData("getSellerDetails", undefined, (draft) => {
+          draft.seller.availableBalance = payload.availableBalance;
+          if (payload.owedBalance !== undefined) draft.seller.owedBalance = payload.owedBalance;
+        })
+      );
+    };
+
+   
     socket.on("notification", handleNotification);
+    socket.on("sellerBalanceUpdated", handleBalanceUpdated);
 
     return () => {
       socket.off("notification", handleNotification);
+      socket.off("sellerBalanceUpdated", handleBalanceUpdated);
       disconnectSocket();
     };
   }, [seller?._id, toast, dispatch, playNotificationSound]);

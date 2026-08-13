@@ -179,16 +179,16 @@ export default function ChatWindow({
         fileInputRef.current.value = "";
       }
 
-      // const displayMessage = trimmed || "[Image]";
-      // socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
-      //   receiverId: peerId,
-      //   text: displayMessage,
-      // });
-      // socket.emit(SOCKET_EVENTS.UPDATE_LAST_MESSAGE, {
-      //   receiverId: peerId,
-      //   lastMessage: displayMessage,
-      //   lastMessageId: conversation._id,
-      // });
+      const displayMessage = trimmed || "[Image]";
+      socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
+        receiverId: peerId,
+        text: displayMessage,
+      });
+      socket.emit(SOCKET_EVENTS.UPDATE_LAST_MESSAGE, {
+        receiverId: peerId,
+        lastMessage: displayMessage,
+        lastMessageId: conversation._id,
+      });
     } catch (error) {
       setFormError(
         getErrorMessage(error, "Could not send message. Please try again."),
