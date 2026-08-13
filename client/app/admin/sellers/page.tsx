@@ -2,6 +2,7 @@
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { NOTIFICATION_SOUND } from "@/constants";
 import {
   adminApiSlice,
   useDeleteSellerAdminMutation,
@@ -15,10 +16,11 @@ import { useConfirm } from "@/providers/confirm-provider";
 import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
 import type { IShop } from "@/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AiOutlineShop } from "react-icons/ai";
 
 export default function AdminSellersPage() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const toast = useToast();
   const socket = useSocket(true);
   const dispatch = useAppDispatch();
@@ -36,22 +38,47 @@ export default function AdminSellersPage() {
   const sellers = data?.sellers ?? [];
 
   useEffect(() => {
-  const handleNotification = (payload: { type: string; data?: { seller?: IShop } }) => {
-    if (payload.type !== "admin_new_seller" || !payload.data?.seller) return;
-    const seller = payload.data.seller;
-    dispatch(adminApiSlice.util.updateQueryData("getAllSellersAdmin", { page: 1, limit: 20 }, (draft) => {
-      if (draft.sellers.some((s) => s._id === seller._id)) return;
-      draft.sellers.unshift(seller);
-      draft.pagination.totalItems += 1;
-      draft.pagination.totalPages = Math.max(Math.ceil(draft.pagination.totalItems / draft.pagination.limit), 1);
-    }));
-    dispatch(apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]));
-  };
-  socket.on("notification", handleNotification);
-  return () => {
-    socket.off("notification", handleNotification)
-  }
-}, [socket, dispatch]);
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handleNotification = (payload: {
+      type: string;
+      data?: { seller?: IShop };
+    }) => {
+      if (payload.type !== "admin_new_seller" || !payload.data?.seller) return;
+      const seller = payload.data.seller;
+      dispatch(
+        adminApiSlice.util.updateQueryData(
+          "getAllSellersAdmin",
+          { page: 1, limit: 20 },
+          (draft) => {
+            if (draft.sellers.some((s) => s._id === seller._id)) return;
+            draft.sellers.unshift(seller);
+            draft.pagination.totalItems += 1;
+            draft.pagination.totalPages = Math.max(
+              Math.ceil(draft.pagination.totalItems / draft.pagination.limit),
+              1,
+            );
+          },
+        ),
+      );
+      dispatch(
+        apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
+      );
+      playNotificationSound()
+    };
+    socket.on("notification", handleNotification);
+    return () => {
+      socket.off("notification", handleNotification);
+    };
+  }, [socket, dispatch, playNotificationSound]);
 
   const handleDelete = async (id: string, sellerName: string) => {
     setActionError(null);

@@ -120,8 +120,7 @@ export default function ChatWindow({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      audioRef.current = new Audio(
-        NOTIFICATION_SOUND,      );
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
     }
   }, []);
 

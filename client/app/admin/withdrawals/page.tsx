@@ -2,6 +2,7 @@
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { NOTIFICATION_SOUND } from "@/constants";
 import {
   adminApiSlice,
   useGetAllWithdrawsAdminQuery,
@@ -15,10 +16,11 @@ import { apiSlice } from "@/lib/api/apiSlice";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useToast } from "@/providers/toast-provider";
 import { useAppDispatch } from "@/store/hooks";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AiOutlineDollarCircle } from "react-icons/ai";
 
 export default function AdminWithdrawalsPage() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const toast = useToast();
   const [page, setPage] = useState(1);
   const socket = useSocket(true);
@@ -34,6 +36,16 @@ export default function AdminWithdrawalsPage() {
     useRejectWithdrawAdminMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const withdraws = data?.withdraws ?? [];
+
+  useEffect(() => {
+      if (typeof window !== "undefined") {
+        audioRef.current = new Audio(NOTIFICATION_SOUND);
+      }
+    }, []);
+  
+    const playNotificationSound = useCallback(() => {
+      audioRef.current?.play().catch(() => {});
+    }, []);
 
   useEffect(() => {
     const handleNotification = (payload: {
@@ -61,12 +73,14 @@ export default function AdminWithdrawalsPage() {
       dispatch(
         apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
       );
+
+      playNotificationSound()
     };
     socket.on("notification", handleNotification);
     return () => {
       socket.off("notification", handleNotification);
     };
-  }, [socket, dispatch]);
+  }, [socket, dispatch, playNotificationSound]);
 
   const handleApprove = async (
     id: string,

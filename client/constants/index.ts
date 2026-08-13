@@ -33,6 +33,7 @@ export const PRODUCT_CATEGORIES = [
   "Others",
 ] as const;
 
-export const NOTIFICATION_SOUND = "https://res.cloudinary.com/dasdrngo1/video/upload/v1715355770/notifications/mixkit-bubble-pop-up-alert-notification-2357_wbwviv.wav"
+// export const NOTIFICATION_SOUND = "https://res.cloudinary.com/dasdrngo1/video/upload/v1715355770/notifications/mixkit-bubble-pop-up-alert-notification-2357_wbwviv.wav"
+export const NOTIFICATION_SOUND = "https://res.cloudinary.com/hkiilsuh/video/upload/v1786640806/new-notification_zulm5o.mp3"
 
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];

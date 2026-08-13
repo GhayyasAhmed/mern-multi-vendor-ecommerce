@@ -2,19 +2,21 @@
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { NOTIFICATION_SOUND } from "@/constants";
 import {
   adminApiSlice,
   useGetAllOrdersAdminQuery,
 } from "@/features/admin/adminApiSlice";
-import Link from "next/link";
-import { AiOutlineFileText } from "react-icons/ai";
-import { useEffect, useState } from "react";
-import { useSocket } from "@/hooks/use-socket";
-import { useAppDispatch } from "@/store/hooks";
-import { apiSlice } from "@/lib/api/apiSlice";
 import type { IOrder } from "@/features/orders/orderApiSlice";
+import { useSocket } from "@/hooks/use-socket";
+import { apiSlice } from "@/lib/api/apiSlice";
+import { useAppDispatch } from "@/store/hooks";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AiOutlineFileText } from "react-icons/ai";
 
 export default function AdminOrdersPage() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [page, setPage] = useState(1);
   const socket = useSocket(true);
   const dispatch = useAppDispatch();
@@ -23,6 +25,16 @@ export default function AdminOrdersPage() {
     limit: 20,
   });
   const orders = data?.orders ?? [];
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleNotification = (payload: {
@@ -50,12 +62,14 @@ export default function AdminOrdersPage() {
       dispatch(
         apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
       );
+
+      playNotificationSound()
     };
     socket.on("notification", handleNotification);
     return () => {
       socket.off("notification", handleNotification);
     };
-  }, [socket, dispatch]);
+  }, [socket, dispatch, playNotificationSound]);
 
   return (
     <div>
