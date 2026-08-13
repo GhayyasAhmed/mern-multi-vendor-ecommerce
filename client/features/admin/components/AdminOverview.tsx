@@ -1,9 +1,10 @@
 "use client";
+import { NOTIFICATION_SOUND } from "@/constants";
 import { useSocket } from "@/hooks/use-socket";
 import { apiSlice } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/store/hooks";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useGetAdminStatsQuery } from "../adminApiSlice";
 
 const ADMIN_STATS_TYPES = new Set([
@@ -33,6 +34,7 @@ function Card({
 }
 
 export default function AdminOverview() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { data, isLoading } = useGetAdminStatsQuery();
   const stats = data?.stats;
 
@@ -40,16 +42,31 @@ export default function AdminOverview() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-  const handleNotification = (payload: { type: string }) => {
-    if (ADMIN_STATS_TYPES.has(payload.type)) {
-      dispatch(apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]));
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
     }
-  };
-  socket.on("notification", handleNotification);
-  return () => {
-    socket.off("notification", handleNotification)
-  };
-}, [socket, dispatch]);
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handleNotification = (payload: { type: string }) => {
+      if (ADMIN_STATS_TYPES.has(payload.type)) {
+        dispatch(
+          apiSlice.util.invalidateTags([
+            { type: "AdminStats", id: "OVERVIEW" },
+          ]),
+        );
+        playNotificationSound();
+      }
+    };
+    socket.on("notification", handleNotification);
+    return () => {
+      socket.off("notification", handleNotification);
+    };
+  }, [socket, dispatch, playNotificationSound]);
 
   return (
     <div>
