@@ -519,7 +519,7 @@ function CardPaymentForm({ isPlacingOrder, onSuccess, onError, trigger }) {
   const elements = useElements();
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handlePayment  = async (e) => {
     e.preventDefault();
 
     // Validate shipping fields before executing card charge
@@ -554,10 +554,11 @@ function CardPaymentForm({ isPlacingOrder, onSuccess, onError, trigger }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       <PaymentElement />
       <button
-        type="submit"
+        type="button"
+        onClick={handlePayment}
         disabled={!stripe || isConfirming || isPlacingOrder}
         className={`${styles.submit_button} w-full mt-2 disabled:opacity-60`}
       >
@@ -565,7 +566,7 @@ function CardPaymentForm({ isPlacingOrder, onSuccess, onError, trigger }) {
           {isConfirming || isPlacingOrder ? "Processing payment..." : "Pay and Place Order"}
         </span>
       </button>
-    </form>
+    </div>
   );
 }
 
