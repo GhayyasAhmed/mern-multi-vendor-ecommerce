@@ -1,0 +1,121 @@
+# Mercovia — local Docker Compose stack (Task 8, Stage 1)
+#
+# Runs client + server + socket-relay, plus a local Redis used only for
+# internal coordination between server and socket-relay (sessions,
+# socket-auth tickets, pub/sub for real-time events).
+#
+# MongoDB is intentionally NOT containerized — the app connects to your
+# existing external MongoDB (e.g. your MongoDB Atlas cluster), exactly
+# like the current Vercel deployment does. Set MONGO_URI in your .env.
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: mercovia-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - mercovia-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: mercovia-server
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # NODE_ENV=development (not "production") is intentional: it keeps
+      # auth cookies as sameSite=lax/secure=false, which is required for
+      # them to work over plain http://localhost. The server still runs
+      # the compiled production JavaScript (dist/server.js) — this only
+      # affects cookie flags and JWT-secret fallback behavior, not which
+      # code runs. Use NODE_ENV=production only behind real HTTPS.
+      NODE_ENV: development
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3000
+      MONGO_URI: ${MONGO_URI}
+      REDIS_URL: redis://redis:6379
+      ACCESS_TOKEN: ${ACCESS_TOKEN}
+      REFRESH_TOKEN: ${REFRESH_TOKEN}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRES: ${JWT_EXPIRES:-5}
+      ACCESS_TOKEN_EXPIRE: ${ACCESS_TOKEN_EXPIRE:-2}
+      REFRESH_TOKEN_EXPIRE: ${REFRESH_TOKEN_EXPIRE:-24}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-usd}
+      COMPANY_NAME: ${COMPANY_NAME:-Mercovia}
+      SMPT_HOST: ${SMPT_HOST}
+      SMPT_PORT: ${SMPT_PORT:-587}
+      SMTP_SERVICE: ${SMTP_SERVICE}
+      SMTP_MAIL: ${SMTP_MAIL}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    ports:
+      - "3001:3001"
+    networks:
+      - mercovia-network
+
+  socket-relay:
+    build:
+      context: ./socket-relay
+      dockerfile: Dockerfile
+    container_name: mercovia-socket-relay
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      REDIS_URL: redis://redis:6379
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "4000:4000"
+    networks:
+      - mercovia-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD: "1"
+        # Server-side rewrite target — reaches the "server" container
+        # directly over the internal Docker network.
+        BACKEND_API_URL: http://server:3001/api/v1
+        # Browser-facing values — must be reachable from YOUR machine's
+        # browser, not from inside Docker.
+        NEXT_PUBLIC_API_URL: /api/v1
+        NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    container_name: mercovia-client
+    restart: unless-stopped
+    depends_on:
+      - server
+      - socket-relay
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    networks:
+      - mercovia-network
+
+networks:
+  mercovia-network:
+    driver: bridge

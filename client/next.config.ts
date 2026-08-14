@@ -10,6 +10,12 @@ const backendOrigin =
     : undefined);
 
 const nextConfig: NextConfig = {
+  // "standalone" produces a minimal, self-contained server.js under
+  // .next/standalone that client/Dockerfile copies into the runtime
+  // image. Only enabled inside the Docker build (DOCKER_BUILD is set as
+  // a build ARG in client/Dockerfile) — Vercel's build never sets this,
+  // so the existing Vercel deployment is completely unaffected.
+  ...(process.env.DOCKER_BUILD ? { output: "standalone" as const } : {}),
   reactCompiler: true,
   images: {
     remotePatterns: [
