@@ -1,12 +1,17 @@
-# Mercovia — local Docker Compose stack (Task 8, Stage 1)
+# Mercovia — Docker Compose stack (EC2 production variant)
 #
 # Runs client + server + socket-relay, plus a local Redis used only for
 # internal coordination between server and socket-relay (sessions,
 # socket-auth tickets, pub/sub for real-time events).
 #
 # MongoDB is intentionally NOT containerized — the app connects to your
-# existing external MongoDB (e.g. your MongoDB Atlas cluster), exactly
-# like the current Vercel deployment does. Set MONGO_URI in your .env.
+# existing external MongoDB (e.g. MongoDB Atlas), exactly like the
+# Vercel deployment does. Set MONGO_URI in your .env.
+#
+# All app ports (3000/3001/4000) are bound to 127.0.0.1 only. Nginx,
+# running directly on the EC2 host, is the sole public entry point on
+# port 80. This keeps the backend and socket-relay unreachable from the
+# internet even if someone probes the instance's IP directly.
 
 services:
   redis:
@@ -31,15 +36,16 @@ services:
       redis:
         condition: service_healthy
     environment:
-      # NODE_ENV=development (not "production") is intentional: it keeps
-      # auth cookies as sameSite=lax/secure=false, which is required for
-      # them to work over plain http://localhost. The server still runs
-      # the compiled production JavaScript (dist/server.js) — this only
-      # affects cookie flags and JWT-secret fallback behavior, not which
-      # code runs. Use NODE_ENV=production only behind real HTTPS.
+      # NODE_ENV=development (not "production") is intentional here too:
+      # it keeps auth cookies as sameSite=lax/secure=false, required
+      # because this deployment serves plain http:// (no TLS/domain yet).
+      # The server still runs the compiled production JavaScript
+      # (dist/server.js) — this only affects cookie flags and the JWT
+      # dev-secret fallback, not which code runs. Switch to "production"
+      # once you put a real domain + HTTPS in front of this (see §11).
       NODE_ENV: development
       PORT: 3001
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: ${PUBLIC_ORIGIN}
       MONGO_URI: ${MONGO_URI}
       REDIS_URL: redis://redis:6379
       ACCESS_TOKEN: ${ACCESS_TOKEN}
@@ -66,7 +72,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     networks:
       - mercovia-network
 
@@ -82,9 +88,9 @@ services:
     environment:
       PORT: 4000
       REDIS_URL: redis://redis:6379
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: ${PUBLIC_ORIGIN}
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     networks:
       - mercovia-network
 
@@ -95,13 +101,13 @@ services:
       args:
         DOCKER_BUILD: "1"
         # Server-side rewrite target — reaches the "server" container
-        # directly over the internal Docker network.
+        # directly over the internal Docker network. Never exposed to
+        # the browser.
         BACKEND_API_URL: http://server:3001/api/v1
-        # Browser-facing values — must be reachable from YOUR machine's
-        # browser, not from inside Docker.
+        # Browser-facing values.
         NEXT_PUBLIC_API_URL: /api/v1
-        NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
-        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+        NEXT_PUBLIC_SOCKET_URL: ${PUBLIC_ORIGIN}
+        NEXT_PUBLIC_SITE_URL: ${PUBLIC_ORIGIN}
     container_name: mercovia-client
     restart: unless-stopped
     depends_on:
@@ -112,7 +118,7 @@ services:
       PORT: 3000
       HOSTNAME: 0.0.0.0
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - mercovia-network
 
