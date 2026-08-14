@@ -94,7 +94,7 @@ export const createOrder = catchAsyncErrors(
             const reserved = await Model.findOneAndUpdate(
               { _id: item._id, stock: { $gte: item.qty } },
               { $inc: { stock: -item.qty, sold_out: item.qty } },
-              { session, new: true }
+              { session, returnDocument: 'after' }
             );
 
             if (!reserved) {
@@ -363,7 +363,7 @@ export const updateOrderStatus = catchAsyncErrors(
               sellerCreditedAmount: netAmount,
             },
           },
-          { new: true, session }
+          { returnDocument: 'after', session }
         );
 
         if (!updated) {
@@ -415,6 +415,12 @@ export const updateOrderStatus = catchAsyncErrors(
         `Your order #${String(finalOrder._id).slice(-8).toUpperCase()} is now "Delivered"`,
         `/orders/${finalOrder._id}`
       ).catch(() => { });
+
+      void publishSocketEvent(String(buyerIdForNotif), "orderStatusUpdated", {
+        orderId: String(finalOrder._id),
+        status: finalOrder.status,
+        deliveredAt: finalOrder.deliveredAt ? finalOrder.deliveredAt.toISOString() : undefined,
+      });
     }
 
     res.status(200).json({ success: true, order: finalOrder });
@@ -442,7 +448,7 @@ export const orderRefund = catchAsyncErrors(
     const updated = await OrderModel.findOneAndUpdate(
       { _id: existingOrder._id, status: "Delivered" },
       { $set: { status: "Processing Refund" } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updated) {
@@ -494,6 +500,7 @@ export const orderRefundSuccess = catchAsyncErrors(
     const session = await mongoose.startSession();
     let refundedOrder: IOrder | null = null;
     let updatedBalance: { availableBalance: number; owedBalance: number } | null = null;
+    const restockUpdates: Array<{ id: string; stock: number; kind: "product" | "event" }> = [];
 
     try {
       await session.withTransaction(async () => {
@@ -503,7 +510,7 @@ export const orderRefundSuccess = catchAsyncErrors(
         const updated = await OrderModel.findOneAndUpdate(
           { _id: preCheckOrder._id, status: "Processing Refund" },
           { $set: { status: "Refund Success" } },
-          { new: true, session }
+          { returnDocument: 'after', session }
         );
 
         if (!updated) {
@@ -550,6 +557,14 @@ export const orderRefundSuccess = catchAsyncErrors(
             { $inc: { stock: item.qty, sold_out: -item.qty } },
             { session }
           );
+          const restocked = await Model.findByIdAndUpdate(
+            item._id,
+            { $inc: { stock: item.qty, sold_out: -item.qty } },
+            { session, returnDocument: 'after' }
+          );
+          if (restocked) {
+            restockUpdates.push({ id: String(item._id), stock: restocked.stock, kind: isEvent ? "event" : "product" });
+          }
         }
 
         refundedOrder = updated;
@@ -560,6 +575,10 @@ export const orderRefundSuccess = catchAsyncErrors(
 
     if (updatedBalance) {
       void publishSocketEvent(String(sellerId), "sellerBalanceUpdated", updatedBalance);
+    }
+
+    for (const update of restockUpdates) {
+      void publishSocketEvent("public", "stockUpdated", update);
     }
 
     const finalRefundedOrder = refundedOrder as unknown as IOrder;

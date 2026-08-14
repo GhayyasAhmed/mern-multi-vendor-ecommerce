@@ -13,23 +13,23 @@ export function registerChatHandlers(socket: AppSocket): void {
   });
 
 
-  socket.on("sendMessage", ({ receiverId, text }) => {
-    if (!receiverId) return;
-    socket.to(receiverId).emit("getMessage", {
-      senderId: identityId,
-      receiverId,
-      text,
-      seen: false,
-      createdAt: new Date().toISOString(),
-    });
-  });
+  // socket.on("sendMessage", ({ receiverId, text }) => {
+  //   if (!receiverId) return;
+  //   socket.to(receiverId).emit("getMessage", {
+  //     senderId: identityId,
+  //     receiverId,
+  //     text,
+  //     seen: false,
+  //     createdAt: new Date().toISOString(),
+  //   });
+  // });
 
-  socket.on("updateLastMessage", ({ receiverId, lastMessage, lastMessageId }) => {
-    if (!receiverId) return;
-    socket.to(receiverId).to(identityId).emit("getLastMessage", {
-      receiverId,
-      lastMessage,
-      lastMessageId,
-    });
-  });
+  // socket.on("updateLastMessage", ({ receiverId, lastMessage, lastMessageId }) => {
+  //   if (!receiverId) return;
+  //   socket.to(receiverId).to(identityId).emit("getLastMessage", {
+  //     receiverId,
+  //     lastMessage,
+  //     lastMessageId,
+  //   });
+  // });
 }

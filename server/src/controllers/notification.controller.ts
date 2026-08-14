@@ -41,7 +41,7 @@ export const markNotificationRead = catchAsyncErrors(
     const notification = await NotificationModel.findOneAndUpdate(
       { _id: req.params.id, recipientId: identity.id },
       { $set: { read: true } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!notification) return next(new ErrorHandler("Notification not found", 404));

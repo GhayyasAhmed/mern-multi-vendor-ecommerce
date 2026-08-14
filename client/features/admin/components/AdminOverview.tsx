@@ -11,6 +11,8 @@ const ADMIN_STATS_TYPES = new Set([
   "admin_new_order",
   "admin_new_withdrawal",
   "admin_new_seller",
+  "admin_seller_status",
+  "admin_withdraw_status",
 ]);
 
 function Card({

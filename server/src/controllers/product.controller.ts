@@ -433,7 +433,7 @@ export const createNewReview = catchAsyncErrors(
     await OrderModel.findByIdAndUpdate(
       orderId,
       { $set: { "cart.$[elem].isReviewed": true } },
-      { arrayFilters: [{ "elem._id": productId }], new: true }
+      { arrayFilters: [{ "elem._id": productId }], returnDocument: 'after' }
     );
 
     res.status(200).json({ success: true, message: "Reviewed successfully!" });

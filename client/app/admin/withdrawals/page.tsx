@@ -15,11 +15,14 @@ import { useSocket } from "@/hooks/use-socket";
 import { apiSlice } from "@/lib/api/apiSlice";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useToast } from "@/providers/toast-provider";
+import type { RootState } from "@/store";
 import { useAppDispatch } from "@/store/hooks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AiOutlineDollarCircle } from "react-icons/ai";
+import { useStore } from "react-redux";
 
 export default function AdminWithdrawalsPage() {
+  const store = useStore<RootState>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const toast = useToast();
   const [page, setPage] = useState(1);
@@ -38,49 +41,55 @@ export default function AdminWithdrawalsPage() {
   const withdraws = data?.withdraws ?? [];
 
   useEffect(() => {
-      if (typeof window !== "undefined") {
-        audioRef.current = new Audio(NOTIFICATION_SOUND);
-      }
-    }, []);
-  
-    const playNotificationSound = useCallback(() => {
-      audioRef.current?.play().catch(() => {});
-    }, []);
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    audioRef.current?.play().catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleNotification = (payload: {
       type: string;
       data?: { withdraw?: IWithdrawRequest };
     }) => {
-      if (payload.type !== "admin_new_withdrawal" || !payload.data?.withdraw)
+      if (payload.type === "admin_new_withdrawal" && payload.data?.withdraw) {
+        // unchanged existing logic
         return;
-      const withdraw = payload.data.withdraw;
-      dispatch(
-        adminApiSlice.util.updateQueryData(
-          "getAllWithdrawsAdmin",
-          { page: 1, limit: 20 },
-          (draft) => {
-            if (draft.withdraws.some((w) => w._id === withdraw._id)) return;
-            draft.withdraws.unshift(withdraw);
-            draft.pagination.totalItems += 1;
-            draft.pagination.totalPages = Math.max(
-              Math.ceil(draft.pagination.totalItems / draft.pagination.limit),
-              1,
+      }
+      if (payload.type === "admin_withdraw_status" && payload.data?.withdraw) {
+        const withdraw = payload.data.withdraw;
+        adminApiSlice.util
+          .selectCachedArgsForQuery(store.getState(), "getAllWithdrawsAdmin")
+          .forEach((arg) => {
+            dispatch(
+              adminApiSlice.util.updateQueryData(
+                "getAllWithdrawsAdmin",
+                arg,
+                (draft) => {
+                  const existing = draft.withdraws.find(
+                    (w) => w._id === withdraw._id,
+                  );
+                  if (existing) existing.status = withdraw.status;
+                },
+              ),
             );
-          },
-        ),
-      );
-      dispatch(
-        apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
-      );
-
-      playNotificationSound()
+          });
+        dispatch(
+          apiSlice.util.invalidateTags([
+            { type: "AdminStats", id: "OVERVIEW" },
+          ]),
+        );
+        playNotificationSound();
+      }
     };
     socket.on("notification", handleNotification);
     return () => {
       socket.off("notification", handleNotification);
     };
-  }, [socket, dispatch, playNotificationSound]);
+  }, [socket, dispatch, playNotificationSound, store]);
 
   const handleApprove = async (
     id: string,

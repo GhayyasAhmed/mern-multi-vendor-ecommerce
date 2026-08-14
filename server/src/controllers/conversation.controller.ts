@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import ConversationModel, { IConversation } from "../models/conversation.model.js";
-import ShopModel from "../models/shop.model.js";
-import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
+import ShopModel, { IShop } from "../models/shop.model.js";
+import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
+import { publishSocketEvent } from "../socket/index.js";
 
 const getUnreadCount = (conversation: IConversation, memberId: string): number => {
   const unreadCounts = conversation.unreadCounts;
@@ -31,16 +32,17 @@ export const createNewConversation = catchAsyncErrors(
 
     const { sellerId } = req.body;
 
-    const shop = await ShopModel.findById(sellerId);
+    const shop: IShop | null = await ShopModel.findById(sellerId);
 
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
     }
 
     const userId = String(req.user._id);
-    const groupTitle = `${userId}_${String(shop._id)}`;
+    const groupTitle: string = `${userId}_${String(shop._id)}`;
 
-    let conversation = await ConversationModel.findOne({ groupTitle });
+    let conversation: IConversation | null = await ConversationModel.findOne({ groupTitle });
+    let isNewConversation = !conversation;
 
     if (!conversation) {
       const conversationData = {
@@ -65,6 +67,7 @@ export const createNewConversation = catchAsyncErrors(
       } catch (error: any) {
         if (error?.code === 11000) {
           conversation = await ConversationModel.findOne({ groupTitle });
+          isNewConversation = false;
         } else {
           throw error;
         }
@@ -73,6 +76,10 @@ export const createNewConversation = catchAsyncErrors(
 
     if (!conversation) {
       return next(new ErrorHandler("Could not start conversation", 500));
+    }
+
+    if (isNewConversation) {
+      void publishSocketEvent(String(shop._id), "newConversation", decorateForMember(conversation, String(shop._id)));
     }
 
     res.status(201).json({
@@ -146,8 +153,8 @@ export const updateLastMessage = catchAsyncErrors(
     const identityId = req.user?._id
       ? String(req.user._id)
       : req.seller?._id
-        ? String(req.seller._id)
-        : undefined;
+      ? String(req.seller._id)
+      : undefined;
 
     if (!identityId) {
       return next(new ErrorHandler("Please login to access this resource", 401));

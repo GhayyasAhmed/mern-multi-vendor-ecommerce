@@ -6,6 +6,7 @@ import {
   conversationApiSlice,
   useGetSellerConversationsQuery,
   useGetUserConversationsQuery,
+  type IConversation,
 } from "@/features/messaging/conversationApiSlice";
 import { useSocket } from "@/hooks/use-socket";
 import { useAppDispatch } from "@/store/hooks";
@@ -67,7 +68,8 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
 
   useEffect(() => {
     if (!identityId) return;
-    const listEndpoint = role === "user" ? "getUserConversations" : "getSellerConversations";
+    const listEndpoint =
+      role === "user" ? "getUserConversations" : "getSellerConversations";
 
     const handleLastMessage = (payload: {
       conversationId: string;
@@ -95,24 +97,47 @@ export default function InboxPanel({ role, identityId }: InboxPanelProps) {
     const handleGetMessage = (payload: { conversationId: string }) => {
       if (payload.conversationId === activeConversationId) return;
       dispatch(
-          conversationApiSlice.util.updateQueryData(
-            listEndpoint,
-            { id: identityId, page },
-            (draft) => {
-              const conv = draft?.conversations?.find(
-                (c) => c._id === payload.conversationId,
-              );
-              if (conv) conv.unreadCount = (conv.unreadCount ?? 0) + 1;
-            },
-          ),
-        );
+        conversationApiSlice.util.updateQueryData(
+          listEndpoint,
+          { id: identityId, page },
+          (draft) => {
+            const conv = draft?.conversations?.find(
+              (c) => c._id === payload.conversationId,
+            );
+            if (conv) conv.unreadCount = (conv.unreadCount ?? 0) + 1;
+          },
+        ),
+      );
+    };
+
+    const handleNewConversation = (conversation: IConversation) => {
+      if (page !== 1) return; // new conversations always sort to the top
+      dispatch(
+        conversationApiSlice.util.updateQueryData(
+          listEndpoint,
+          { id: identityId, page },
+          (draft) => {
+            if (!draft?.conversations) return;
+            if (draft.conversations.some((c) => c._id === conversation._id))
+              return;
+            draft.conversations.unshift(conversation);
+            draft.pagination.totalItems += 1;
+            draft.pagination.totalPages = Math.max(
+              Math.ceil(draft.pagination.totalItems / draft.pagination.limit),
+              1,
+            );
+          },
+        ),
+      );
     };
 
     socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
     socket.on(SOCKET_EVENTS.GET_LAST_MESSAGE, handleLastMessage);
+    socket.on("newConversation", handleNewConversation);
     return () => {
       socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
       socket.off(SOCKET_EVENTS.GET_LAST_MESSAGE, handleLastMessage);
+      socket.off("newConversation", handleNewConversation);
     };
   }, [socket, dispatch, identityId, role, page, activeConversationId]);
 

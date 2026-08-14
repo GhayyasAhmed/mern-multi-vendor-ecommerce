@@ -95,12 +95,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stock: number;
       kind?: "product" | "event";
     }) => {
+      const state = store.getState();
       if (payload.kind === "event") {
         dispatch(
-          eventApiSlice.util.updateQueryData("getEventById", payload.id, (draft) => {
-            if (draft.event) draft.event.stock = payload.stock;
-          }),
+          eventApiSlice.util.updateQueryData(
+            "getEventById",
+            payload.id,
+            (draft) => {
+              if (draft.event) draft.event.stock = payload.stock;
+            },
+          ),
         );
+        eventApiSlice.util
+          .selectCachedArgsForQuery(state, "getShopEvents")
+          .forEach((arg) =>
+            dispatch(
+              eventApiSlice.util.updateQueryData(
+                "getShopEvents",
+                arg,
+                (draft) => {
+                  const e = draft.events.find((e) => e._id === payload.id);
+                  if (e) e.stock = payload.stock;
+                },
+              ),
+            ),
+          );
+        eventApiSlice.util
+          .selectCachedArgsForQuery(state, "getAllEvents")
+          .forEach((arg) =>
+            dispatch(
+              eventApiSlice.util.updateQueryData(
+                "getAllEvents",
+                arg,
+                (draft) => {
+                  const e = draft.events.find((e) => e._id === payload.id);
+                  if (e) e.stock = payload.stock;
+                },
+              ),
+            ),
+          );
       } else {
         dispatch(
           productApiSlice.util.updateQueryData(
@@ -111,6 +144,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
           ),
         );
+        productApiSlice.util
+          .selectCachedArgsForQuery(state, "getShopProducts")
+          .forEach((arg) =>
+            dispatch(
+              productApiSlice.util.updateQueryData(
+                "getShopProducts",
+                arg,
+                (draft) => {
+                  const p = draft.products.find((p) => p._id === payload.id);
+                  if (p) p.stock = payload.stock;
+                },
+              ),
+            ),
+          );
+        productApiSlice.util
+          .selectCachedArgsForQuery(state, "getAllProducts")
+          .forEach((arg) =>
+            dispatch(
+              productApiSlice.util.updateQueryData(
+                "getAllProducts",
+                arg,
+                (draft) => {
+                  const p = draft.products.find((p) => p._id === payload.id);
+                  if (p) p.stock = payload.stock;
+                },
+              ),
+            ),
+          );
+        productApiSlice.util
+          .selectCachedArgsForQuery(state, "getRelatedProducts")
+          .forEach((arg) =>
+            dispatch(
+              productApiSlice.util.updateQueryData(
+                "getRelatedProducts",
+                arg,
+                (draft) => {
+                  const p = draft.products.find((p) => p._id === payload.id);
+                  if (p) p.stock = payload.stock;
+                },
+              ),
+            ),
+          );
       }
       dispatch(
         syncItemAvailability({ productId: payload.id, stock: payload.stock }),
@@ -121,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       socket.off("stockUpdated", handleStockUpdated);
     };
-  }, [isSellerOnlyRoute, user?._id, dispatch]);
+  }, [isSellerOnlyRoute, user?._id, dispatch, store]);
 
   return <>{children}</>;
 }

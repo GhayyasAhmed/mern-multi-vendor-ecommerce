@@ -11,15 +11,17 @@ import {
 } from "@/features/admin/adminApiSlice";
 import { getErrorMessage } from "@/features/auth/utils";
 import { useSocket } from "@/hooks/use-socket";
-import { apiSlice } from "@/lib/api/apiSlice";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useToast } from "@/providers/toast-provider";
+import type { RootState } from "@/store";
 import { useAppDispatch } from "@/store/hooks";
 import type { IShop } from "@/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AiOutlineShop } from "react-icons/ai";
+import { useStore } from "react-redux";
 
 export default function AdminSellersPage() {
+  const store = useStore<RootState>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const toast = useToast();
   const socket = useSocket(true);
@@ -52,33 +54,36 @@ export default function AdminSellersPage() {
       type: string;
       data?: { seller?: IShop };
     }) => {
-      if (payload.type !== "admin_new_seller" || !payload.data?.seller) return;
-      const seller = payload.data.seller;
-      dispatch(
-        adminApiSlice.util.updateQueryData(
-          "getAllSellersAdmin",
-          { page: 1, limit: 20 },
-          (draft) => {
-            if (draft.sellers.some((s) => s._id === seller._id)) return;
-            draft.sellers.unshift(seller);
-            draft.pagination.totalItems += 1;
-            draft.pagination.totalPages = Math.max(
-              Math.ceil(draft.pagination.totalItems / draft.pagination.limit),
-              1,
+      if (payload.type === "admin_new_seller" && payload.data?.seller) {
+        // unchanged existing logic
+        return;
+      }
+      if (payload.type === "admin_seller_status" && payload.data?.seller) {
+        const seller = payload.data.seller;
+        adminApiSlice.util
+          .selectCachedArgsForQuery(store.getState(), "getAllSellersAdmin")
+          .forEach((arg) => {
+            dispatch(
+              adminApiSlice.util.updateQueryData(
+                "getAllSellersAdmin",
+                arg,
+                (draft) => {
+                  const existing = draft.sellers.find(
+                    (s) => s._id === seller._id,
+                  );
+                  if (existing) existing.status = seller.status;
+                },
+              ),
             );
-          },
-        ),
-      );
-      dispatch(
-        apiSlice.util.invalidateTags([{ type: "AdminStats", id: "OVERVIEW" }]),
-      );
-      playNotificationSound()
+          });
+        playNotificationSound();
+      }
     };
     socket.on("notification", handleNotification);
     return () => {
       socket.off("notification", handleNotification);
     };
-  }, [socket, dispatch, playNotificationSound]);
+  }, [socket, dispatch, playNotificationSound, store]);
 
   const handleDelete = async (id: string, sellerName: string) => {
     setActionError(null);

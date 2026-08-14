@@ -6,7 +6,7 @@ import CardListSkeleton from "@/components/ui/CardListSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { NOTIFICATION_SOUND, PRODUCT_CATEGORIES } from "@/constants";
+import { PRODUCT_CATEGORIES } from "@/constants";
 import { getErrorMessage, readFileAsBase64 } from "@/features/auth/utils";
 import {
   useCreateCouponCodeMutation,
@@ -62,9 +62,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  useCallback,
   useEffect,
-  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -120,7 +118,6 @@ const ORDER_STATUSES = [
 ];
 
 export default function SellerDashboard() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { seller } = useCurrentSeller();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -141,15 +138,6 @@ export default function SellerDashboard() {
 
   const toast = useToast();
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      audioRef.current = new Audio(NOTIFICATION_SOUND);
-    }
-  }, []);
-
-  const playNotificationSound = useCallback(() => {
-    audioRef.current?.play().catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!seller?._id) return;
@@ -165,13 +153,6 @@ export default function SellerDashboard() {
       // dispatch(apiSlice.util.invalidateTags([{ type: "Notification", id: "LIST" }]));
 
       if (payload.type === "new_order") {
-        dispatch(
-          apiSlice.util.invalidateTags([
-            { type: "Order", id: "SELLER-LIST" },
-            { type: "AdminStats", id: "OVERVIEW" },
-          ]),
-        );
-
         const order = payload.data?.order;
         if (order) {
           dispatch(
@@ -245,7 +226,7 @@ export default function SellerDashboard() {
       //   );
       // }
 
-      playNotificationSound();
+      // playNotificationSound();
     };
 
     // Real-time balance sync: patches the cached seller/shop details
@@ -278,7 +259,7 @@ export default function SellerDashboard() {
       socket.off("sellerBalanceUpdated", handleBalanceUpdated);
       disconnectSocket();
     };
-  }, [seller?._id, toast, dispatch, playNotificationSound]);
+  }, [seller?._id, toast, dispatch]);
 
   if (!seller) return null;
 

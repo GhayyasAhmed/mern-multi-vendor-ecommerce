@@ -30,7 +30,7 @@ export const createWithdrawRequest = catchAsyncErrors(
         const shop = await ShopModel.findOneAndUpdate(
           { _id: seller._id, availableBalance: { $gte: amount } },
           { $inc: { availableBalance: -amount } },
-          { new: true, session }
+          { returnDocument: 'after', session }
         );
 
         if (!shop) {
@@ -122,7 +122,7 @@ export const updateWithdrawRequest = catchAsyncErrors(
     const withdraw = await WithdrawModel.findOneAndUpdate(
       { _id: withdrawId, status: "Processing" },
       { status: "succeed", updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!withdraw) {
@@ -167,6 +167,16 @@ export const updateWithdrawRequest = catchAsyncErrors(
       message: `Hello ${seller.name}, Your withdraw request of ${withdraw.amount}$ is on the way. Delivery time depends on your bank's rules it usually takes 3days to 7days.`,
     });
 
+    void publishSocketEvent(String(seller._id), "sellerBalanceUpdated", {
+      availableBalance: seller.availableBalance,
+      owedBalance: seller.owedBalance,
+    });
+    void publishSocketEvent("admin", "notification", {
+      type: "admin_withdraw_status",
+      message: `Withdrawal of $${withdraw.amount.toFixed(2)} for ${seller.name} marked as paid`,
+      data: { withdraw },
+    });
+
     res.status(201).json({
       success: true,
       withdraw,
@@ -191,7 +201,7 @@ export const rejectWithdrawRequest = catchAsyncErrors(
         const updated = await WithdrawModel.findOneAndUpdate(
           { _id: withdrawId, status: "Processing" },
           { $set: { status: "rejected", rejectionReason: reason } },
-          { new: true, session }
+          { returnDocument: 'after', session }
         );
 
         if (!updated) {
@@ -234,6 +244,12 @@ export const rejectWithdrawRequest = catchAsyncErrors(
       void publishSocketEvent(String(seller._id), "sellerBalanceUpdated", {
         availableBalance: seller.availableBalance,
         owedBalance: seller.owedBalance,
+      });
+
+      void publishSocketEvent("admin", "notification", {
+        type: "admin_withdraw_status",
+        message: `Withdrawal of $${withdraw.amount.toFixed(2)} for ${seller.name} rejected`,
+        data: { withdraw },
       });
     }
 

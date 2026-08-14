@@ -387,7 +387,7 @@ export const updatePaymentMethods = catchAsyncErrors(
     const shop = await Shop.findByIdAndUpdate(
       req.seller._id,
       { withdrawMethod: sanitizedWithdrawMethod },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!shop) {
@@ -478,7 +478,7 @@ export const updateShopStatus = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     const { status } = req.body as { status: "pending" | "active" | "suspended" };
 
-    const shop = await Shop.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+    const shop = await Shop.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after', runValidators: true });
     if (!shop) {
       return next(new ErrorHandler("Shop not found", 404));
     }
@@ -501,6 +501,12 @@ export const updateShopStatus = catchAsyncErrors(
     } catch {
       // best-effort
     }
+
+    void publishSocketEvent("admin", "notification", {
+      type: "admin_seller_status",
+      message: `${shop.name}'s shop status changed to "${status}"`,
+      data: { shop },
+    });
 
     res.status(200).json({ success: true, shop });
   }

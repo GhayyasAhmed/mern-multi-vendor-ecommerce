@@ -1,7 +1,7 @@
 "use client";
 import EmptyState from "@/components/ui/EmptyState";
 import { ProductGridSkeleton } from "@/components/ui/ProductCardSkeleton";
-import { NOTIFICATION_SOUND, SOCKET_EVENTS } from "@/constants";
+import { SOCKET_EVENTS } from "@/constants";
 import { getErrorMessage } from "@/features/auth/utils";
 import {
   useGetMessagesQuery,
@@ -12,7 +12,7 @@ import {
 } from "@/features/messaging/conversationApiSlice";
 import { useSocket } from "@/hooks/use-socket";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiOutlineArrowLeft, AiOutlineMessage } from "react-icons/ai";
 
 interface ChatWindowProps {
@@ -64,7 +64,6 @@ export default function ChatWindow({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const socket = useSocket(true);
 
   const messages = useMemo(() => {
@@ -119,31 +118,18 @@ export default function ChatWindow({
   }, [messages.length]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      audioRef.current = new Audio(NOTIFICATION_SOUND);
-    }
-  }, []);
-
-  const playNotificationSound = useCallback(() => {
-    audioRef.current?.play().catch(() => {});
-  }, []);
-
-  useEffect(() => {
     const handleGetMessage = (payload: {
       senderId: string;
       receiverId: string;
     }) => {
-      if (payload.senderId === peerId && payload.receiverId === identityId) {
+      if (payload.senderId === peerId && payload.receiverId === identityId)
         refetch();
-      }
-      playNotificationSound()
     };
-
     socket.on(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
     return () => {
       socket.off(SOCKET_EVENTS.GET_MESSAGE, handleGetMessage);
     };
-  }, [socket, peerId, identityId, refetch, playNotificationSound]);
+  }, [socket, peerId, identityId, refetch]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,16 +164,16 @@ export default function ChatWindow({
         fileInputRef.current.value = "";
       }
 
-      const displayMessage = trimmed || "[Image]";
-      socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
-        receiverId: peerId,
-        text: displayMessage,
-      });
-      socket.emit(SOCKET_EVENTS.UPDATE_LAST_MESSAGE, {
-        receiverId: peerId,
-        lastMessage: displayMessage,
-        lastMessageId: conversation._id,
-      });
+      // const displayMessage = trimmed || "[Image]";
+      // socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
+      //   receiverId: peerId,
+      //   text: displayMessage,
+      // });
+      // socket.emit(SOCKET_EVENTS.UPDATE_LAST_MESSAGE, {
+      //   receiverId: peerId,
+      //   lastMessage: displayMessage,
+      //   lastMessageId: conversation._id,
+      // });
     } catch (error) {
       setFormError(
         getErrorMessage(error, "Could not send message. Please try again."),
@@ -221,7 +207,9 @@ export default function ChatWindow({
         <p className="font-medium text-sm text-foreground">
           {peer?.name || "Unknown"}
         </p>
-        <p className={`text-xs font-bold ${isPeerOnline ? "text-success" : "text-muted-foreground"} `}>
+        <p
+          className={`text-xs font-bold ${isPeerOnline ? "text-success" : "text-muted-foreground"} `}
+        >
           {isPeerOnline ? "Online" : "Offline"}
         </p>
       </div>
