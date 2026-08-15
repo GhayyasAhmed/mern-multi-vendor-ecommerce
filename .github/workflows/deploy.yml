@@ -1,0 +1,105 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - aws-deploy
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ec2-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Sanity-checks docker-compose.yml's syntax and variable references
+      # before we ever touch the server. The dummy values below only exist
+      # so `docker compose config` can resolve ${VAR} placeholders — they
+      # are never sent to EC2 and never used to run anything.
+      - name: Sanity-check docker-compose.yml
+        run: docker compose config > /dev/null
+        env:
+          MONGO_URI: validation-only
+          PUBLIC_ORIGIN: http://validation-only
+          ACCESS_TOKEN: validation-only
+          REFRESH_TOKEN: validation-only
+          JWT_SECRET_KEY: validation-only
+          ENCRYPTION_KEY: validation-only
+          CLOUDINARY_CLOUD_NAME: validation-only
+          CLOUDINARY_API_KEY: validation-only
+          CLOUDINARY_API_SECRET: validation-only
+          STRIPE_SECRET_KEY: validation-only
+          STRIPE_PUBLISHABLE_KEY: validation-only
+          STRIPE_WEBHOOK_SECRET: validation-only
+          SMPT_HOST: validation-only
+          SMTP_SERVICE: validation-only
+          SMTP_MAIL: validation-only
+          SMTP_PASSWORD: validation-only
+          ADMIN_EMAIL: validation-only
+          ADMIN_PASSWORD: validation-only
+
+      - name: Configure SSH access to EC2
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s <<EOF
+          set -e
+          cd "$EC2_APP_DIR"
+          echo "== Fetching latest aws-deploy branch =="
+          git fetch origin aws-deploy
+          git checkout -f aws-deploy
+          git reset --hard origin/aws-deploy
+          echo "== Rebuilding images =="
+          docker compose build
+          echo "== Restarting containers =="
+          docker compose up -d --remove-orphans
+          sleep 10
+          echo "== Container status =="
+          docker compose ps
+          RUNNING=\$(docker compose ps --status running --services | wc -l)
+          if [ "\$RUNNING" -lt 4 ]; then
+            echo "ERROR: expected 4 running services (redis, server, socket-relay, client), found \$RUNNING"
+            docker compose logs --tail=50
+            exit 1
+          fi
+          echo "== Deploy script finished successfully =="
+          EOF
+
+      - name: Clean up SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+      - name: Verify backend health endpoint
+        run: |
+          curl -fsS "http://${{ secrets.EC2_HOST }}/api/v1/health-check"
+          echo ""
+          echo "Backend health check passed"
+
+      - name: Verify frontend responds
+        run: |
+          STATUS=$(curl -fsS -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST }}/")
+          if [ "$STATUS" != "200" ]; then
+            echo "Frontend returned HTTP $STATUS instead of 200"
+            exit 1
+          fi
+          echo "Frontend check passed (HTTP 200)"
