@@ -240,7 +240,7 @@ function CheckoutContent() {
     return (
       <div>
         <Header activeHeading={0} />
-        <div className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4 text-center px-4">
+        <main className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4 text-center px-4">
           <p className="text-[20px] font-semibold text-foreground">Your order has been placed!</p>
           <p className="text-[15px] text-muted-foreground">
             Since your cart included items from {placedOrders.length} different shops, we created {placedOrders.length} separate orders.
@@ -261,7 +261,7 @@ function CheckoutContent() {
           <Link href="/orders" className="text-primary hover:underline">
             View all my orders
           </Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -271,14 +271,14 @@ function CheckoutContent() {
     return (
       <div>
         <Header activeHeading={0} />
-        <div className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4">
+        <main className="w-full flex flex-col items-center justify-center py-24 min-h-[50vh] gap-4">
           <EmptyState icon={<IoBagHandleOutline size={26} />} title="Your cart is empty" />
           <div className="text-center pb-8 -mt-8">
             <Link href="/products" className="text-primary hover:underline">
               Browse products
             </Link>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -287,7 +287,7 @@ function CheckoutContent() {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8 max-w-7xl mx-auto px-4`}>
+      <main className={`${styles.section} py-8 max-w-7xl mx-auto px-4`}>
         <div className={`${styles.heading} mb-6`}>
           <h1 className="text-2xl font-bold">Checkout</h1>
         </div>
@@ -302,8 +302,9 @@ function CheckoutContent() {
 
                 {savedAddresses.length > 0 && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-foreground mb-1">Use a saved address</label>
+                    <label htmlFor="checkout-saved-address" className="block text-sm font-medium text-foreground mb-1">Use a saved address</label>
                     <select
+                      id="checkout-saved-address"
                       className={`${styles.input} w-full`}
                       value={selectedAddressId}
                       onChange={(e) => handleSelectSavedAddress(e.target.value)}
@@ -320,25 +321,26 @@ function CheckoutContent() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground">Street address</label>
-                    <input className={`${styles.input} mt-1 w-full`} {...register("address1")} />
+                    <label htmlFor="checkout-address1" className="block text-sm font-medium text-foreground">Street address</label>
+                    <input id="checkout-address1" className={`${styles.input} mt-1 w-full`} {...register("address1")} />
                     {errors.address1 && <p className="mt-1 text-sm text-error">{errors.address1.message}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground">Apartment, suite, etc. (optional)</label>
-                    <input className={`${styles.input} mt-1 w-full`} {...register("address2")} />
+                    <label htmlFor="checkout-address2" className="block text-sm font-medium text-foreground">Apartment, suite, etc. (optional)</label>
+                    <input id="checkout-address2" className={`${styles.input} mt-1 w-full`} {...register("address2")} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground">City</label>
-                      <input className={`${styles.input} mt-1 w-full`} {...register("city")} />
+                      <label htmlFor="checkout-city" className="block text-sm font-medium text-foreground">City</label>
+                      <input id="checkout-city" className={`${styles.input} mt-1 w-full`} {...register("city")} />
                       {errors.city && <p className="mt-1 text-sm text-error">{errors.city.message}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground">Zip code</label>
+                      <label htmlFor="checkout-zipcode" className="block text-sm font-medium text-foreground">Zip code</label>
                       <input
+                        id="checkout-zipcode"
                         className={`${styles.input} mt-1 w-full`}
                         inputMode="numeric"
                         maxLength={10}
@@ -352,8 +354,8 @@ function CheckoutContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground">Country</label>
-                    <input className={`${styles.input} mt-1 w-full`} {...register("country")} />
+                    <label htmlFor="checkout-country" className="block text-sm font-medium text-foreground">Country</label>
+                    <input id="checkout-country" className={`${styles.input} mt-1 w-full`} {...register("country")} />
                     {errors.country && <p className="mt-1 text-sm text-error">{errors.country.message}</p>}
                   </div>
 
@@ -418,7 +420,11 @@ function CheckoutContent() {
                 </div>
 
                 <div className="flex gap-2 mb-3">
+                  <label htmlFor="checkout-coupon" className="sr-only">
+                    Coupon code
+                  </label>
                   <input
+                    id="checkout-coupon"
                     type="text"
                     placeholder="Coupon code"
                     value={couponInput}
@@ -508,7 +514,7 @@ function CheckoutContent() {
 
           </div>
         </form>
-      </div>
+      </main>
       <Footer />
     </div>
   );
@@ -519,7 +525,7 @@ function CardPaymentForm({ isPlacingOrder, onSuccess, onError, trigger }) {
   const elements = useElements();
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const handlePayment  = async (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
 
     // Validate shipping fields before executing card charge

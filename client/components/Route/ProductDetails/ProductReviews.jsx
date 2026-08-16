@@ -73,7 +73,7 @@ const ProductReviews = ({ product, productId }) => {
                     </div>
                   </div>
                 </div>
-                {review.comment && <p className="text-[14px] text-[#555]">{review.comment}</p>}
+                {review.comment && <p className="text-[14px] text-foreground">{review.comment}</p>}
               </div>
             );
           })}

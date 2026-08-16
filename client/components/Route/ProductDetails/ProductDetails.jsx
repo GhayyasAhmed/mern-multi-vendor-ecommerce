@@ -26,7 +26,7 @@ import {
 } from "react-icons/ai";
 import ProductReviews from "./ProductReviews";
 
-const ProductDetails = ({ productId }) => {
+const ProductDetails = ({ productId, initialProduct }) => {
   const [count, setCount] = useState(1);
   const toast = useToast();
   const [activeImage, setActiveImage] = useState(0);
@@ -43,7 +43,7 @@ const ProductDetails = ({ productId }) => {
     isError,
     error,
   } = useGetProductByIdQuery(productId, { skip: !productId });
-  const product = productData?.product;
+  const product = productData?.product ?? initialProduct;
   const outOfStock = (product?.stock ?? 0) <= 0;
 
   const isWishlisted = Boolean(product?._id && user?.wishlist?.includes(product._id));
@@ -103,30 +103,30 @@ const ProductDetails = ({ productId }) => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !initialProduct) {
     return (
       <div>
         <Header activeHeading={3} />
-        <div className="w-full flex items-center justify-center py-20 min-h-[60vh]">
+        <main className="w-full flex items-center justify-center py-20 min-h-[60vh]">
           <p className="text-[18px] text-muted-foreground">Loading product...</p>
-        </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
-  if (isError || !product) {
+  if ((isError && !initialProduct) || !product) {
     return (
       <div>
         <Header activeHeading={3} />
-        <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
+        <main className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
           <p className="text-[18px] text-error">
             {getErrorMessage(error, "This product could not be found.")}
           </p>
           <Link href="/products" className="text-primary hover:underline">
             Back to products
           </Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -135,7 +135,7 @@ const ProductDetails = ({ productId }) => {
   return (
     <div>
       <Header activeHeading={3} />
-      <div className={`${styles.section} py-8`}>
+      <main className={`${styles.section} py-8`}>
         <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm border border-border">
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-75">
@@ -143,6 +143,8 @@ const ProductDetails = ({ productId }) => {
                 src={product.images?.[activeImage]?.url || "/placeholder.png"}
                 alt={product.name}
                 fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-contain"
               />
             </div>
@@ -160,6 +162,7 @@ const ProductDetails = ({ productId }) => {
                       src={img.url}
                       alt={`${product.name} ${index + 1}`}
                       fill
+                      sizes="64px"
                       className="object-cover rounded-md"
                     />
                   </button>
@@ -280,7 +283,7 @@ const ProductDetails = ({ productId }) => {
             </div>
           </div>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );

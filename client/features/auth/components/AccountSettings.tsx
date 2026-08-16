@@ -46,7 +46,7 @@ function AccountContent() {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8 min-h-[60vh]`}>
+      <main className={`${styles.section} py-8 min-h-[60vh]`}>
         <div className={`${styles.heading}`}>
           <h1>Account Settings</h1>
         </div>
@@ -71,7 +71,7 @@ function AccountContent() {
         {tab === "profile" && <ProfileTab />}
         {tab === "addresses" && <AddressesTab />}
         {tab === "security" && <SecurityTab />}
-      </div>
+      </main>
       <Footer />
     </div>
   );
@@ -80,8 +80,10 @@ function AccountContent() {
 function ProfileTab() {
   const toast = useToast();
   const { user } = useCurrentUser();
-  const [updateProfile, { isLoading: isSavingProfile }] = useUpdateUserProfileMutation();
-  const [updateAvatar, { isLoading: isSavingAvatar }] = useUpdateUserAvatarMutation();
+  const [updateProfile, { isLoading: isSavingProfile }] =
+    useUpdateUserProfileMutation();
+  const [updateAvatar, { isLoading: isSavingAvatar }] =
+    useUpdateUserAvatarMutation();
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -114,7 +116,6 @@ function ProfileTab() {
       });
 
       // socket.emit("ping", { name: values.name });
-
     } catch (error) {
       setProfileError(getErrorMessage(error));
       toast.showToast({ title: getErrorMessage(error), variant: "error" });
@@ -156,6 +157,7 @@ function ProfileTab() {
                 src={user.avatar.url}
                 alt={user.name}
                 fill
+                sizes="64px"
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -191,10 +193,14 @@ function ProfileTab() {
           Personal information
         </h2>
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="account-name"
+            className="block text-sm font-medium text-foreground"
+          >
             Full name
           </label>
           <input
+            id="account-name"
             className={`${styles.input} mt-1`}
             {...registerProfile("name")}
           />
@@ -205,10 +211,14 @@ function ProfileTab() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="account-email"
+            className="block text-sm font-medium text-foreground"
+          >
             Email address
           </label>
           <input
+            id="account-email"
             type="email"
             disabled
             value={user?.email || ""}
@@ -216,10 +226,14 @@ function ProfileTab() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="account-phone"
+            className="block text-sm font-medium text-foreground"
+          >
             Phone number
           </label>
           <input
+            id="account-phone"
             className={`${styles.input} mt-1`}
             inputMode="numeric"
             maxLength={15}
@@ -354,10 +368,14 @@ function AddressesTab() {
           noValidate
         >
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="addr-type"
+              className="block text-sm font-medium text-foreground"
+            >
               Label (e.g. Home, Work)
             </label>
             <input
+              id="addr-type"
               className={`${styles.input} mt-1`}
               {...register("addressType")}
             />
@@ -368,10 +386,14 @@ function AddressesTab() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="addr-address1"
+              className="block text-sm font-medium text-foreground"
+            >
               Street address
             </label>
             <input
+              id="addr-address1"
               className={`${styles.input} mt-1`}
               {...register("address1")}
             />
@@ -382,29 +404,44 @@ function AddressesTab() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="addr-address2"
+              className="block text-sm font-medium text-foreground"
+            >
               Apartment, suite, etc. (optional)
             </label>
             <input
+              id="addr-address2"
               className={`${styles.input} mt-1`}
               {...register("address2")}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground">
+              <label
+                htmlFor="addr-city"
+                className="block text-sm font-medium text-foreground"
+              >
                 City
               </label>
-              <input className={`${styles.input} mt-1`} {...register("city")} />
+              <input
+                id="addr-city"
+                className={`${styles.input} mt-1`}
+                {...register("city")}
+              />
               {errors.city && (
                 <p className="mt-1 text-sm text-error">{errors.city.message}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground">
+              <label
+                htmlFor="addr-zipcode"
+                className="block text-sm font-medium text-foreground"
+              >
                 Zip code
               </label>
               <input
+                id="addr-zipcode"
                 className={`${styles.input} mt-1`}
                 inputMode="numeric"
                 maxLength={10}
@@ -423,10 +460,11 @@ function AddressesTab() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label htmlFor="addr-country" className="block text-sm font-medium text-foreground">
               Country
             </label>
             <input
+              id="addr-country"
               className={`${styles.input} mt-1`}
               {...register("country")}
             />
@@ -563,6 +601,11 @@ function SecurityTab() {
             <button
               type="button"
               onClick={() => setShowOldPassword(!showOldPassword)}
+              aria-label={
+                showOldPassword
+                  ? "Hide current password"
+                  : "Show current password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showOldPassword ? (
@@ -593,6 +636,9 @@ function SecurityTab() {
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
+              aria-label={
+                showNewPassword ? "Hide new password" : "Show new password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showNewPassword ? (
@@ -628,6 +674,11 @@ function SecurityTab() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showConfirmPassword ? (

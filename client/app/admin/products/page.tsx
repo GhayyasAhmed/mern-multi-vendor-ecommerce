@@ -35,6 +35,7 @@ export default function AdminProductsPage() {
                     src={product.images?.[0]?.url || "/placeholder.png"}
                     alt={product.name}
                     fill
+                    sizes="48px"
                     className="object-cover rounded-[5px]"
                   />
                 </div>
@@ -70,6 +71,7 @@ export default function AdminProductsPage() {
                           src={product.images?.[0]?.url || "/placeholder.png"}
                           alt={product.name}
                           fill
+                          sizes="40px"
                           className="object-cover rounded-[5px]"
                         />
                       </div>

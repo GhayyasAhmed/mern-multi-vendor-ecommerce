@@ -62,6 +62,7 @@ export default function ConversationList({
                     src={peer.avatar}
                     alt={peer.name || "User"}
                     fill
+                    sizes="40px"
                     className="object-cover"
                   />
                 ) : null}

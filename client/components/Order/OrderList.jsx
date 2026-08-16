@@ -34,7 +34,7 @@ function OrderListContent() {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8 min-h-[60vh]`}>
+      <main className={`${styles.section} py-8 min-h-[60vh]`}>
         <div className={`${styles.heading}`}>
           <h1>My Orders</h1>
         </div>
@@ -88,7 +88,7 @@ function OrderListContent() {
             )}
           </>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );

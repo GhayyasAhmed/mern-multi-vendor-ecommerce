@@ -23,7 +23,7 @@ const EventsListing = () => {
   return (
     <div>
       <Header activeHeading={4} />
-      <div className={`${styles.section} py-8 min-h-[60vh]`}>
+      <main className={`${styles.section} py-8 min-h-[60vh]`}>
         <div className={`${styles.heading}`}>
           <h1>All Events</h1>
         </div>
@@ -60,7 +60,7 @@ const EventsListing = () => {
             )}
           </>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );

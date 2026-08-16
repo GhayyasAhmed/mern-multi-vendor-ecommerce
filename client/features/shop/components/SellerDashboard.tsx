@@ -61,12 +61,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import {
   AiOutlineCalendar,
@@ -137,7 +132,6 @@ export default function SellerDashboard() {
   };
 
   const toast = useToast();
-
 
   useEffect(() => {
     if (!seller?._id) return;
@@ -216,8 +210,8 @@ export default function SellerDashboard() {
       } else if (payload.type === "shop_status") {
         dispatch(apiSlice.util.invalidateTags(["Shop"]));
         toast.showToast({ title: payload.message, variant: "info" });
-      } 
-      
+      }
+
       // else if (payload.type === "new_message") {
       //   dispatch(
       //     apiSlice.util.invalidateTags([
@@ -241,12 +235,12 @@ export default function SellerDashboard() {
           "getSellerDetails",
           undefined,
           (draft) => {
-             if (draft.seller) {
-               draft.seller.availableBalance = payload.availableBalance;
-               if (payload.owedBalance !== undefined)
+            if (draft.seller) {
+              draft.seller.availableBalance = payload.availableBalance;
+              if (payload.owedBalance !== undefined)
                 draft.seller.owedBalance = payload.owedBalance;
             }
-          }
+          },
         ),
       );
     };
@@ -265,7 +259,7 @@ export default function SellerDashboard() {
 
   return (
     <div className="w-full min-h-screen bg-background">
-      <div className="bg-brand text-brand-foreground">
+      <header className="bg-brand text-brand-foreground">
         <div className="w-11/12 mx-auto py-6 flex flex-col md:flex-row items-center md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="relative w-15 h-15 rounded-full overflow-hidden border-2 border-brand-foreground/30 shrink-0">
@@ -273,6 +267,7 @@ export default function SellerDashboard() {
                 src={seller.avatar?.url || "/placeholder.png"}
                 alt={seller.name}
                 fill
+                sizes="60px"
                 className="object-cover"
               />
             </div>
@@ -298,7 +293,7 @@ export default function SellerDashboard() {
             <ShopLogoutButton className="text-sm font-medium cursor-pointer text-brand-foreground hover:text-red-200" />
           </div>
         </div>
-      </div>
+      </header>
 
       {seller.status !== "active" && (
         <div className="w-11/12 mx-auto mt-4 rounded-md bg-warning-bg border border-warning/30 text-warning text-sm px-4 py-3">
@@ -308,7 +303,7 @@ export default function SellerDashboard() {
         </div>
       )}
 
-      <div className="w-11/12 mx-auto py-6">
+      <main className="w-11/12 mx-auto py-6">
         <div className="flex gap-4 border-b border-border mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
           {TABS.map((t) => (
             <button
@@ -342,7 +337,7 @@ export default function SellerDashboard() {
         )}
         {tab === "messages" && <MessagesPanel sellerId={seller._id} />}
         {tab === "coupons" && <CouponsPanel />}
-      </div>
+      </main>
     </div>
   );
 }
@@ -446,6 +441,7 @@ function OrdersPanel({ shopId }: { shopId: string }) {
                     onChange={(e) =>
                       handleStatusChange(order._id, e.target.value)
                     }
+                    aria-label={`Update status for order ${order._id.slice(-8).toUpperCase()}`}
                     disabled={isUpdating || order.status === "Delivered"}
                     className="border border-input bg-surface text-foreground rounded-md px-2 py-1.5 text-sm disabled:opacity-60"
                   >
@@ -559,7 +555,11 @@ function PayoutsPanel({
           onSubmit={handleSubmit}
           className="flex flex-col sm:flex-row gap-3"
         >
+          <label htmlFor="withdraw-amount" className="sr-only">
+            Withdrawal amount
+          </label>
           <input
+            id="withdraw-amount"
             type="number"
             min="0.01"
             step="0.01"
@@ -891,6 +891,7 @@ function ProfilePanel() {
                 src={seller.avatar.url}
                 alt={seller.name}
                 fill
+                sizes="64px"
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -923,33 +924,55 @@ function ProfilePanel() {
         noValidate
       >
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="seller-name"
+            className="block text-sm font-medium text-foreground"
+          >
             Shop name
           </label>
-          <input className={`${styles.input} mt-1`} {...register("name")} />
+          <input
+            id="seller-name"
+            className={`${styles.input} mt-1`}
+            {...register("name")}
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="seller-description"
+            className="block text-sm font-medium text-foreground"
+          >
             Description
           </label>
           <textarea
+            id="seller-description"
             rows={3}
             className={`${styles.input} mt-1`}
             {...register("description")}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="seller-address"
+            className="block text-sm font-medium text-foreground"
+          >
             Address
           </label>
-          <input className={`${styles.input} mt-1`} {...register("address")} />
+          <input
+            id="seller-address"
+            className={`${styles.input} mt-1`}
+            {...register("address")}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="seller-phone"
+              className="block text-sm font-medium text-foreground"
+            >
               Phone number
             </label>
             <input
+              id="seller-phone"
               className={`${styles.input} mt-1`}
               inputMode="numeric"
               maxLength={15}
@@ -962,10 +985,14 @@ function ProfilePanel() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="seller-zipcode"
+              className="block text-sm font-medium text-foreground"
+            >
               Zip code
             </label>
             <input
+              id="seller-zipcode"
               className={`${styles.input} mt-1`}
               inputMode="numeric"
               maxLength={10}
@@ -1359,6 +1386,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                       src={img}
                       alt={`Preview ${index + 1}`}
                       fill
+                      sizes="64px"
                       className="object-cover"
                     />
                     <button
@@ -1421,6 +1449,7 @@ function ProductsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                     src={product.images?.[0]?.url || "/placeholder.png"}
                     alt={product.name}
                     fill
+                    sizes="48px"
                     className="object-cover rounded-[5px]"
                   />
                 </div>
@@ -1864,6 +1893,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                       src={img}
                       alt={`Preview ${index + 1}`}
                       fill
+                      sizes="64px"
                       className="object-cover"
                     />
                     <button
@@ -1926,6 +1956,7 @@ function EventsPanel({ seller, shopId }: { shopId: string; seller: IShop }) {
                     src={event.images?.[0]?.url || "/placeholder.png"}
                     alt={event.name}
                     fill
+                    sizes="48px"
                     className="object-cover rounded-[5px]"
                   />
                 </div>
@@ -2046,15 +2077,22 @@ function CouponsPanel() {
           onSubmit={handleSubmit}
           className="space-y-3 bg-surface border border-border rounded-lg shadow-sm p-6 mb-6"
         >
+          <label htmlFor="coupon-name" className="sr-only">
+            Coupon code
+          </label>
           <input
+            id="coupon-name"
             required
             placeholder="Coupon code (e.g. SAVE10)"
             className={`${styles.input}`}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
+          <label htmlFor="coupon-value" className="sr-only">
+            Discount percentage
+          </label>
           <input
-            required
+            id="coupon-value"
             placeholder="Discount % (1-100)"
             inputMode="numeric"
             className={`${styles.input}`}
@@ -2067,7 +2105,11 @@ function CouponsPanel() {
               setForm({ ...form, value: clamped });
             }}
           />
+          <label htmlFor="coupon-min" className="sr-only">
+            Minimum order amount
+          </label>
           <input
+            id="coupon-min"
             placeholder="Minimum order amount (optional)"
             inputMode="decimal"
             className={`${styles.input}`}
@@ -2080,7 +2122,11 @@ function CouponsPanel() {
               })
             }
           />
+          <label htmlFor="coupon-max" className="sr-only">
+            Maximum order amount
+          </label>
           <input
+            id="coupon-max"
             placeholder="Maximum order amount (optional)"
             inputMode="decimal"
             className={`${styles.input}`}

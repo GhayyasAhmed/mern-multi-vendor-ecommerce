@@ -77,6 +77,11 @@ export default function NotificationBell({
         className="relative cursor-pointer mt-1"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={
+          unreadCount > 0
+            ? `Notifications, ${unreadCount} unread`
+            : "Notifications"
+        }
       >
         <AiOutlineBell size={24} aria-hidden="true" />
         {unreadCount > 0 && (
@@ -120,7 +125,7 @@ export default function NotificationBell({
                 className={`block px-4 py-2.5 text-sm border-b last:border-b-0 hover:bg-muted ${notification.read ? "text-muted-foreground" : "font-medium text-foreground"}`}
               >
                 <p>{notification.message}</p>
-                <p className="text-[11px] mt-0.5">
+                <p className="text-xs mt-0.5">
                   {new Date(notification.createdAt).toLocaleString()}
                 </p>
               </Link>
