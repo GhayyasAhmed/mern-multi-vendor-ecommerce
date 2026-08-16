@@ -1,22 +1,12 @@
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
+import { ConfirmProvider } from "@/providers/confirm-provider";
 import StoreProvider from "@/providers/store-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ToastProvider } from "@/providers/toast-provider";
-import { ConfirmProvider } from "@/providers/confirm-provider";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Poppins, Roboto } from "next/font/google";
+import { Poppins, Roboto } from "next/font/google";
 import "./globals.css";
 import SkipLink from "@/components/ui/SkipLink";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
@@ -36,7 +26,7 @@ const siteName = "Mercovia";
 const siteTitle = "Mercovia - Multi-Vendor E-Commerce Marketplace";
 const siteDescription =
   "Mercovia is a multi-vendor marketplace platform to buy and sell products";
-const previewImage = "/svg-image-2.svg";
+const previewImage = "/logo.svg";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -131,7 +121,8 @@ export default function RootLayout({
       </head>
       <body
         // className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-surface dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased duration-300 bg-no-repeat`}
-          className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-background text-foreground antialiased duration-300 bg-no-repeat`}      
+        // className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} bg-background text-foreground antialiased duration-300 bg-no-repeat`}
+        className={`${poppins.variable} ${roboto.variable} bg-background text-foreground antialiased duration-300 bg-no-repeat`}
       >
         <script
           type="application/ld+json"
@@ -144,7 +135,9 @@ export default function RootLayout({
           <ThemeProvider>
             <ToastProvider>
               <ConfirmProvider>
-                <AuthProvider>{children}</AuthProvider>
+                <AuthProvider>
+                  <div id="main-content">{children}</div>
+                </AuthProvider>
               </ConfirmProvider>
             </ToastProvider>
           </ThemeProvider>

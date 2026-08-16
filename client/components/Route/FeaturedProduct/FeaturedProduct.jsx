@@ -16,7 +16,7 @@ const FeaturedProduct = () => {
     <div>
       <div className={`${styles.section}`}>
         <div className={`${styles.heading}`}>
-          <h1>Featured Products</h1>
+          <h2>Featured Products</h2>
         </div>
         {isLoading ? (
           <ProductGridSkeleton count={10} />

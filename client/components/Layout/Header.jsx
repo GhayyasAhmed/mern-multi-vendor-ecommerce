@@ -1,8 +1,7 @@
 "use client";
-import Cart from "@/components/Cart/Cart";
+import dynamic from "next/dynamic";
 import NotificationBell from "@/components/Layout/NotificationBell";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import Wishlist from "@/components/Wishlist/Wishlist.jsx";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { selectCartCount } from "@/features/cart/cartSlice";
@@ -25,6 +24,9 @@ import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { RxCross1 } from "react-icons/rx";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
+
+const Cart = dynamic(() => import("@/components/Cart/Cart"), { ssr: false });
+const Wishlist = dynamic(() => import("@/components/Wishlist/Wishlist.jsx"), { ssr: false });
 
 const Header = ({ activeHeading }) => {
   const cartCount = useAppSelector(selectCartCount);
@@ -84,14 +86,14 @@ const Header = ({ activeHeading }) => {
             <Link href="/">
               <div className="relative inline-block">
                 <Image
-                  src="/svg-image-2.svg"
+                  src="/logo.svg"
                   alt="Logo"
                   width={250}
                   height={250}
                   className="dark:brightness-0 dark:invert"
                 />
                 <Image
-                  src="/svg-image-2.svg"
+                  src="/logo.svg"
                   alt=""
                   width={250}
                   height={250}
@@ -303,8 +305,8 @@ const Header = ({ activeHeading }) => {
                 </div>
               ) : (
                 <div className="relative cursor-pointer mr-3.75">
-                  <Link href="/login">
-                    <CgProfile size={30} color="rgb(255 255 255 / 83%)" />
+                  <Link href="/login" aria-label="Login to your account">
+                    <CgProfile size={30} color="rgb(255 255 255 / 83%)" aria-hidden="true" />
                   </Link>
                 </div>
               )}
@@ -429,14 +431,14 @@ const Header = ({ activeHeading }) => {
               <Link href="/" onClick={() => setOpen(false)}>
                 <div className="relative inline-block">
                   <Image
-                    src="/svg-image-2.svg"
+                    src="/logo.svg"
                     alt="Logo"
                     width={180}
                     height={40}
                     className="dark:brightness-0 dark:invert object-contain"
                   />
                   <Image
-                    src="/svg-image-2.svg"
+                    src="/logo.svg"
                     alt=""
                     width={180}
                     height={40}
@@ -444,11 +446,14 @@ const Header = ({ activeHeading }) => {
                   />
                 </div>
               </Link>
-              <RxCross1
-                size={24}
-                className="cursor-pointer text-foreground"
+              <button
+                type="button"
                 onClick={() => setOpen(false)}
-              />
+                aria-label="Close menu"
+                className="min-h-11 min-w-11 flex items-center justify-center cursor-pointer text-foreground"
+              >
+                <RxCross1 size={24} aria-hidden="true" />
+              </button>
             </div>
 
             <div className="py-4 flex-1">

@@ -55,9 +55,9 @@ const EventCard = ({ active = true, data }) => {
         />
       </div>
       <div className="w-full lg:w-[50%] flex flex-col justify-center p-4">
-        <h2 className={`${styles.productTitle}`}>
+        <p className={`${styles.productTitle}`}>
           {data?.name || "Iphone 14 Pro Max 256GB SSD and 8GB RAM Silver Colour"}
-        </h2>
+        </p>
         <p className="py-2 text-[15px] leading-6 font-normal text-muted-foreground">
           {data?.description ||
             "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nostrum, ab! Accusantium sapiente laudantium eveniet error impedit, perferendis architecto aut inventore eaque distinctio corporis culpa placeat ad id quas non omnis!"}

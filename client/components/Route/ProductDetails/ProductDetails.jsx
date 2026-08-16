@@ -181,8 +181,8 @@ const ProductDetails = ({ productId, initialProduct }) => {
                   />
                 </div>
                 <div>
-                  <h3 className={`${styles.shop_name}`}>{product.shop?.name}</h3>
-                  <h5 className="pb-1 text-[15px] text-muted-foreground">({product.shop?.ratings || 0}) Ratings</h5>
+                  <p className={`${styles.shop_name}`}>{product.shop?.name}</p>
+                  <p className="pb-1 text-[15px] text-muted-foreground">({product.shop?.ratings || 0}) Ratings</p>
                 </div>
               </Link>
             </div>
@@ -223,7 +223,7 @@ const ProductDetails = ({ productId, initialProduct }) => {
                 <button
                   type="button"
                   aria-label="Decrease quantity"
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
+                  className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
@@ -232,7 +232,7 @@ const ProductDetails = ({ productId, initialProduct }) => {
                 <button
                   type="button"
                   aria-label="Increase quantity"
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
+                  className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                   onClick={incrementCount}
                 >
                   +
@@ -274,7 +274,7 @@ const ProductDetails = ({ productId, initialProduct }) => {
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <div className={`${styles.heading}`}>
-              <h1>Related Products</h1>
+              <h2>Related Products</h2>
             </div>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 lg:grid-cols-4 lg:gap-6.25 xl:grid-cols-5 xl:gap-7.5 mb-12 border-0">
               {relatedProducts.map((related) => (

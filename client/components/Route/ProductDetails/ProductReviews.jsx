@@ -38,7 +38,7 @@ const ProductReviews = ({ product, productId }) => {
   return (
     <div className="mt-16">
       <div className={`${styles.heading}`}>
-        <h1>Reviews {reviews.length > 0 ? `(${reviews.length})` : ""}</h1>
+        <h2>Reviews {reviews.length > 0 ? `(${reviews.length})` : ""}</h2>
       </div>
 
       {reviews.length === 0 ? (

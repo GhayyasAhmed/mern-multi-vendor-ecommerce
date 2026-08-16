@@ -17,7 +17,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-border text-sm">
           {/* Column 1: Shop Links */}
           <div className="flex flex-col space-y-2">
-            <h3 className="font-semibold text-foreground">Shop</h3>
+            <p className="font-semibold text-foreground">Shop</p>
             <ul className="flex flex-col space-y-1.5">
               {footerCompanyLinks.map((link, index) => (
                 <li key={index}>
@@ -34,7 +34,7 @@ const Footer = () => {
 
           {/* Column 2: Connect & Socials */}
           <div className="flex flex-col space-y-3">
-            <h3 className="font-semibold text-foreground">Connect With Us</h3>
+            <p className="font-semibold text-foreground">Connect With Us</p>
             <p className="text-xs text-muted-foreground">
               Follow us on social media for updates, offers, and more.
             </p>

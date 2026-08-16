@@ -14,7 +14,7 @@ const Events = () => {
     <div>
       <div className={`${styles.section}`}>
         <div className={`${styles.heading}`}>
-          <h1>Popular Events</h1>
+          <h2>Popular Events</h2>
         </div>
         {isLoading ? (
           <CardListSkeleton count={2} />

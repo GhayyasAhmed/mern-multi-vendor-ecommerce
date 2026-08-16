@@ -311,6 +311,8 @@ export default function RegisterShopForm() {
                 <img
                   src={avatarPreview}
                   alt="Avatar preview"
+                  width={40}
+                  height={40}
                   className="h-full w-full object-cover"
                 />
               ) : (

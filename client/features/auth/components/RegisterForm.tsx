@@ -177,9 +177,7 @@ export default function RegisterForm() {
             </button>
           </div>
           {errors.password && (
-            <p className="mt-1 text-sm text-error">
-              {errors.password.message}
-            </p>
+            <p className="mt-1 text-sm text-error">{errors.password.message}</p>
           )}
           {passwordValue && !errors.password && (
             <div className="mt-2">
@@ -193,21 +191,21 @@ export default function RegisterForm() {
                     key={bar}
                     className={`flex-1 rounded-full transition-colors ${
                       bar < passwordStrength.score
-                       ? passwordStrength.color === "error"
+                        ? passwordStrength.color === "error"
                           ? "bg-red-500"
                           : passwordStrength.color === "warning"
                             ? "bg-amber-500"
                             : passwordStrength.color === "info"
                               ? "bg-blue-500"
                               : "bg-green-500"
-                        // ? passwordStrength.color === "error"
-                        //   ? "bg-error-bg"
-                        //   : passwordStrength.color === "warning"
-                        //     ? "bg-warning-bg"
-                        //     : passwordStrength.color === "info"
-                        //       ? "bg-info-bg"
-                        //       : "bg-success-bg"
-                        : "bg-muted"
+                        : // ? passwordStrength.color === "error"
+                          //   ? "bg-error-bg"
+                          //   : passwordStrength.color === "warning"
+                          //     ? "bg-warning-bg"
+                          //     : passwordStrength.color === "info"
+                          //       ? "bg-info-bg"
+                          //       : "bg-success-bg"
+                          "bg-muted"
                     }`}
                   />
                 ))}
@@ -238,7 +236,11 @@ export default function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showConfirmPassword ? (
@@ -267,6 +269,8 @@ export default function RegisterForm() {
                 <img
                   src={avatarPreview}
                   alt="Avatar preview"
+                  width={40}
+                  height={40}
                   className="h-full w-full object-cover"
                 />
               ) : (
