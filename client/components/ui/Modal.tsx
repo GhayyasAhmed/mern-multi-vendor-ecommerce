@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AiOutlineClose } from "react-icons/ai";
 import { cn } from "@/lib/utils";
@@ -36,8 +36,9 @@ export default function Modal({
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const titleId = "modal-title";
-  const descId = "modal-description";
+  const generatedId = useId();
+  const titleId = `modal-title-${generatedId}`;
+  const descId = `modal-description-${generatedId}`;
 
   // Focus management: remember what was focused before opening, move focus
   // into the dialog on open, trap Tab within it, restore focus on close.

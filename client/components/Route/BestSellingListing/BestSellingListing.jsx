@@ -28,7 +28,7 @@ const BestSellingListing = () => {
   return (
     <div>
       <Header activeHeading={2} />
-      <div className={`${styles.section} py-8 min-h-[60vh]`}>
+      <main className={`${styles.section} py-8 min-h-[60vh]`}>
         <div className={`${styles.heading}`}>
           <h1>Best Selling</h1>
         </div>
@@ -61,7 +61,7 @@ const BestSellingListing = () => {
             )}
           </>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );

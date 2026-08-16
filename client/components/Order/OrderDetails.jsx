@@ -41,7 +41,9 @@ function OrderDetailsContent({ orderId }) {
     return (
       <div>
         <Header activeHeading={0} />
-        <p className="text-center text-[15px] text-muted-foreground py-20 min-h-[50vh]">Loading order...</p>
+        <main>
+          <p className="text-center text-[15px] text-muted-foreground py-20 min-h-[50vh]">Loading order...</p>
+        </main>
         <Footer />
       </div>
     );
@@ -51,14 +53,14 @@ function OrderDetailsContent({ orderId }) {
     return (
       <div>
         <Header activeHeading={0} />
-        <div className="w-full flex flex-col items-center justify-center py-20 min-h-[50vh] gap-4">
+        <main className="w-full flex flex-col items-center justify-center py-20 min-h-[50vh] gap-4">
           <p className="text-[18px] text-error">
             {getErrorMessage(error, "This order could not be found.")}
           </p>
           <Link href="/orders" className="text-primary hover:underline">
             Back to my orders
           </Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -67,7 +69,7 @@ function OrderDetailsContent({ orderId }) {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8`}>
+      <main className={`${styles.section} py-8`}>
         <div className={`${styles.heading}`}>
           <h1>Order #{order._id.slice(-8).toUpperCase()}</h1>
         </div>
@@ -130,6 +132,7 @@ function OrderDetailsContent({ orderId }) {
                   src={item.images?.[0]?.url || "/placeholder.png"}
                   alt={item.name || "Product"}
                   fill
+                  sizes="64px"
                   className="object-cover"
                 />
               </div>
@@ -177,7 +180,7 @@ function OrderDetailsContent({ orderId }) {
             &larr; Back to my orders
           </Link>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

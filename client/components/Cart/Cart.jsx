@@ -231,6 +231,7 @@ const CartSingle = ({ data, warning, onRemove, onQtyChange }) => {
               src={data.image}
               alt={data.name}
               fill
+              sizes="80px"
               className="object-cover"
             />
           </div>

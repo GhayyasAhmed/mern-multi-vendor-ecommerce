@@ -108,6 +108,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                   src={data?.images?.[0]?.url || "/placeholder.png"}
                   alt={data?.name || "Product Image"}
                   fill
+                  sizes="(max-width: 768px) 90vw, 45vw"
                   className="object-contain"
                 />
               </div>

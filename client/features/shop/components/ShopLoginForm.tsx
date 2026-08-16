@@ -32,7 +32,9 @@ export default function ShopLoginForm() {
       router.push("/seller/dashboard");
       router.refresh();
     } catch (error) {
-      setFormError(getErrorMessage(error, "Please provide the correct credentials"));
+      setFormError(
+        getErrorMessage(error, "Please provide the correct credentials"),
+      );
     }
   };
 
@@ -40,23 +42,40 @@ export default function ShopLoginForm() {
     <div className="w-full max-w-md space-y-4 rounded-lg bg-surface border border-border p-8 shadow-sm">
       {/* Back Navigation Link */}
       <div>
-        <Link href="/" className="text-sm text-foreground hover:text-primary hover:underline inline-flex items-center gap-1">
+        <Link
+          href="/"
+          className="text-sm text-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+        >
           Back to Home
         </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-foreground"
+          >
             Email
           </label>
-          <input id="email" type="email" autoComplete="email" className={`${styles.input} mt-1`} {...register("email")} />
-          {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className={`${styles.input} mt-1`}
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-error">{errors.email.message}</p>
+          )}
         </div>
 
         {/* Password Field with Eye Icon */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-foreground">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-foreground"
+          >
             Password
           </label>
           <div className="relative mt-1">
@@ -70,12 +89,19 @@ export default function ShopLoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
-              {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+              {showPassword ? (
+                <AiOutlineEye size={20} />
+              ) : (
+                <AiOutlineEyeInvisible size={20} />
+              )}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-error">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="mt-1 text-sm text-error">{errors.password.message}</p>
+          )}
         </div>
 
         {formError && (
@@ -84,8 +110,14 @@ export default function ShopLoginForm() {
           </p>
         )}
 
-        <button type="submit" disabled={isLoading} className={`${styles.submit_button} w-full disabled:opacity-60`}>
-          <span className="font-[Poppins]">{isLoading ? "Logging in..." : "Login"}</span>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`${styles.submit_button} w-full disabled:opacity-60`}
+        >
+          <span className="font-[Poppins]">
+            {isLoading ? "Logging in..." : "Login"}
+          </span>
         </button>
 
         <p className="text-center text-sm text-muted-foreground">

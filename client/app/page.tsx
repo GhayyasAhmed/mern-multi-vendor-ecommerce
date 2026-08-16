@@ -11,12 +11,14 @@ export default function HomePage() {
   return (
     <div>
       <Header activeHeading={1} />
-      <Hero />
-      <Categories />
-      <BestDeals />
-      <Events />
-      <FeaturedProduct />
-      {/* <Sponsored /> */}
+       <main>
+        <Hero />
+        <Categories />
+        <BestDeals />
+        <Events />
+        <FeaturedProduct />
+        {/* <Sponsored /> */}
+      </main>
       <Footer />
     </div>
   );

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineInfoCircle, AiOutlineWarning, AiOutlineClose } from "react-icons/ai";
+import {
+  AiOutlineCheckCircle,
+  AiOutlineCloseCircle,
+  AiOutlineInfoCircle,
+  AiOutlineWarning,
+  AiOutlineClose,
+} from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 export type ToastVariant = "success" | "error" | "warning" | "info";
@@ -13,7 +19,10 @@ export interface ToastItem {
   variant: ToastVariant;
 }
 
-const VARIANT_STYLES: Record<ToastVariant, { icon: React.ReactNode; className: string }> = {
+const VARIANT_STYLES: Record<
+  ToastVariant,
+  { icon: React.ReactNode; className: string }
+> = {
   success: {
     icon: <AiOutlineCheckCircle size={20} className="text-success" />,
     className: "border-success/40",
@@ -32,7 +41,13 @@ const VARIANT_STYLES: Record<ToastVariant, { icon: React.ReactNode; className: s
   },
 };
 
-function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
+function ToastCard({
+  toast,
+  onDismiss,
+}: {
+  toast: ToastItem;
+  onDismiss: (id: string) => void;
+}) {
   // Mount with opacity-0 then flip to opacity-100 on the next frame so the
   // entrance is an actual transition rather than appearing instantly.
   const [entered, setEntered] = useState(false);
@@ -49,19 +64,23 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
       className={cn(
         "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border bg-surface px-4 py-3 shadow-lg transition-all duration-200 motion-reduce:transition-none",
         entered ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
-        className
+        className,
       )}
     >
       <span className="mt-0.5 shrink-0">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">{toast.title}</p>
-        {toast.description && <p className="mt-0.5 text-sm text-muted-foreground">{toast.description}</p>}
+        {toast.description && (
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {toast.description}
+          </p>
+        )}
       </div>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="Dismiss notification"
-        className="shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground cursor-pointer"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground cursor-pointer"
       >
         <AiOutlineClose size={16} />
       </button>

@@ -63,9 +63,11 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
     return (
       <div>
         <Header activeHeading={0} />
-        <p className="text-center text-[15px] text-muted-foreground py-20 min-h-[50vh]">
-          Loading shop...
-        </p>
+        <main>
+          <p className="text-center text-[15px] text-muted-foreground py-20 min-h-[50vh]">
+            Loading shop...
+          </p>
+        </main>
         <Footer />
       </div>
     );
@@ -75,11 +77,11 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
     return (
       <div>
         <Header activeHeading={0} />
-        <div className="w-full flex flex-col items-center justify-center py-20 min-h-[50vh] gap-4">
+        <main className="w-full flex flex-col items-center justify-center py-20 min-h-[50vh] gap-4">
           <p className="text-[18px] text-error">
             {getErrorMessage(shopError, "This shop could not be found.")}
           </p>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -88,13 +90,14 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8`}>
+      <main className={`${styles.section} py-8`}>
         <div className="w-full flex flex-col md:flex-row items-center md:items-start gap-6 bg-surface rounded-lg shadow-sm p-6 mb-10">
           <div className="relative w-25 h-25 rounded-full overflow-hidden shrink-0">
             <Image
               src={shop.avatar?.url || "/placeholder.png"}
               alt={shop.name}
               fill
+              sizes="100px"
               className="object-cover"
             />
           </div>
@@ -107,7 +110,9 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
                 {shop.description}
               </p>
             )}
-            <p className="text-[14px] text-muted-foreground pt-2">{shop.address}</p>
+            <p className="text-[14px] text-muted-foreground pt-2">
+              {shop.address}
+            </p>
             {shop.createdAt && (
               <p className="text-[13px] text-muted-foreground pt-1">
                 Joined {new Date(shop.createdAt).toLocaleDateString()}
@@ -156,11 +161,10 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
             ))}
           </div>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );
 };
 
 export default ShopPreview;
-

@@ -119,6 +119,7 @@ const WishlistSingle = ({ data, onRemove, onAddToCart }) => {
             src={data.images?.[0]?.url || "/placeholder.png"}
             alt={data.name}
             fill
+            sizes="80px"
             className="object-cover"
           />
         </div>

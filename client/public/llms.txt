@@ -1,0 +1,28 @@
+# Mercovia
+
+> Mercovia is a multi-vendor e-commerce marketplace where independent
+> sellers list products and events and buyers browse, purchase, and
+> track orders across multiple shops in a single checkout.
+
+Mercovia is a live production application. Product and event pages are
+server-rendered and safe to fetch directly; prices are in USD and stock
+levels reflect real-time inventory.
+
+## Key pages
+- [Home](/): featured products, categories, and active events
+- [All products](/products): full catalog with search, category, and price filters
+- [Best selling](/best-selling): top-selling products
+- [Events](/events): time-limited seller promotions
+- [Individual product pages](/product/{id}): name, description, price, stock, seller, and reviews
+- [Individual event pages](/events/{id}): event details, countdown, price, and stock
+- [Shop pages](/shop/preview/{id}): seller profile, products, and active events
+
+## Notes for agents and crawlers
+- robots.txt: /robots.txt
+- sitemap: /sitemap.xml
+- Product and event detail pages include JSON-LD (schema.org Product) in
+  the initial server-rendered HTML.
+- Checkout, account, inbox, and order pages require an authenticated
+  session and are excluded from crawling via robots.txt.
+- Prices and stock are authoritative from the server at request time;
+  do not assume cached values remain valid for purchase decisions.

@@ -200,6 +200,7 @@ export default function ChatWindow({
               src={peer.avatar}
               alt={peer.name || "User"}
               fill
+              sizes="36px"
               className="object-cover"
             />
           ) : null}
@@ -257,6 +258,7 @@ export default function ChatWindow({
                         src={message.images.url}
                         alt="attachment"
                         fill
+                        sizes="160px"
                         className="object-cover rounded-md"
                       />
                     </div>
@@ -265,7 +267,7 @@ export default function ChatWindow({
                   {isMine &&
                     message.text &&
                     seenMessageIds.has(message._id) && (
-                      <span className="block text-[10px] text-primary-foreground/70 mt-0.5">
+                      <span className="block text-xs text-primary-foreground/70 mt-0.5">
                         Seen
                       </span>
                     )}
@@ -317,6 +319,7 @@ export default function ChatWindow({
             onClick={() => fileInputRef.current?.click()}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-surface-hover cursor-pointer shrink-0"
             title="Attach image"
+            aria-label="Attach image"
           >
             <svg
               className="w-5 h-5"

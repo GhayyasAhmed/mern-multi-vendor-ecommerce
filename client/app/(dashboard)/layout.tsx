@@ -7,7 +7,7 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex">{children}</div>
+      <main className="min-h-screen flex">{children}</main>
     </ProtectedRoute>
   );
 }

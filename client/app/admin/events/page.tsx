@@ -29,7 +29,10 @@ export default function AdminEventsPage() {
       ) : isError ? (
         <p className="text-sm text-error">Could not load events.</p>
       ) : events.length === 0 ? (
-        <EmptyState icon={<AiOutlineCalendar size={26} />} title="No events yet" />
+        <EmptyState
+          icon={<AiOutlineCalendar size={26} />}
+          title="No events yet"
+        />
       ) : (
         <>
           {/* Mobile: card list */}
@@ -41,16 +44,21 @@ export default function AdminEventsPage() {
                     src={event.images?.[0]?.url || "/placeholder.png"}
                     alt={event.name}
                     fill
+                    sizes="48px"
                     className="object-cover rounded-[5px]"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{event.name}</p>
-                  <Badge variant={statusVariant(event)}>{statusLabel(event)}</Badge>
+                  <Badge variant={statusVariant(event)}>
+                    {statusLabel(event)}
+                  </Badge>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-medium">${event.discountPrice}</p>
-                  <p className="text-xs text-muted-foreground">{event.stock} in stock</p>
+                  <p className="text-xs text-muted-foreground">
+                    {event.stock} in stock
+                  </p>
                 </div>
               </div>
             ))}
@@ -76,6 +84,7 @@ export default function AdminEventsPage() {
                           src={event.images?.[0]?.url || "/placeholder.png"}
                           alt={event.name}
                           fill
+                          sizes="40px"
                           className="object-cover rounded-[5px]"
                         />
                       </div>

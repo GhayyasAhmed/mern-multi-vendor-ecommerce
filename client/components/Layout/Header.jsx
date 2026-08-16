@@ -59,7 +59,7 @@ const Header = ({ activeHeading }) => {
         setActive(false);
       }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -92,7 +92,7 @@ const Header = ({ activeHeading }) => {
                 />
                 <Image
                   src="/svg-image-2.svg"
-                  alt="Logo Icon"
+                  alt=""
                   width={250}
                   height={250}
                   className="absolute inset-0 hidden dark:block [clip-path:inset(0_58%_0_0)] pointer-events-none"
@@ -162,8 +162,8 @@ const Header = ({ activeHeading }) => {
       {/* Dynamic Desktop Navbar */}
       <div
         className={`${active
-            ? "fixed top-0 left-0 z-40 bg-brand shadow-md"
-            : "relative bg-brand"
+          ? "fixed top-0 left-0 z-40 bg-brand shadow-md"
+          : "relative bg-brand"
           } transition hidden 800px:flex items-center justify-between w-full text-brand-foreground h-17.5`}
       >
         <div className={`${styles.section} relative ${styles.normalFlex} justify-between w-full h-full`}>
@@ -437,7 +437,7 @@ const Header = ({ activeHeading }) => {
                   />
                   <Image
                     src="/svg-image-2.svg"
-                    alt="Logo Icon"
+                    alt=""
                     width={180}
                     height={40}
                     className="absolute inset-0 hidden dark:block [clip-path:inset(0_58%_0_0)] pointer-events-none object-contain"

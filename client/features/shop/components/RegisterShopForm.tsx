@@ -171,6 +171,7 @@ export default function RegisterShopForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showPassword ? (
@@ -181,9 +182,7 @@ export default function RegisterShopForm() {
             </button>
           </div>
           {errors.password && (
-            <p className="mt-1 text-sm text-error">
-              {errors.password.message}
-            </p>
+            <p className="mt-1 text-sm text-error">{errors.password.message}</p>
           )}
         </div>
 
@@ -206,6 +205,11 @@ export default function RegisterShopForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground focus:outline-none"
             >
               {showConfirmPassword ? (
@@ -236,9 +240,7 @@ export default function RegisterShopForm() {
             {...register("address")}
           />
           {errors.address && (
-            <p className="mt-1 text-sm text-error">
-              {errors.address.message}
-            </p>
+            <p className="mt-1 text-sm text-error">{errors.address.message}</p>
           )}
         </div>
 

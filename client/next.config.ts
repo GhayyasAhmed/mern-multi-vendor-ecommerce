@@ -11,11 +11,31 @@ const backendOrigin =
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  poweredByHeader: false,
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
+      // https-only: removes the http:// wildcard that previously allowed
+      // mixed-content image loads on an HTTPS page.
       { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
+    ];
   },
   async rewrites() {
     if (!backendOrigin) return [];

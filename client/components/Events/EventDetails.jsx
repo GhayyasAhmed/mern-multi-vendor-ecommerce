@@ -12,14 +12,14 @@ import Link from "next/link";
 import { useState } from "react";
 import CountDown from "./CountDown";
 
-const EventDetails = ({ eventId }) => {
+const EventDetails = ({ eventId, initialEvent }) => {
   const [count, setCount] = useState(1);
   const toast = useToast();
   const [activeImage, setActiveImage] = useState(0);
   const dispatch = useAppDispatch();
 
   const { data, isLoading, isError, error } = useGetEventByIdQuery(eventId, { skip: !eventId });
-  const event = data?.event;
+  const event = data?.event ?? initialEvent;
 
   const decrementCount = () => {
     if (count > 1) setCount(count - 1);
@@ -31,9 +31,9 @@ const EventDetails = ({ eventId }) => {
   const handleAddToCart = () => {
     if (outOfStock || !event) {
       toast.showToast({
-      title: `"${event?.name ?? "Event"}" out of stock or not available for sell.`,
-      variant: "error",
-    });
+        title: `"${event?.name ?? "Event"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
       return
     };
     dispatch(addItem({ item: productToCartItem(event, count, "event") }));
@@ -43,30 +43,30 @@ const EventDetails = ({ eventId }) => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !initialEvent) {
     return (
       <div>
         <Header activeHeading={4} />
-        <div className="w-full flex items-center justify-center py-20 min-h-[60vh]">
+        <main className="w-full flex items-center justify-center py-20 min-h-[60vh]">
           <p className="text-[18px] text-muted-foreground">Loading event...</p>
-        </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
-  if (isError || !event) {
+  if ((isError && !initialEvent) || !event) {
     return (
       <div>
         <Header activeHeading={4} />
-        <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
+        <main className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] gap-4">
           <p className="text-[18px] text-error">
             {getErrorMessage(error, "This event could not be found.")}
           </p>
           <Link href="/events" className="text-primary hover:underline">
             Back to events
           </Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -75,7 +75,7 @@ const EventDetails = ({ eventId }) => {
   return (
     <div>
       <Header activeHeading={4} />
-      <div className={`${styles.section} py-8`}>
+      <main className={`${styles.section} py-8`}>
         <div className="block w-full md:flex p-2 md:p-6 bg-surface rounded-md shadow-sm">
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-75">
@@ -93,9 +93,8 @@ const EventDetails = ({ eventId }) => {
                     type="button"
                     key={img.public_id || index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${
-                      activeImage === index ? "border-primary" : "border-transparent"
-                    }`}
+                    className={`relative w-16 h-16 shrink-0 rounded-md border-2 ${activeImage === index ? "border-primary" : "border-transparent"
+                      }`}
                   >
                     <Image src={img.url} alt={`${event.name} ${index + 1}`} fill className="object-cover rounded-md" />
                   </button>
@@ -109,7 +108,7 @@ const EventDetails = ({ eventId }) => {
 
           <div className="w-full md:w-1/2 pt-5 md:pt-0 pl-0 md:pl-5">
             <h1 className={`${styles.productTitle} text-[20px]`}>{event.name}</h1>
-            <p className="py-3 text-[14px] text-[#555] leading-6">{event.description}</p>
+            <p className="py-3 text-[14px] text-foreground leading-6">{event.description}</p>
 
             <div className="flex pt-3">
               <h4 className={`${styles.productDiscountPrice}`}>{event.discountPrice}$</h4>
@@ -123,14 +122,18 @@ const EventDetails = ({ eventId }) => {
             <div className="flex items-center mt-12 justify-between pr-3">
               <div className="flex items-center">
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  type="button"
+                  aria-label="Decrease quantity"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
                 </button>
-                <span className="bg-muted text-gray-800 font-medium px-4 py-2.25">{count}</span>
+                <span className="bg-surface border-y border-border text-foreground font-medium px-4 py-2">{count}</span>
                 <button
-                  className="bg-linear-to-r from-teal-400 to-teal-500 text-primary-foreground font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out cursor-pointer"
+                  type="button"
+                  aria-label="Increase quantity"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                   onClick={incrementCount}
                 >
                   +
@@ -139,9 +142,8 @@ const EventDetails = ({ eventId }) => {
             </div>
 
             <button
-              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center ${
-                outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-              }`}
+              className={`${styles.button} mt-6 rounded-md font-medium flex items-center justify-center ${outOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
               onClick={handleAddToCart}
               disabled={outOfStock}
             >
@@ -149,7 +151,7 @@ const EventDetails = ({ eventId }) => {
             </button>
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

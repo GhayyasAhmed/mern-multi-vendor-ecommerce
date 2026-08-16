@@ -13,12 +13,12 @@ function InboxContent() {
   return (
     <div>
       <Header activeHeading={0} />
-      <div className={`${styles.section} py-8`}>
+      <main className={`${styles.section} py-8`}>
         <div className={`${styles.heading}`}>
           <h1>Inbox</h1>
         </div>
         <InboxPanel role="user" identityId={user?._id} />
-      </div>
+      </main>
       <Footer />
     </div>
   );

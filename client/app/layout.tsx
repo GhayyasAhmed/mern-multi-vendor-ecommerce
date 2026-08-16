@@ -45,6 +45,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
+  alternates: { canonical: "/" },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
@@ -119,6 +120,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <script
           dangerouslySetInnerHTML={{
             __html:

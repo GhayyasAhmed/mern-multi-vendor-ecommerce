@@ -137,6 +137,7 @@ export default function AdminSellersPage() {
           seller.name,
         )
       }
+      aria-label={`Change status for ${seller.name}`}
       className="min-h-11 border border-border rounded-md px-2 text-sm bg-surface"
     >
       <option value="pending">Pending</option>
