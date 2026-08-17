@@ -241,7 +241,7 @@ export const loginShop = catchAsyncErrors(
     const isPasswordValid = await shop.comparePassword(password);
 
     if (!isPasswordValid) {
-      return next(new ErrorHandler("Please provide the correct credentials", 400));
+      return next(new ErrorHandler("Invalid email or password", 401));
     }
 
     await sendShopToken(shop, 200, res, "Login successful");

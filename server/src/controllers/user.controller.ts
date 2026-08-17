@@ -221,9 +221,7 @@ export const loginUser = catchAsyncErrors(
         const isPasswordValid = await user.comparePassword(password);
 
         if (!isPasswordValid) {
-            return next(
-                new ErrorHandler("Please provide the correct information", 400)
-            );
+            return next(new ErrorHandler("Invalid email or password", 401));
         }
 
         sendToken(user, 201, res, "Login successful");
@@ -390,6 +388,12 @@ export const updateUserAvatar = catchAsyncErrors(
 
         await existsUser.save();
 
+        const sessionRaw = await redis.get(existsUser._id.toString());
+        if (sessionRaw) {
+            const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+            await redis.set(existsUser._id.toString(), JSON.stringify(existsUser), "EX", refreshTokenExpireInSeconds);
+        }
+
         res.status(200).json({
             success: true,
             user: existsUser,
@@ -432,6 +436,14 @@ export const updateUserAddresses = catchAsyncErrors(
 
         await user.save();
 
+        if (user) {
+            const sessionRaw = await redis.get(user._id.toString());
+            if (sessionRaw) {
+                const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+                await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
+            }
+        }
+
         res.status(200).json({
             success: true,
             user,
@@ -455,6 +467,14 @@ export const deleteUserAddress = catchAsyncErrors(
         );
 
         const user = await User.findById(userId);
+
+         if (user) {
+            const sessionRaw = await redis.get(userId.toString());
+            if (sessionRaw) {
+                const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+                await redis.set(userId.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
+            }
+        }
 
         res.status(200).json({ success: true, user });
     }
@@ -569,11 +589,13 @@ export const deleteUserAdmin = catchAsyncErrors(
 export const forgotPassword = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         const { email } = req.body;
-
+        const genericMessage = "If an account exists for this email, a password reset link has been sent.";
         const user = await User.findOne({ email });
 
         if (!user) {
-            return next(new ErrorHandler("User not found with this email", 404));
+            // return next(new ErrorHandler("User not found with this email", 404));
+            res.status(200).json({ success: true, message: genericMessage });
+            return
         }
 
         const resetToken = crypto.randomBytes(32).toString("hex");
@@ -596,7 +618,8 @@ export const forgotPassword = catchAsyncErrors(
 
             res.status(200).json({
                 success: true,
-                message: `A password reset link has been sent to ${user.email}`,
+                message: genericMessage,
+                // message: `A password reset link has been sent to ${user.email}`,
             });
         } catch (error: any) {
             user.resetPasswordToken = undefined;

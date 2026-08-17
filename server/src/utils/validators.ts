@@ -1,6 +1,21 @@
 import * as z from 'zod';
 import { PRODUCT_CATEGORIES } from '../constants/categories.js';
 
+const BASE64_IMAGE_PATTERN = /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/]+=*$/;
+
+const base64ImageSchema = z
+  .string('Image is required')
+  .regex(BASE64_IMAGE_PATTERN, 'Image must be a valid base64-encoded image');
+
+// For avatar-update endpoints where an empty string means "keep current avatar"
+const optionalBase64ImageSchema = z
+  .string()
+  .refine((val) => val === '' || BASE64_IMAGE_PATTERN.test(val), {
+    message: 'Image must be empty or a valid base64-encoded image',
+  });
+
+
+
 const createShopSchema = z.object({
   body: z.object({
     name: z.string('Shop name is required'),
@@ -9,7 +24,7 @@ const createShopSchema = z.object({
     address: z.string('Address is required'),
     phoneNumber: z.number({ message: 'Phone number is required' }),
     zipCode: z.number({ message: 'Zip code is required' }),
-    avatar: z.string('Avatar image is required'),
+    avatar: base64ImageSchema,
   }),
 });
 
@@ -46,7 +61,7 @@ const updatePaymentMethodsSchema = z.object({
 
 const updateShopAvatarSchema = z.object({
   body: z.object({
-    avatar: z.string().optional(),
+    avatar: optionalBase64ImageSchema.optional(),
   }),
 });
 
@@ -85,7 +100,7 @@ const createUserSchema = z.object({
     name: z.string('Name is required'),
     email: z.string('Email is required').email('Invalid email address'),
     password: z.string('Password is required').min(8, 'Password must be at least 8 characters'),
-    avatar: z.string('Please upload a profile photo').min(1, 'Please upload a profile photo'),
+    avatar: base64ImageSchema,
   }),
 });
 
@@ -107,7 +122,7 @@ const updateUserInfoSchema = z.object({
 
 const updateUserAvatarSchema = z.object({
   body: z.object({
-    avatar: z.string('Avatar is required'),
+    avatar: optionalBase64ImageSchema,
   }),
 });
 
@@ -149,23 +164,23 @@ const resetPasswordSchema = z.object({
 
 
 const updateUserProfileSchema = z.object({
-    body: z.object({
-        name: z.string().optional(),
-        phoneNumber: z.number().optional(),
-    }),
+  body: z.object({
+    name: z.string().optional(),
+    phoneNumber: z.number().optional(),
+  }),
 });
 
 const updateUserEmailSchema = z.object({
-    body: z.object({
-        email: z.string('Email is required').email('Invalid email address'),
-        password: z.string('Password is required'),
-    }),
+  body: z.object({
+    email: z.string('Email is required').email('Invalid email address'),
+    password: z.string('Password is required'),
+  }),
 });
 
 // Helper for validating product and event images with a max limit of 8
 const imageListValidation = z.union([
-  z.string(),
-  z.array(z.string()).min(1, 'At least one image is required').max(8, 'Maximum 8 images allowed'),
+  base64ImageSchema,
+  z.array(base64ImageSchema).min(1, 'At least one image is required').max(8, 'Maximum 8 images allowed'),
 ]);
 
 const createProductSchema = z.object({
@@ -230,15 +245,15 @@ export const ProductValidations = {
 };
 
 export const UserValidations = {
-    createUserSchema,
-    loginUserSchema,
-    updateUserProfileSchema,
-    updateUserEmailSchema,
-    updateUserAvatarSchema,
-    updateUserAddressesSchema,
-    updateUserPasswordSchema,
-    forgotPasswordSchema,
-    resetPasswordSchema,
+  createUserSchema,
+  loginUserSchema,
+  updateUserProfileSchema,
+  updateUserEmailSchema,
+  updateUserAvatarSchema,
+  updateUserAddressesSchema,
+  updateUserPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 };
 
 // ---- Order Validations ----
@@ -395,7 +410,7 @@ const createMessageSchema = z.object({
     .object({
       conversationId: z.string('Conversation id is required'),
       text: z.string().optional(),
-      images: z.string().optional(),
+      images: base64ImageSchema.optional(),
     })
     .refine((data) => Boolean(data.text?.trim()) || Boolean(data.images), {
       message: 'Message must contain text or an image',

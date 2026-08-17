@@ -54,6 +54,8 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Please enter your email"],
       unique: true,
+      lowercase: true,
+      trim: true,
       validate: {
         validator: function (value: string) {
           return emailRegexPattern.test(value);
@@ -134,15 +136,17 @@ userSchema.methods.getJwtToken = function (): string {
 
 // Sign access token
 userSchema.methods.signAccessToken = function (): string {
+  const expiresIn = process.env.ACCESS_TOKEN_EXPIRE || "2";
   return jwt.sign({ id: this._id }, env.accessTokenSecret, {
-    expiresIn: "2h",
+    expiresIn: (expiresIn + "h") as any
   });
 };
 
 // Sign refresh token
 userSchema.methods.signRefreshToken = function (): string {
+  const expiresIn = process.env.REFRESH_TOKEN_EXPIRE || "24";
   return jwt.sign({ id: this._id }, env.refreshTokenSecret, {
-    expiresIn: "24h",
+    expiresIn: (expiresIn + "h") as any,
   });
 };
 

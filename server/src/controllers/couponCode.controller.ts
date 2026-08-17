@@ -80,7 +80,10 @@ export const deleteCouponCode = catchAsyncErrors(
 // get coupon code by its name (simple public lookup, no discount calculation)
 export const getCouponValueByName = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { shopId } = req.query as { shopId?: string };
+    // const { shopId } = req.query as { shopId?: string };
+
+    const shopId = typeof req.query.shopId === "string" ? req.query.shopId : undefined;
+
 
     if (!shopId) {
       return next(new ErrorHandler("shopId is required to look up a coupon", 400));
