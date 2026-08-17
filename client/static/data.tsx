@@ -221,20 +221,21 @@ export const categoriesData: CategoryData[] = [
     title: "Shoes",
     subTitle: "",
     image_Url:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvBQPQMVNRd6TtDkGs2dCri0Y-rxKkFOiEWw&usqp=CAU",
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
   },
   {
     id: 6,
     title: "Gifts",
     subTitle: "",
     image_Url:
-      "https://securecdn.pymnts.com/wp-content/uploads/2014/11/Gifts-Photo-700x489.jpg",
+      "https://img.freepik.com/free-vector/gift-card-template-modern-swirl-decor_1017-8149.jpg",
   },
   {
     id: 7,
     title: "Pet Care",
     subTitle: "",
-    image_Url: "https://cdn.openpr.com/T/c/Tc15444071_g.jpg",
+    image_Url: 
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee",
   },
   {
     id: 8,
