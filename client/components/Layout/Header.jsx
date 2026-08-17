@@ -54,12 +54,17 @@ const Header = ({ activeHeading }) => {
 
   // Scroll listener to toggle fixed state on scroll
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      if (window.scrollY > 70) {
-        setActive(true);
-      } else {
-        setActive(false);
-      }
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        setActive((prev) => {
+          const next = window.scrollY > 70;
+          return prev === next ? prev : next;
+        });
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
@@ -83,8 +88,8 @@ const Header = ({ activeHeading }) => {
       <div className={`${styles.section}`}>
         <div className="hidden 800px:h-12.5 800px:my-5 800px:flex items-center justify-between">
           <div>
-            <Link href="/">
-              <div className="relative inline-block">
+            <Link href="/" aria-label="Mercovia home">
+              <div className="relative inline-block" >
                 <Image
                   src="/logo.svg"
                   alt="Logo"
@@ -152,10 +157,8 @@ const Header = ({ activeHeading }) => {
           </div>
 
           <div className={`${styles.button}`}>
-            <Link href="/seller">
-              <h1 className="flex items-center">
-                Become Seller <IoIosArrowForward className="ml-1" />
-              </h1>
+            <Link href="/seller" className="flex items-center">
+              Become Seller <IoIosArrowForward className="ml-1" aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -426,9 +429,13 @@ const Header = ({ activeHeading }) => {
 
       {open && (
         <div className="fixed w-full bg-[#0000005f] z-100 h-full top-0 left-0">
-          <div className="fixed w-[75%] max-w-[320px] bg-surface h-full top-0 left-0 z-101 overflow-y-scroll flex flex-col shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site menu"
+            className="fixed w-[75%] max-w-[320px] bg-surface h-full top-0 left-0 z-101 overflow-y-scroll flex flex-col shadow-2xl">
             <div className="w-full justify-between flex items-center px-4 border-b border-border">
-              <Link href="/" onClick={() => setOpen(false)}>
+              <Link href="/" onClick={() => setOpen(false)} aria-label="Mercovia home">
                 <div className="relative inline-block">
                   <Image
                     src="/logo.svg"

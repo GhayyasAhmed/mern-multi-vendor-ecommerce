@@ -56,12 +56,12 @@ export default function AdminNav() {
         >
           <AiOutlineMenu size={24} />
         </button>
-        <h2 className="text-base font-semibold flex items-center gap-2">
+        <p className="text-base font-semibold flex items-center gap-2">
           Admin
           {pendingWithdrawCount > 0 && (
             <Badge variant="warning">{pendingWithdrawCount}</Badge>
           )}
-        </h2>
+        </p>
         <ThemeToggle className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-brand-foreground hover:bg-white/10 cursor-pointer transition-colors" />
       </div>
 
@@ -80,7 +80,7 @@ export default function AdminNav() {
             className="fixed top-0 left-0 h-full w-64 bg-brand text-brand-foreground p-4 space-y-1 overflow-y-auto shadow-xl"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Admin</h2>
+              <p className="text-lg font-semibold">Admin</p>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -106,9 +106,9 @@ export default function AdminNav() {
       )}
 
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex md:flex-col w-56 shrink-0 bg-brand text-brand-foreground min-h-screen p-4 space-y-1 border-r border-white/10">
+      <nav aria-label="Admin navigation" className="hidden md:flex md:flex-col w-56 shrink-0 bg-brand text-brand-foreground min-h-screen p-4 space-y-1 border-r border-white/10">
         <div className="flex items-center justify-between mb-4 px-2">
-          <h2 className="text-lg font-semibold">Admin</h2>
+          <p className="text-lg font-semibold">Admin</p>
           <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-brand-foreground hover:bg-white/10 cursor-pointer transition-colors" />
         </div>
         {renderLinks()}

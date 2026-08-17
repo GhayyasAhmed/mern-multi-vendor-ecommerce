@@ -19,9 +19,9 @@ const EventCard = ({ active = true, data }) => {
   const handleAddToCart = () => {
     if (outOfStock || !data) {
       toast.showToast({
-      title: `"${data?.name ?? "Event"}" out of stock or not available for sell.`,
-      variant: "error",
-    });
+        title: `"${data?.name ?? "Event"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
       return
     };;
     dispatch(addItem({ item: productToCartItem(data, 1, "event") }));
@@ -83,7 +83,7 @@ const EventCard = ({ active = true, data }) => {
             type="button"
             onClick={handleAddToCart}
             disabled={outOfStock}
-            aria-label={outOfStock ? "Out of stock" : `Add ${data?.name || "event"} to cart`}
+            aria-label={outOfStock ? "Out of stock" : `Add to cart, ${data?.name || "event"}`}
             className={`${styles.button} disabled:opacity-50`}
           >
             {outOfStock ? "Out of stock" : "Add to cart"}

@@ -1,15 +1,17 @@
+// REPLACE ENTIRE FILE CONTENTS WITH:
 import { navItems } from "@/static/data";
 import styles from "@/styles/styles";
 import Link from "next/link";
 
 const Navbar = ({ active }) => {
   return (
-    <div className={`block 800px:${styles.normalFlex}`}>
+    <nav aria-label="Primary" className={`block 800px:${styles.normalFlex}`}>
       {navItems &&
         navItems.map((i, index) => (
           <div className="flex" key={index}>
             <Link
               href={i.url}
+              aria-current={active === index + 1 ? "page" : undefined}
               className={`${
                 active === index + 1
                 ? "text-accent"
@@ -20,7 +22,7 @@ const Navbar = ({ active }) => {
             </Link>
           </div>
         ))}
-    </div>
+    </nav>
   );
 };
 
