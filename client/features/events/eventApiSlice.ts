@@ -164,10 +164,11 @@ export const eventApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_result, _error, body) => [
-        { type: "Event", id: "LIST" },
-        { type: "Event", id: `SHOP-${body.shopId}` },
-      ],
+      invalidatesTags: (_result, error, body) =>
+        error ? [] : [
+          { type: "Event", id: "LIST" },
+          { type: "Event", id: `SHOP-${body.shopId}` },
+        ],
     }),
 
     deleteEvent: builder.mutation<DeleteEventResponse, { id: string; shopId: string }>({
@@ -175,11 +176,12 @@ export const eventApiSlice = apiSlice.injectEndpoints({
         url: `/event/delete-shop-event/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, { id, shopId }) => [
-        { type: "Event", id },
-        { type: "Event", id: "LIST" },
-        { type: "Event", id: `SHOP-${shopId}` },
-      ],
+      invalidatesTags: (_result, error, { id, shopId }) =>
+        error ? [] : [
+          { type: "Event", id },
+          { type: "Event", id: "LIST" },
+          { type: "Event", id: `SHOP-${shopId}` },
+        ],
     }),
 
     updateEvent: builder.mutation<UpdateEventResponse, UpdateEventRequest>({
@@ -188,11 +190,12 @@ export const eventApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_result, _error, { id, shopId }) => [
-        { type: "Event", id },
-        { type: "Event", id: "LIST" },
-        { type: "Event", id: `SHOP-${shopId}` },
-      ],
+      invalidatesTags: (_result, error, { id, shopId }) =>
+        error ? [] : [
+          { type: "Event", id },
+          { type: "Event", id: "LIST" },
+          { type: "Event", id: `SHOP-${shopId}` },
+        ],
     }),
   }),
   overrideExisting: false,

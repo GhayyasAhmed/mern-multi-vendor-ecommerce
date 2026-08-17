@@ -86,7 +86,7 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 
         activateShop: builder.mutation<ShopAuthResponse, ActivateShopRequest>({
             query: (body) => ({ url: "/shop/activation", method: "POST", body }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags: (_result, error) => (error ? [] : ["Shop"]),
         }),
 
         resendShopActivation: builder.mutation<ApiSuccessMessage, ResendShopActivationRequest>({
@@ -95,7 +95,7 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 
         loginShop: builder.mutation<ShopAuthResponse, LoginShopRequest>({
             query: (body) => ({ url: "/shop/login-shop", method: "POST", body }),
-            invalidatesTags: ["Shop"],
+            invalidatesTags: (_result, error) => (error ? [] : ["Shop"]),
         }),
 
         getSellerDetails: builder.query<GetSellerResponse, void>({
@@ -105,7 +105,7 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 
         logoutShop: builder.mutation<ApiSuccessMessage, void>({
             query: () => ({ url: "/shop/logout", method: "POST" }),
-            invalidatesTags: ["Shop"],
+            // invalidatesTags: (_result, error) => (error ? [] : ["Shop"]),
         }),
 
         getShopInfo: builder.query<GetShopInfoResponse, string>({
@@ -116,22 +116,22 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 
         updateSellerInfo: builder.mutation<UpdateShopResponse, UpdateSellerInfoRequest>({
             query: (body) => ({ url: "/shop/update-seller-info", method: "PUT", body }),
-            invalidatesTags: (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
+            invalidatesTags: (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : [],
         }),
 
         updateShopAvatar: builder.mutation<UpdateShopResponse, UpdateShopAvatarRequest>({
             query: (body) => ({ url: "/shop/update-shop-avatar", method: "PUT", body }),
-            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : [],
         }),
 
         updatePaymentMethods: builder.mutation<UpdateShopResponse, UpdatePaymentMethodsRequest>({
             query: (body) => ({ url: "/shop/update-payment-methods", method: "PUT", body }),
-            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : [],
         }),
 
         deleteWithdrawMethod: builder.mutation<UpdateShopResponse, void>({
             query: () => ({ url: "/shop/delete-withdraw-method", method: "DELETE" }),
-            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : ["Shop"],
+            invalidatesTags:  (result) => result ? ["Shop", { type: "Shop", id: result.shop._id }] : [],
         }),
     }),
     overrideExisting: false,

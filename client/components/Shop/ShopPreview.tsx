@@ -133,7 +133,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
         {events.length > 0 && (
           <div className="mb-10">
             <div className={`${styles.heading}`}>
-              <h1>Shop Events</h1>
+              <h2>Shop Events</h2>
             </div>
             <div className="w-full grid">
               {events.map((event) => (
@@ -144,7 +144,7 @@ const ShopPreview = ({ shopId }: ShopPreviewProps) => {
         )}
 
         <div className={`${styles.heading}`}>
-          <h1>Shop Products</h1>
+          <h2>Shop Products</h2>
         </div>
         {isProductsLoading ? (
           <p className="text-center text-[15px] text-muted-foreground py-12">

@@ -40,14 +40,13 @@ export default function AdminWithdrawalsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const withdraws = data?.withdraws ?? [];
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      audioRef.current = new Audio(NOTIFICATION_SOUND);
-    }
-  }, []);
-
   const playNotificationSound = useCallback(() => {
-    audioRef.current?.play().catch(() => {});
+    if (typeof window === "undefined") return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+      audioRef.current.preload = "none";
+    }
+    audioRef.current.play().catch(() => {});
   }, []);
 
   useEffect(() => {

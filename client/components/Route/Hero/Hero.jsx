@@ -6,7 +6,7 @@ const Hero = () => {
   return (
     <div className="relative min-h-[70vh] 800px:min-h-[80vh] w-full flex items-center">
       <Image
-        src="https://themes.rslahmed.dev/rafcart/assets/images/banner-2.jpg"
+        src="/hero-banner.webp"
         alt=""
         fill
         priority

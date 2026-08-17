@@ -21,8 +21,8 @@ const Wishlist = ({ setOpenWishlist }) => {
       await Promise.all(
         wishlistData.map((item) => removeFromWishlist(item._id).unwrap())
       );
-    } catch (err) {
-      console.error("Failed to clear wishlist", err);
+    } catch {
+      // console.error("Failed to clear wishlist", err);
     }
   };
 

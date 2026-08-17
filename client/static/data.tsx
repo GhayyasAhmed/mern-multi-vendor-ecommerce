@@ -90,6 +90,8 @@ export const brandingData: BrandingData[] = [
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="text-primary shrink-0"
+        aria-hidden="true"
+        focusable="false"
       >
         <path
           d="M1 1H7L10.68 19.39C10.8068 20.0274 11.1448 20.5982 11.6375 21.0028C12.1302 21.4074 12.7447 21.6192 13.37L27.3 21.62C27.9253 21.6192 28.5398 21.4074 29.0325 21.0028C29.5252 20.5982 29.8632 20.0274 29.99 19.39L32.2 8H8.25"
@@ -116,6 +118,8 @@ export const brandingData: BrandingData[] = [
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="text-primary shrink-0"
+        aria-hidden="true"
+        focusable="false"
       >
         <path
           d="M16 2L20.3262 10.7639L30 12.1764L23 19.0005L24.6524 28.6472L16 24.1L7.34762 28.6472L9 19.0005L2 12.1764L11.6738 10.7639L16 2Z"
@@ -140,6 +144,8 @@ export const brandingData: BrandingData[] = [
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="text-primary shrink-0"
+        aria-hidden="true"
+        focusable="false"
       >
         <path
           d="M16 2V30M2 16H30"
@@ -164,6 +170,8 @@ export const brandingData: BrandingData[] = [
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="text-primary shrink-0"
+        aria-hidden="true"
+        focusable="false"
       >
         <path
           d="M16 2L4 7V15C4 22.38 9.12 29.23 16 31C22.88 29.23 28 22.38 28 15V7L16 2Z"
@@ -213,20 +221,21 @@ export const categoriesData: CategoryData[] = [
     title: "Shoes",
     subTitle: "",
     image_Url:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvBQPQMVNRd6TtDkGs2dCri0Y-rxKkFOiEWw&usqp=CAU",
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
   },
   {
     id: 6,
     title: "Gifts",
     subTitle: "",
     image_Url:
-      "https://securecdn.pymnts.com/wp-content/uploads/2014/11/Gifts-Photo-700x489.jpg",
+      "https://img.freepik.com/free-vector/gift-card-template-modern-swirl-decor_1017-8149.jpg",
   },
   {
     id: 7,
     title: "Pet Care",
     subTitle: "",
-    image_Url: "https://cdn.openpr.com/T/c/Tc15444071_g.jpg",
+    image_Url: 
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee",
   },
   {
     id: 8,

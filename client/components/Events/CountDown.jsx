@@ -7,7 +7,7 @@ const getTimeDetails = (finishDate) => {
     : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
   const difference = +targetDate - +new Date();
-  
+
   if (difference <= 0) {
     return { expired: true };
   }
@@ -55,10 +55,9 @@ const CountDownOption1 = ({ data }) => {
   const isUrgent = timeDetails.type === 'hours';
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-      isUrgent ? 'bg-red-50 text-error border border-red-200 animate-pulse' : 'bg-muted text-foreground'
-    }`}>
-      <span className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-gray-400'}`} />
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isUrgent ? 'bg-error-bg text-error border border-error/30 animate-pulse' : 'bg-muted text-foreground'
+      }`}>
+      <span className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-error' : 'bg-muted-foreground'}`} />
       {timeDetails.type === 'hours' && (
         <span>{timeDetails.hours} hours {timeDetails.minutes} minutes {timeDetails.seconds} seconds</span>
       )}

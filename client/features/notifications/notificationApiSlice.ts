@@ -37,11 +37,13 @@ export const notificationApiSlice = apiSlice.injectEndpoints({
     }),
     markNotificationRead: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({ url: `/notification/mark-read/${id}`, method: "PUT" }),
-      invalidatesTags: [{ type: "Notification", id: "LIST" }],
+      // invalidatesTags: [{ type: "Notification", id: "LIST" }],
+      invalidatesTags: (_result, error) => (error ? [] : [{ type: "Notification", id: "LIST" }]),
     }),
     markAllNotificationsRead: builder.mutation<ApiSuccessMessage, void>({
       query: () => ({ url: "/notification/mark-all-read", method: "PUT" }),
-      invalidatesTags: [{ type: "Notification", id: "LIST" }],
+      // invalidatesTags: [{ type: "Notification", id: "LIST" }],
+      invalidatesTags: (_result, error) => (error ? [] : [{ type: "Notification", id: "LIST" }])
     }),
   }),
   overrideExisting: false,

@@ -1,5 +1,6 @@
 import { apiSlice } from "@/lib/api/apiSlice";
 import type { IUser } from "@/types";
+import { markSessionInvalid } from "@/features/auth/sessionSlice";
 
 export interface ApiSuccessMessage {
     success: boolean;
@@ -95,7 +96,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         resendActivation: builder.mutation<ApiSuccessMessage, ResendActivationRequest>({
@@ -112,7 +113,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         getUserDetails: builder.query<GetUserResponse, void>({
@@ -128,7 +129,21 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 url: "/user/logout",
                 method: "POST",
             }),
-            invalidatesTags: ["User"],
+            // invalidatesTags: (_result, error) => (error ? [] : ["User"]),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    // Mark the session invalid directly instead of invalidating the
+                    // "User" tag: tag invalidation would force an immediate refetch
+                    // of the still-subscribed getUserDetails query (AuthProvider
+                    // never unmounts on logout), producing an unnecessary /getuser
+                    // request right after logout. useCurrentUser() already treats
+                    // an invalid session as "no user" without needing fresh data.
+                    dispatch(markSessionInvalid());
+                } catch {
+                    // Logout request failed server-side; leave session state as-is.
+                }
+            },
         }),
 
         forgotPassword: builder.mutation<ApiSuccessMessage, ForgotPasswordRequest>({
@@ -150,22 +165,22 @@ export const authApiSlice = apiSlice.injectEndpoints({
         // add endpoints inside injectEndpoints
         updateUserProfile: builder.mutation<UpdateUserResponse, UpdateUserProfileRequest>({
             query: (body) => ({ url: "/user/update-user-profile", method: "PUT", body }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         updateUserAvatar: builder.mutation<UpdateUserResponse, UpdateUserAvatarRequest>({
             query: (body) => ({ url: "/user/update-avatar", method: "PUT", body }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         updateUserAddress: builder.mutation<UpdateUserResponse, UpdateUserAddressRequest>({
             query: (body) => ({ url: "/user/update-user-addresses", method: "PUT", body }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         deleteUserAddress: builder.mutation<UpdateUserResponse, string>({
             query: (id) => ({ url: `/user/delete-user-address/${id}`, method: "DELETE" }),
-            invalidatesTags: ["User"],
+            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
         }),
 
         updateUserPassword: builder.mutation<ApiSuccessMessage, UpdateUserPasswordRequest>({

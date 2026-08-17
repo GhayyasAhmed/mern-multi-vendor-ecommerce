@@ -59,12 +59,14 @@ export const couponApiSlice = apiSlice.injectEndpoints({
 
     createCouponCode: builder.mutation<CreateCouponResponse, CreateCouponRequest>({
       query: (body) => ({ url: "/coupon-code/create-coupon-code", method: "POST", body }),
-      invalidatesTags: [{ type: "Coupon", id: "LIST" }],
+      // invalidatesTags: [{ type: "Coupon", id: "LIST" }],
+      invalidatesTags: (_result, error) => (error ? [] : [{ type: "Coupon", id: "LIST" }]),
     }),
 
     deleteCouponCode: builder.mutation<DeleteCouponResponse, string>({
       query: (id) => ({ url: `/coupon-code/delete-coupon/${id}`, method: "DELETE" }),
-      invalidatesTags: [{ type: "Coupon", id: "LIST" }],
+      // invalidatesTags: [{ type: "Coupon", id: "LIST" }],
+      invalidatesTags: (_result, error) => (error ? [] : [{ type: "Coupon", id: "LIST" }]),
     }),
     validateCoupon: builder.mutation<ValidateCouponResponse, ValidateCouponRequest>({
       query: (body) => ({

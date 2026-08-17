@@ -16,7 +16,7 @@ const BestDeals = () => {
     <div>
       <div className={`${styles.section}`}>
         <div className={`${styles.heading}`}>
-          <h1>Best Deals</h1>
+          <h2>Best Deals</h2>
         </div>
         {isLoading ? (
           <ProductGridSkeleton count={5} />

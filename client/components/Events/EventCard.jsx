@@ -19,9 +19,9 @@ const EventCard = ({ active = true, data }) => {
   const handleAddToCart = () => {
     if (outOfStock || !data) {
       toast.showToast({
-      title: `"${data?.name ?? "Event"}" out of stock or not available for sell.`,
-      variant: "error",
-    });
+        title: `"${data?.name ?? "Event"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
       return
     };;
     dispatch(addItem({ item: productToCartItem(data, 1, "event") }));
@@ -55,9 +55,9 @@ const EventCard = ({ active = true, data }) => {
         />
       </div>
       <div className="w-full lg:w-[50%] flex flex-col justify-center p-4">
-        <h2 className={`${styles.productTitle}`}>
+        <p className={`${styles.productTitle}`}>
           {data?.name || "Iphone 14 Pro Max 256GB SSD and 8GB RAM Silver Colour"}
-        </h2>
+        </p>
         <p className="py-2 text-[15px] leading-6 font-normal text-muted-foreground">
           {data?.description ||
             "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nostrum, ab! Accusantium sapiente laudantium eveniet error impedit, perferendis architecto aut inventore eaque distinctio corporis culpa placeat ad id quas non omnis!"}
@@ -83,7 +83,7 @@ const EventCard = ({ active = true, data }) => {
             type="button"
             onClick={handleAddToCart}
             disabled={outOfStock}
-            aria-label={outOfStock ? "Out of stock" : `Add ${data?.name || "event"} to cart`}
+            aria-label={outOfStock ? "Out of stock" : `Add to cart, ${data?.name || "event"}`}
             className={`${styles.button} disabled:opacity-50`}
           >
             {outOfStock ? "Out of stock" : "Add to cart"}

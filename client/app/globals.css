@@ -56,8 +56,8 @@
     0 12px 24px -6px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.08);
 
   /* Fonts */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
   --font-roboto: var(--font-roboto), Roboto, sans-serif;
   --font-poppins: var(--font-poppins), Poppins, sans-serif;
 
@@ -82,13 +82,14 @@
   --secondary: #eef2ff;
   --secondary-foreground: #1e293b;
 
-  --success: #16a34a;
+
+  --success: #15803d;
   --success-bg: #f0fdf4;
-  --warning: #d97706;
+  --warning: #92400e;
   --warning-bg: #fffbeb;
-  --error: #dc2626;
+  --error: #b91c1c;
   --error-bg: #fef2f2;
-  --info: #0284c7;
+  --info: #0369a1;
   --info-bg: #f0f9ff;
 
   --focus-ring: #93c5fd;
@@ -162,8 +163,6 @@ body {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
-
-
 
 iframe[title*="Secure payment input"] ~ div,
 .StripeElement iframe + div,

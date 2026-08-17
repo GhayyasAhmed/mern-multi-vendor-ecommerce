@@ -91,7 +91,12 @@ const ProductDetailsCard = ({ setOpen, data }) => {
   return (
     <div className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
       {data ? (
-        <div className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface text-foreground rounded-md shadow-lg relative p-4 overflow-y-auto border border-border">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={data?.name ? `Quick view: ${data.name}` : "Product quick view"}
+          className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface text-foreground rounded-md shadow-lg relative p-4 overflow-y-auto border border-border"
+        >
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -127,12 +132,12 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                     />
                   </div>
                   <div>
-                    <h3 className={`${styles.shop_name}`}>
+                    <p className={`${styles.shop_name}`}>
                       {data?.shop?.name}
-                    </h3>
-                    <h5 className="pb-1 text-[15px] text-muted-foreground">
+                    </p>
+                    <p className="pb-1 text-[15px] text-muted-foreground">
                       ({data?.shop?.ratings || 0}) Ratings
-                    </h5>
+                    </p>
                   </div>
                 </Link>
               </div>
@@ -176,7 +181,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                   <button
                     type="button"
                     aria-label="Decrease quantity"
-                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
+                    className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                     onClick={decrementCount}
                   >
                     -
@@ -187,7 +192,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                   <button
                     type="button"
                     aria-label="Increase quantity"
-                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
+                    className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                     onClick={incrementCount}
                   >
                     +

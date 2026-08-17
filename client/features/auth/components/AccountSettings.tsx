@@ -355,7 +355,7 @@ function AddressesTab() {
         <button
           type="button"
           onClick={() => (showForm ? setShowForm(false) : openCreateForm())}
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm cursor-pointer"
+          className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary-hover text-sm cursor-pointer"
         >
           {showForm ? "Cancel" : "Add address"}
         </button>

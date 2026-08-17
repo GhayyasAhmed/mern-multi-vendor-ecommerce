@@ -124,7 +124,7 @@ const EventDetails = ({ eventId, initialEvent }) => {
                 <button
                   type="button"
                   aria-label="Decrease quantity"
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
+                  className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-l px-4 py-2 transition-colors cursor-pointer"
                   onClick={decrementCount}
                 >
                   -
@@ -133,7 +133,7 @@ const EventDetails = ({ eventId, initialEvent }) => {
                 <button
                   type="button"
                   aria-label="Increase quantity"
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
+                  className="min-h-11 min-w-11 flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-r px-4 py-2 transition-colors cursor-pointer"
                   onClick={incrementCount}
                 >
                   +

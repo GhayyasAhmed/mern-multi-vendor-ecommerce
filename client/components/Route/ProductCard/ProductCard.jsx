@@ -1,5 +1,5 @@
 "use client";
-import ProductDetailsCard from "@/components/Route/ProductDetailsCard/ProductDetailsCard";
+import dynamic from "next/dynamic";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { addItem, productToCartItem } from "@/features/cart/cartSlice";
 import { useAddToWishlistMutation, useRemoveFromWishlistMutation } from "@/features/wishlist/wishlistApiSlice";
@@ -18,6 +18,10 @@ import {
   AiOutlineShoppingCart,
   AiOutlineStar,
 } from "react-icons/ai";
+const ProductDetailsCard = dynamic(
+  () => import("@/components/Route/ProductDetailsCard/ProductDetailsCard"),
+  { ssr: false }
+);
 
 const ProductCard = ({ data }) => {
   const [open, setOpen] = useState(false);
@@ -38,9 +42,9 @@ const ProductCard = ({ data }) => {
     e.stopPropagation();
     if (outOfStock || !data) {
       toast.showToast({
-      title: `"${data?.name ?? "Product"}" out of stock or not available for sell.`,
-      variant: "error",
-    });
+        title: `"${data?.name ?? "Product"}" out of stock or not available for sell.`,
+        variant: "error",
+      });
       return
     };
     dispatch(addItem({ item: productToCartItem(data, 1) }));
@@ -97,7 +101,7 @@ const ProductCard = ({ data }) => {
             onClick={handleWishlistToggle}
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             aria-pressed={isWishlisted}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
           >
             {isWishlisted ? (
               <AiFillHeart size={16} className="text-accent" aria-hidden="true" />
@@ -114,7 +118,7 @@ const ProductCard = ({ data }) => {
             aria-label="Quick view"
             aria-haspopup="dialog"
             aria-expanded={open}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground cursor-pointer"
           >
             <AiOutlineEye size={16} className="text-muted-foreground" aria-hidden="true" />
           </button>
@@ -123,19 +127,28 @@ const ProductCard = ({ data }) => {
             onClick={handleAddToCart}
             disabled={outOfStock}
             aria-label={outOfStock ? "Out of stock" : "Add to cart"}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface/90 disabled:hover:text-current cursor-pointer"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface/90 disabled:hover:text-current cursor-pointer"
           >
             <AiOutlineShoppingCart size={16} className="text-muted-foreground" aria-hidden="true" />
           </button>
         </div>
 
-        <Link href={`/shop/preview/${data?.shop?._id}`}>
-          <h5 className={`${styles.shop_name} mt-2`}>{data?.shop?.name}</h5>
-        </Link>
+        {
+          data?.shop?.name
+          ?
+          <Link href={`/shop/preview/${data?.shopId}`}>
+            <p className={`${styles.shop_name} mt-2`}>{data?.shop?.name}</p>
+          </Link>
+          :
+          <>
+          <br/>
+          {/* <br/> */}
+          </>
+        }
         <Link href={`/product/${data?._id}`}>
-          <h4 className="pb-3 font-medium text-foreground">
+          <p className="pb-3 font-medium text-foreground">
             {data?.name?.length > 40 ? data.name.slice(0, 40) + "..." : data?.name}
-          </h4>
+          </p>
 
           <div className="flex items-center gap-2">
             <div className="flex">
