@@ -105,7 +105,7 @@ export const shopApiSlice = apiSlice.injectEndpoints({
 
         logoutShop: builder.mutation<ApiSuccessMessage, void>({
             query: () => ({ url: "/shop/logout", method: "POST" }),
-            invalidatesTags: (_result, error) => (error ? [] : ["Shop"]),
+            // invalidatesTags: (_result, error) => (error ? [] : ["Shop"]),
         }),
 
         getShopInfo: builder.query<GetShopInfoResponse, string>({

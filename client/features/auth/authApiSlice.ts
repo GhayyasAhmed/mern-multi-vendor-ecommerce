@@ -1,5 +1,6 @@
 import { apiSlice } from "@/lib/api/apiSlice";
 import type { IUser } from "@/types";
+import { markSessionInvalid } from "@/features/auth/sessionSlice";
 
 export interface ApiSuccessMessage {
     success: boolean;
@@ -128,7 +129,21 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 url: "/user/logout",
                 method: "POST",
             }),
-            invalidatesTags: (_result, error) => (error ? [] : ["User"]),
+            // invalidatesTags: (_result, error) => (error ? [] : ["User"]),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    // Mark the session invalid directly instead of invalidating the
+                    // "User" tag: tag invalidation would force an immediate refetch
+                    // of the still-subscribed getUserDetails query (AuthProvider
+                    // never unmounts on logout), producing an unnecessary /getuser
+                    // request right after logout. useCurrentUser() already treats
+                    // an invalid session as "no user" without needing fresh data.
+                    dispatch(markSessionInvalid());
+                } catch {
+                    // Logout request failed server-side; leave session state as-is.
+                }
+            },
         }),
 
         forgotPassword: builder.mutation<ApiSuccessMessage, ForgotPasswordRequest>({

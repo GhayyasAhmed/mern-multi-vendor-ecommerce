@@ -23,6 +23,7 @@ const REFRESH_EXEMPT_ENDPOINTS = [
   "/user/activation",
   "/user/forgot-password",
   "/user/reset-password",
+  "/user/logout",
 ];
 
 // Endpoints that establish a brand-new session on success — a successful
@@ -92,12 +93,14 @@ const baseQuery: BaseQueryFn<
     if (refreshResult.data) {
       result = await rawBaseQuery(args, api, extraOptions);
     } else {
-      // Refresh failed too: the session is really over. Invalidate the
-      // cached user so dependent UI (e.g. getUserDetails) reflects logout.
-      // This now happens at most once per invalid session, guarded by
-      // the `session.invalid` Redux state above.
+      // Refresh failed too: the session is really over. Mark it invalid so
+      // useCurrentUser() immediately treats the user as logged out (even if
+      // a stale cached user is still sitting in the getUserDetails cache —
+      // see useCurrentUser.ts) instead of invalidating the "User" tag.
+      // Invalidating here would force an immediate refetch of the
+      // still-subscribed getUserDetails query (AuthProvider never
+      // unmounts), which would just 401 again for no benefit.
       api.dispatch(markSessionInvalid());
-      api.dispatch(apiSlice.util.invalidateTags(["User"]))
     }
   }
 

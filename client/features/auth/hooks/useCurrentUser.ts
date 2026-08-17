@@ -23,10 +23,28 @@ export function useCurrentUser(options?: UseCurrentUserOptions) {
     skip,
   });
 
+  // A confirmed-invalid session (explicit logout, or a failed token
+  // refresh) means there is no user, full stop — even if getUserDetails
+  // still holds a "fulfilled" cache entry from a previous session. We
+  // deliberately don't force a refetch to clear that entry (that would
+  // mean an extra /getuser request); overriding here keeps the UI correct
+  // (e.g. the header won't flash the previous user) without any network
+  // cost.
+  if (sessionInvalid) {
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isFetching: false,
+      error,
+      refetch,
+    };
+  }
+
   return {
     user: data?.user ?? null,
     isAuthenticated: Boolean(data?.user),
-    isLoading: skip ? false : isLoading,
+    isLoading,
     isFetching,
     error,
     refetch,
