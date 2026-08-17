@@ -188,10 +188,11 @@ export const productApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_result, _error, body) => [
-        { type: "Product", id: "LIST" },
-        { type: "Product", id: `SHOP-${body.shopId}` },
-      ],
+      invalidatesTags: (_result, error, body) =>
+        error ? [] : [
+          { type: "Product", id: "LIST" },
+          { type: "Product", id: `SHOP-${body.shopId}` },
+        ],
     }),
 
     deleteProduct: builder.mutation<DeleteProductResponse, { id: string; shopId: string }>({
@@ -199,11 +200,12 @@ export const productApiSlice = apiSlice.injectEndpoints({
         url: `/product/delete-shop-product/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, { id, shopId }) => [
-        { type: "Product", id },
-        { type: "Product", id: "LIST" },
-        { type: "Product", id: `SHOP-${shopId}` },
-      ],
+      invalidatesTags: (_result, error, { id, shopId }) =>
+        error ? [] : [
+          { type: "Product", id },
+          { type: "Product", id: "LIST" },
+          { type: "Product", id: `SHOP-${shopId}` },
+        ],
     }),
 
     updateProduct: builder.mutation<UpdateProductResponse, UpdateProductRequest>({
@@ -212,11 +214,12 @@ export const productApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_result, _error, { id, shopId }) => [
-        { type: "Product", id },
-        { type: "Product", id: "LIST" },
-        { type: "Product", id: `SHOP-${shopId}` },
-      ],
+      invalidatesTags: (_result, error, { id, shopId }) =>
+        error ? [] : [
+          { type: "Product", id },
+          { type: "Product", id: "LIST" },
+          { type: "Product", id: `SHOP-${shopId}` },
+        ],
     }),
 
     checkAvailability: builder.mutation<CheckAvailabilityResponse, CheckAvailabilityItem[]>({
@@ -229,7 +232,11 @@ export const productApiSlice = apiSlice.injectEndpoints({
 
     createReview: builder.mutation<{ success: boolean; message: string }, CreateReviewRequest>({
       query: (body) => ({ url: "/product/create-new-review", method: "PUT", body }),
-      invalidatesTags: (_result, _error, { productId }) => [{ type: "Product", id: productId }, { type: "Product", id: `REVIEW-${productId}` }],
+      invalidatesTags: (_result, error, { productId }) =>
+        error ? [] : [
+          { type: "Product", id: productId },
+          { type: "Product", id: `REVIEW-${productId}` },
+        ],
     }),
 
     getReviewEligibility: builder.query<ReviewEligibilityResponse, string>({

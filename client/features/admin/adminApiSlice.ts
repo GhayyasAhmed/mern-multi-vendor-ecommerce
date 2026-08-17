@@ -111,10 +111,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
     deleteUserAdmin: builder.mutation<ApiSuccessMessage, string>({
       query: (id) => ({ url: `/user/delete-user/${id}`, method: "DELETE" }),
       // invalidatesTags: [{ type: "User", id: "ADMIN-LIST" }],
-      invalidatesTags: [
-        { type: "User", id: "ADMIN-LIST" },
-        { type: "AdminStats", id: "OVERVIEW" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [
+          { type: "User", id: "ADMIN-LIST" },
+          { type: "AdminStats", id: "OVERVIEW" },
+        ],
+
     }),
 
     getAllSellersAdmin: builder.query<AdminSellersResponse, AdminPageParams | void>({
@@ -125,10 +127,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
     deleteSellerAdmin: builder.mutation<ApiSuccessMessage, string>({
       query: (id) => ({ url: `/shop/delete-seller/${id}`, method: "DELETE" }),
       // invalidatesTags: [{ type: "Shop", id: "ADMIN-LIST" }],
-      invalidatesTags: [
-        { type: "Shop", id: "ADMIN-LIST" },
-        { type: "AdminStats", id: "OVERVIEW" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [
+          { type: "Shop", id: "ADMIN-LIST" },
+          { type: "AdminStats", id: "OVERVIEW" },
+        ],
+
     }),
 
     getAllProductsAdmin: builder.query<AdminProductsResponse, AdminPageParams | void>({
@@ -157,11 +161,11 @@ export const adminApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: { sellerId },
       }),
-      // invalidatesTags: [{ type: "Withdraw", id: "LIST" }],
-      invalidatesTags: [
-        { type: "Withdraw", id: "LIST" },
-        { type: "AdminStats", id: "OVERVIEW" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [
+          { type: "Withdraw", id: "LIST" },
+          { type: "AdminStats", id: "OVERVIEW" },
+        ],
     }),
 
     rejectWithdrawAdmin: builder.mutation<ApiSuccessMessage, { id: string; reason?: string }>({
@@ -170,20 +174,20 @@ export const adminApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: { reason },
       }),
-      // invalidatesTags: [{ type: "Withdraw", id: "LIST" }],
-      invalidatesTags: [
-        { type: "Withdraw", id: "LIST" },
-        { type: "AdminStats", id: "OVERVIEW" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [
+          { type: "Withdraw", id: "LIST" },
+          { type: "AdminStats", id: "OVERVIEW" },
+        ],
     }),
 
     updateSellerStatusAdmin: builder.mutation<ApiSuccessMessage, { id: string; status: "pending" | "active" | "suspended" }>({
       query: ({ id, status }) => ({ url: `/shop/admin-update-status/${id}`, method: "PUT", body: { status } }),
-      // invalidatesTags: [{ type: "Shop", id: "ADMIN-LIST" }],
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Shop", id: "ADMIN-LIST" },
-        { type: "Shop", id },
-      ],
+      invalidatesTags: (_result, error, { id }) =>
+        error ? [] : [
+          { type: "Shop", id: "ADMIN-LIST" },
+          { type: "Shop", id },
+        ],
     }),
   }),
   overrideExisting: false,

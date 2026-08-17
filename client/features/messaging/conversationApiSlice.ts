@@ -136,10 +136,12 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [
-        { type: "Conversation", id: "USER-LIST" },
-        { type: "Conversation", id: "SELLER-LIST" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [
+          { type: "Conversation", id: "USER-LIST" },
+          { type: "Conversation", id: "SELLER-LIST" },
+        ],
+
     }),
 
     getMessages: builder.query<GetMessagesResponse, GetMessagesParams>({
@@ -156,11 +158,8 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_result, _error, body) => [
-        { type: "Message", id: body.conversationId },
-        // { type: "Conversation", id: "USER-LIST" },
-        // { type: "Conversation", id: "SELLER-LIST" },
-      ],
+      invalidatesTags: (_result, error, body) =>
+        error ? [] : [{ type: "Message", id: body.conversationId }],
     }),
   }),
   overrideExisting: false,

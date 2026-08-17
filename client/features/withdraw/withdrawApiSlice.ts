@@ -55,9 +55,9 @@ export const withdrawApiSlice = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.withdraws.map((w) => ({ type: "Withdraw" as const, id: w._id })),
-              { type: "Withdraw" as const, id: "MY-LIST" },
-            ]
+            ...result.withdraws.map((w) => ({ type: "Withdraw" as const, id: w._id })),
+            { type: "Withdraw" as const, id: "MY-LIST" },
+          ]
           : [{ type: "Withdraw" as const, id: "MY-LIST" }],
     }),
 
@@ -67,7 +67,8 @@ export const withdrawApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "Withdraw", id: "MY-LIST" }, "Shop"],
+      invalidatesTags: (_result, error) =>
+        error ? [] : [{ type: "Withdraw", id: "MY-LIST" }, "Shop"],
     }),
   }),
   overrideExisting: false,

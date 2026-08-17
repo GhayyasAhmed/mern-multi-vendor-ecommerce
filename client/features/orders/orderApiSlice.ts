@@ -96,7 +96,8 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "Order", id: "LIST" }],
+      invalidatesTags: (_result, error) => (error ? [] : [{ type: "Order", id: "LIST" }]),
+
     }),
 
     getMyOrders: builder.query<GetOrdersResponse, GetOrdersParams>({
@@ -145,11 +146,12 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: { status },
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Order", id },
-        { type: "Order", id: "SELLER-LIST" },
-        { type: "Order", id: "LIST" },
-      ],
+      invalidatesTags: (_result, error, { id }) =>
+        error ? [] : [
+          { type: "Order", id },
+          { type: "Order", id: "SELLER-LIST" },
+          { type: "Order", id: "LIST" },
+        ],
     }),
 
     orderRefundSuccess: builder.mutation<OrderActionResponse, { id: string }>({
@@ -157,11 +159,12 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         url: `/order/order-refund-success/${id}`,
         method: "PUT",
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Order", id },
-        { type: "Order", id: "SELLER-LIST" },
-        { type: "Order", id: "LIST" },
-      ],
+      invalidatesTags: (_result, error, { id }) =>
+        error ? [] : [
+          { type: "Order", id },
+          { type: "Order", id: "SELLER-LIST" },
+          { type: "Order", id: "LIST" },
+        ],
     }),
 
     getOrderById: builder.query<GetOrderResponse, string>({
@@ -177,11 +180,12 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         url: `/order/order-refund/${id}`,
         method: "PUT",
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Order", id },
-        { type: "Order", id: "LIST" },
-        { type: "Order", id: "SELLER-LIST" },
-      ],
+      invalidatesTags: (_result, error, { id }) =>
+        error ? [] : [
+          { type: "Order", id },
+          { type: "Order", id: "LIST" },
+          { type: "Order", id: "SELLER-LIST" },
+        ],
     }),
   }),
   overrideExisting: false,

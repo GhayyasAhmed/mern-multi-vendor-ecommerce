@@ -32,7 +32,7 @@ export const wishlistApiSlice = apiSlice.injectEndpoints({
         url: `/user/wishlist/${productId}`,
         method: "PUT",
       }),
-      invalidatesTags: [{ type: "Wishlist", id: "LIST" }, "User"],
+      invalidatesTags: (result) => result ? [{ type: "Wishlist", id: "LIST" }, "User"] : [],
     }),
 
     removeFromWishlist: builder.mutation<ApiSuccessMessage, string>({
@@ -40,7 +40,7 @@ export const wishlistApiSlice = apiSlice.injectEndpoints({
         url: `/user/wishlist/${productId}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "Wishlist", id: "LIST" }, "User"],
+      invalidatesTags: (result) => result ? [{ type: "Wishlist", id: "LIST" }, "User"] : [],
     }),
   }),
   overrideExisting: false,
