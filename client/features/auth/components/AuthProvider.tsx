@@ -5,7 +5,7 @@ import { switchUser, syncItemAvailability } from "@/features/cart/cartSlice";
 import { eventApiSlice } from "@/features/events/eventApiSlice";
 import { orderApiSlice } from "@/features/orders/orderApiSlice";
 import { productApiSlice } from "@/features/products/productApiSlice";
-import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket, getSocket, isSocketConfigured } from "@/lib/socket";
 import type { RootState } from "@/store";
 import { useAppDispatch } from "@/store/hooks";
 import { usePathname } from "next/navigation";
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isSellerOnlyRoute) return;
     if (isLoading) return;
-    if (user?._id) {
+    if (user?._id && isSocketConfigured()) {
       connectSocket();
     } else {
       disconnectSocket();

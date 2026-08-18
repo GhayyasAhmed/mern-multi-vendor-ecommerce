@@ -43,7 +43,7 @@ import {
 } from "@/features/withdraw/withdrawApiSlice";
 import { shopApiSlice } from "@/features/shop/shopApiSlice";
 import { apiSlice } from "@/lib/api/apiSlice";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket, isSocketConfigured  } from "@/lib/socket";
 import {
   blockNonIntegerKeys,
   blockNonPriceKeys,
@@ -134,7 +134,7 @@ export default function SellerDashboard() {
   const toast = useToast();
 
   useEffect(() => {
-    if (!seller?._id) return;
+    if (!seller?._id || !isSocketConfigured()) return;
 
     const socket = connectSocket();
 
