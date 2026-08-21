@@ -1,19 +1,39 @@
 # Mercovia — Docker Compose stack (EC2 production variant)
 #
-# Runs client + server + socket-relay, plus a local Redis used only for
-# internal coordination between server and socket-relay (sessions,
-# socket-auth tickets, pub/sub for real-time events).
+# Runs mongodb + redis + server + socket-relay + client.
 #
-# MongoDB is intentionally NOT containerized — the app connects to your
-# existing external MongoDB (e.g. MongoDB Atlas), exactly like the
-# Vercel deployment does. Set MONGO_URI in your .env.
+# MongoDB is now a containerized service on this EC2 host with a named
+# volume (mongodb_data) for persistent storage, authentication enabled,
+# and no published host port — only containers on mercovia-network can
+# reach it.
 #
-# All app ports (3000/3001/4000) are bound to 127.0.0.1 only. Nginx,
+# All app ports (3000/3001/4000) stay bound to 127.0.0.1 only. Nginx,
 # running directly on the EC2 host, is the sole public entry point on
-# port 80. This keeps the backend and socket-relay unreachable from the
-# internet even if someone probes the instance's IP directly.
+# ports 80/443, fronting three subdomains:
+#   mercovia.online / www.mercovia.online -> client       (:3000)
+#   api.mercovia.online                   -> server       (:3001)
+#   socket.mercovia.online                -> socket-relay (:4000)
 
 services:
+  mongodb:
+    image: mongo:7
+    container_name: mercovia-mongodb
+    restart: unless-stopped
+    command: ["--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: mercovia
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mercovia-network
+
   redis:
     image: redis:7-alpine
     container_name: mercovia-redis
@@ -35,18 +55,13 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     environment:
-      # NODE_ENV=development (not "production") is intentional here too:
-      # it keeps auth cookies as sameSite=lax/secure=false, required
-      # because this deployment serves plain http:// (no TLS/domain yet).
-      # The server still runs the compiled production JavaScript
-      # (dist/server.js) — this only affects cookie flags and the JWT
-      # dev-secret fallback, not which code runs. Switch to "production"
-      # once you put a real domain + HTTPS in front of this (see §11).
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       FRONTEND_URL: ${PUBLIC_ORIGIN}
-      MONGO_URI: ${MONGO_URI}
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/mercovia?authSource=admin
       REDIS_URL: redis://redis:6379
       ACCESS_TOKEN: ${ACCESS_TOKEN}
       REFRESH_TOKEN: ${REFRESH_TOKEN}
@@ -100,13 +115,9 @@ services:
       dockerfile: Dockerfile
       args:
         DOCKER_BUILD: "1"
-        # Server-side rewrite target — reaches the "server" container
-        # directly over the internal Docker network. Never exposed to
-        # the browser.
         BACKEND_API_URL: http://server:3001/api/v1
-        # Browser-facing values.
         NEXT_PUBLIC_API_URL: /api/v1
-        NEXT_PUBLIC_SOCKET_URL: ${PUBLIC_ORIGIN}
+        NEXT_PUBLIC_SOCKET_URL: ${SOCKET_ORIGIN}
         NEXT_PUBLIC_SITE_URL: ${PUBLIC_ORIGIN}
     container_name: mercovia-client
     restart: unless-stopped
@@ -125,3 +136,6 @@ services:
 networks:
   mercovia-network:
     driver: bridge
+
+volumes:
+  mongodb_data:
