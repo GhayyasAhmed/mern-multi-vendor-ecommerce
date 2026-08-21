@@ -32,7 +32,7 @@ export const writeLimiter = rateLimit({
 // to slow down credential stuffing / brute-force / token-guessing attempts.
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 1000,
+    limit: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: {

@@ -4,6 +4,7 @@ import { Document, Schema, model } from 'mongoose';
 import { env } from '../config/env.js';
 import { decryptSecret, maskAccountNumber } from '../utils/crypto.js';
 
+const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export interface IWithdrawMethod {
     withdrawMethodName: string;
     bankName: string;
@@ -100,6 +101,12 @@ const shopSchema = new Schema<IShop>(
             unique: true,
             lowercase: true,
             trim: true,
+            validate: {
+                validator: function (value: string) {
+                    return emailRegexPattern.test(value);
+                },
+                message: "Please enter a valid email",
+            },
         },
         password: {
             type: String,

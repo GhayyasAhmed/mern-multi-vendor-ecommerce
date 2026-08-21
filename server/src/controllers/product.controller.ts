@@ -1,14 +1,13 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
+import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary.js";
 import catchAsyncErrors from "../middlewares/catchAsyncError.js";
-import ProductModel, { IReview } from "../models/product.model.js";
-import OrderModel from "../models/order.model.js";
-import ShopModel from "../models/shop.model.js";
-import EventModel from "../models/event.model.js";
 import CouponCodeModel from "../models/couponCode.model.js";
-import ConversationModel from "../models/conversation.model.js";
+import EventModel from "../models/event.model.js";
+import OrderModel from "../models/order.model.js";
+import ProductModel, { IReview } from "../models/product.model.js";
+import ShopModel from "../models/shop.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary.js";
-import { parsePagination, buildPaginationMeta } from "../utils/pagination.js"
+import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
 
 // Helper function to escape special regex metacharacters
 const escapeRegex = (text: string): string => {
@@ -136,9 +135,9 @@ export const deleteProduct = catchAsyncErrors(
 
     await Promise.all(deletePromises);
 
-    // Cascade delete dependent entities if required or cleanup references
-    await CouponCodeModel.deleteMany({ productIds: product._id });
-    await ConversationModel.deleteMany({ productId: product._id });
+    // Cascade delete: coupons scoped to this product become invalid once it's gone
+    await CouponCodeModel.deleteMany({ selectedProduct: String(product._id) });
+
 
     await ProductModel.findByIdAndDelete(req.params.id);
 
@@ -280,11 +279,10 @@ export const checkAvailability = catchAsyncErrors(
 // get all products (with pagination, category filter, search, sorting)
 export const getAllProducts = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 12, 1), 50);
-    const category = req.query.category as string | undefined;
-    const search = req.query.search as string | undefined;
-    const sortBy = (req.query.sortBy as string) || "newest";
+    const { page, limit } = parsePagination(req.query, 12, 50);
+    const category = typeof req.query.category === "string" ? req.query.category : undefined;
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
+    const sortBy = typeof req.query.sortBy === "string" ? req.query.sortBy : "newest";
 
     const filter: Record<string, any> = {};
     if (category) {
@@ -315,12 +313,7 @@ export const getAllProducts = catchAsyncErrors(
     res.status(200).json({
       success: true,
       products,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.max(Math.ceil(totalProducts / limit), 1),
-        totalProducts,
-        limit,
-      },
+      pagination: buildPaginationMeta(page, limit, totalProducts),
     });
   }
 );

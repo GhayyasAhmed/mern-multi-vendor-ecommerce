@@ -9,7 +9,7 @@ import styles from "@/styles/styles";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AiFillHeart,
   AiOutlineClose,
@@ -88,14 +88,32 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     setCount(count + 1);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [setOpen]);
+
   return (
-    <div className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
+    // <div className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center">
+    <div
+      className="bg-black/50 fixed w-full h-screen top-0 left-0 z-40 flex items-center justify-center"
+      onClick={() => setOpen(false)}
+    >
       {data ? (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={data?.name ? `Quick view: ${data.name}` : "Product quick view"}
           className="w-[90%] md:w-[60%] h-[90vh] md:h-[75vh] bg-surface text-foreground rounded-md shadow-lg relative p-4 overflow-y-auto border border-border"
+          onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"

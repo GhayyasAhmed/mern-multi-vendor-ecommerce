@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import Badge from "@/components/ui/Badge";
 import { useGetAdminStatsQuery } from "@/features/admin/adminApiSlice";
+import { useEffect, useState } from "react";
 
 const links = [
   { href: "/admin", label: "Overview" },
@@ -23,6 +23,19 @@ export default function AdminNav() {
   const [open, setOpen] = useState(false);
   const { data } = useGetAdminStatsQuery();
   const pendingWithdrawCount = data?.stats?.pendingWithdrawCount ?? 0;
+
+  // useEffect(() => {
+  //   const handleKeyDown = (e: { key: string; }) => {
+  //     if (e.key === "Escape") setOpen(false);
+  //   };
+  //   document.addEventListener("keydown", handleKeyDown);
+  //   const originalOverflow = document.body.style.overflow;
+  //   document.body.style.overflow = "hidden";
+  //   return () => {
+  //     document.removeEventListener("keydown", handleKeyDown);
+  //     document.body.style.overflow = originalOverflow;
+  //   };
+  // }, [setOpen]);
 
   const renderLinks = (onNavigate?: () => void) =>
     links.map((link) => {
@@ -106,7 +119,10 @@ export default function AdminNav() {
       )}
 
       {/* Desktop sidebar */}
-      <nav aria-label="Admin navigation" className="hidden md:flex md:flex-col w-56 shrink-0 bg-brand text-brand-foreground min-h-screen p-4 space-y-1 border-r border-white/10">
+      <nav
+        aria-label="Admin navigation"
+        className="hidden md:flex md:flex-col w-56 shrink-0 bg-brand text-brand-foreground min-h-screen p-4 space-y-1 border-r border-white/10"
+      >
         <div className="flex items-center justify-between mb-4 px-2">
           <p className="text-lg font-semibold">Admin</p>
           <ThemeToggle className="h-9 w-9 flex items-center justify-center rounded-full text-brand-foreground hover:bg-white/10 cursor-pointer transition-colors" />

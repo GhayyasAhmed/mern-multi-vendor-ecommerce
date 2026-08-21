@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+// import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import ToastViewport, { type ToastItem, type ToastVariant } from "@/components/ui/Toast";
 
 interface ShowToastOptions {
@@ -47,7 +48,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ToastContext.Provider value={{ showToast, dismissToast }}>
+    // <ToastContext.Provider value={{ showToast, dismissToast }}>
+    <ToastContext.Provider value={useMemo(() => ({ showToast, dismissToast }), [showToast, dismissToast])}>
       {children}
       <ToastViewport toasts={toasts} onDismiss={dismissToast} />
     </ToastContext.Provider>

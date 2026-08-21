@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 
@@ -52,7 +52,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const canConfirm = !requiresTyping || typedValue === merged?.requireTypedConfirmation;
 
   return (
-    <ConfirmContext.Provider value={{ confirm }}>
+    <ConfirmContext.Provider value={useMemo(() => ({ confirm }), [confirm])}>
       {children}
       <Modal
         open={Boolean(merged)}
