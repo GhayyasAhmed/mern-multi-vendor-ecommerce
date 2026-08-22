@@ -56,14 +56,17 @@ jobs:
           EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
         run: |
           echo "Debugging EC2_APP_DIR value: '${EC2_APP_DIR}'"
-          # Safety check to ensure the variable isn't empty before proceeding
           if [ -z "$EC2_APP_DIR" ]; then
             echo "Error: EC2_APP_DIR secret is missing or empty!"
             exit 1
           fi
           
-          # Note: Removed single quotes around EOF to allow runner-side interpolation of $EC2_APP_DIR
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'bash -s' << EOF
+          # Added ServerAliveInterval=30 and ServerAliveCountMax=20 to prevent SSH broken pipe drops during long builds
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=accept-new \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=20 \
+              "$EC2_USER@$EC2_HOST" 'bash -s' << EOF
             set -e
             cd "$EC2_APP_DIR"
             echo "== Fetching latest branch =="
