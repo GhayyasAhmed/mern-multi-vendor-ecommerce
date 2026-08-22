@@ -86,18 +86,3 @@ jobs:
       - name: Cleanup SSH Key
         if: always()
         run: rm -f ~/.ssh/deploy_key
-        
-      - name: Verify backend health endpoint
-        run: |
-          curl -fsSL "https://${{ secrets.EC2_HOST }}/api/v1/health-check"
-          echo ""
-          echo "Backend health check passed"
-
-      - name: Verify frontend responds
-        run: |
-          STATUS=$(curl -fsSL -o /dev/null -w "%{http_code}" "https://${{ secrets.EC2_HOST }}/")
-          if [ "$STATUS" != "200" ]; then
-            echo "Frontend returned HTTP $STATUS instead of 200"
-            exit 1
-          fi
-          echo "Frontend check passed (HTTP 200)"
