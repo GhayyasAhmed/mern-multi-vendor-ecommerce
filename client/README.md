@@ -1,8 +1,11 @@
 # Mercovia Client
 
-> Frontend application for Mercovia, responsible for the marketplace
-> user experience, routing, client state, API integration, forms,
-> protected navigation, and buyer/seller/admin workflows.
+> Next.js frontend for Mercovia, responsible for the marketplace user
+> experience, routing, client state, API integration, forms, protected
+> navigation, and buyer/seller/admin workflows.
+
+For system-wide architecture, deployment topology, and the AWS/Docker
+production setup, see the [root README](../README.md).
 
 ## Responsibilities
 
@@ -11,24 +14,22 @@ The client is responsible for:
 -   application routing and deep-linking
 -   page composition
 -   reusable UI components
--   buyer workflows
--   seller dashboard workflows
--   administrative UI
+-   buyer, seller, and admin workflows
 -   Redux Toolkit state
 -   RTK Query server-state management
 -   form handling and client-side validation
 -   authentication-state resolution
 -   protected navigation
 -   loading, error, and empty states
--   real-time messaging UI
+-   real-time messaging and notification UI
 
 The browser is **not** the final authorization boundary. Sensitive
 decisions remain enforced by the backend.
 
 ## Architecture
 
-``` text
-React / Next.js UI
+```text
+React / Next.js UI (App Router)
        │
        ├── Route / Layout
        │
@@ -40,61 +41,94 @@ React / Next.js UI
        └── Socket.IO client
               │
               ▼
-       Express REST API
+     same-origin /api/v1/* (Next.js rewrite proxy)
+              │
+              ▼
+       Express REST API (server)
               │
               ▼
        MongoDB / Redis / services
+
+Socket.IO client ──▶ socket-relay (separate service, separate origin)
 ```
 
-RTK Query is the primary server-state layer. Domain API slices should
-use the shared API infrastructure rather than creating independent
-ad-hoc API clients.
+RTK Query is the primary server-state layer. Domain API slices use the
+shared API infrastructure (`lib/api/apiSlice.ts`) rather than creating
+independent ad-hoc API clients.
 
 ## Structure
 
-The exact tree may evolve, but the client is organized around
-application routes, shared components, domain features, and state
-infrastructure.
-
-Typical responsibilities:
-
-``` text
+```text
 client/
 ├── app/              # application routes and layouts
 ├── components/       # reusable/shared UI
 ├── features/         # domain-specific components and API slices
 ├── store/            # Redux store configuration
-├── public/            # static assets
-├── styles/            # global/component styling
-└── ...
+├── lib/              # api client, socket client, server-side fetch helper
+├── config/           # runtime env accessor
+├── public/           # static assets
+└── styles/           # global/component styling
 ```
 
 ## Technology Stack
 
--   React / Next.js
--   JavaScript / TypeScript where applicable
--   Redux Toolkit
--   RTK Query
--   React Hook Form
--   Zod where used
+-   React / Next.js (App Router)
+-   TypeScript
+-   Redux Toolkit + RTK Query
+-   React Hook Form + Zod
 -   Tailwind CSS
 -   Socket.IO client
 
 ## Environment Variables
 
-Create:
+Create `client/.env.local` for local development:
 
-``` text
-client/.env.local
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ```
 
-The frontend API configuration uses:
+| Variable | Read by | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `config/env.ts`, `lib/api/apiSlice.ts` | Browser-visible. Either an absolute backend URL (simple local dev) or a relative path like `/api/v1` (production pattern — see below). |
+| `NEXT_PUBLIC_SOCKET_URL` | `config/env.ts`, `lib/socket.ts` | Browser-visible. Falls back to `NEXT_PUBLIC_API_URL` if unset. Must be a real origin — Socket.IO cannot be reached through the `/api/v1` rewrite. |
+| `NEXT_PUBLIC_SITE_URL` | `app/layout.tsx`, `app/sitemap.ts`, `app/robots.ts` | Browser-visible. Used to build absolute canonical/OG URLs and the sitemap. Defaults to `http://localhost:3000`. |
+| `BACKEND_API_URL` | `next.config.ts` (rewrites), `lib/server-api.ts` | **Server-only, never bundled to the browser.** The real backend origin the Next.js server proxies to and fetches from during SSR/build. |
 
-``` env
-NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
+`NEXT_PUBLIC_SERVER_URI` is **not** used anywhere in this codebase —
+if you've seen it in older notes, ignore it.
+
+### Two supported local patterns
+
+**A. Direct (simplest for local-only work):**
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
-`NEXT_PUBLIC_*` variables are exposed to browser code.
+The browser calls the backend directly. Requires the backend's CORS
+(`FRONTEND_URL`) and cookie `SameSite`/`Secure` settings to permit a
+cross-origin, credentialed request from `http://localhost:3000` — the
+existing `development` cookie/CORS defaults in `server/src/config/env.ts`
+and `server/src/app.ts` support this out of the box.
+
+**B. Same-origin proxy (matches production):**
+
+```env
+NEXT_PUBLIC_API_URL=/api/v1
+BACKEND_API_URL=http://localhost:3001/api/v1
+```
+
+`next.config.ts`'s `rewrites()` proxies every `/api/v1/*` request from
+the Next.js server to `BACKEND_API_URL`, so the browser only ever talks
+to `localhost:3000`. This is the pattern used in production (see the
+root README's request-flow diagram) and is worth using locally if
+you're debugging cookie/CORS behavior specifically.
+
+`BACKEND_API_URL` is also required (or an absolute `NEXT_PUBLIC_API_URL`)
+for server-side data fetching — `lib/server-api.ts` throws if neither is
+set, since it powers `generateMetadata`, `app/sitemap.ts`, and the
+server-rendered product/event detail pages.
 
 ### Never put these in the client environment
 
@@ -106,237 +140,110 @@ NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
 -   Stripe webhook secret
 -   SMTP password
 -   admin password
--   any server-only credential
+-   any other server-only credential
 
-If a value is secret, it belongs in the backend environment.
+If a value is secret, it belongs in `server/.env`, not here. Only
+variables prefixed `NEXT_PUBLIC_` are ever exposed to browser code —
+`BACKEND_API_URL` is deliberately unprefixed so it can never leak into
+the client bundle.
 
 ## Local Setup
 
-From the repository root:
-
-``` bash
+```bash
 cd client
 npm install
 npm run dev
 ```
 
-Open:
-
-``` text
-http://localhost:3000
-```
-
-The backend must be running separately.
-
-Typical topology:
-
-``` text
-Browser
-   │
-   ├── HTTP + cookies ──────► Express API
-   │
-   └── Socket.IO ───────────► Socket.IO server
-                                  │
-                                  ▼
-                              MongoDB / Redis
-```
-
-## Production Build
-
-``` bash
-npm run build
-npm run start
-```
-
-Before deployment, verify:
-
--   direct route navigation
--   browser refresh
--   protected routes
--   authentication/session restoration
--   API failures
--   empty collections
--   mutation invalidation
--   pagination
--   Socket.IO reconnect behavior
--   production API URL
--   image loading
+Open `http://localhost:3000`. The backend (and, for real-time features,
+`socket-relay`) must be running separately — see the
+[root README](../README.md#local-development-without-docker).
 
 ## Authentication
 
-Authentication is cookie-based.
+Authentication is cookie-based and resolved from the backend — the
+client never reads or interprets the HTTP-only token itself.
 
-The client does not need to read the HTTP-only authentication token.
-Instead, it resolves the current authenticated user from the backend.
-
-Expected flow:
-
-``` text
+```text
 Login / registration
       ↓
-Server sets HTTP-only cookies
+Server sets HTTP-only cookies (accessToken, refreshToken)
       ↓
-Client resolves current user
+Client resolves the current user via GET /api/v1/user/getuser
       ↓
 Role-aware UI and navigation
       ↓
 Backend re-validates every protected operation
 ```
 
+`lib/api/apiSlice.ts` implements a circuit breaker around token
+refresh: a 401 triggers one refresh attempt; if that also fails, the
+session is marked invalid in Redux (`features/auth/sessionSlice.ts`) so
+further requests don't retry a refresh that's already known to be
+broken, and `useCurrentUser()` immediately reflects the logged-out
+state without waiting on a stale cache entry.
+
 Protected navigation should provide a good user experience, but it must
-never be treated as the security mechanism.
+never be treated as the security mechanism — the backend re-checks
+every sensitive action.
 
-## Buyer Experience
+## Real-Time Client
 
-The buyer-facing client supports:
+`lib/socket.ts` connects to `NEXT_PUBLIC_SOCKET_URL` (the standalone
+`socket-relay` service, **not** the REST API). Authentication is
+ticket-based rather than cookie-based, since `socket-relay` runs on a
+separate origin:
 
--   marketplace browsing
--   product search/filtering
--   product details
--   seller/shop discovery
--   cart management
--   stock revalidation
--   checkout
--   COD / Stripe payment flows
--   multi-shop order results
--   order history
--   order details
--   supported refunds
--   eligible product reviews
--   account management
--   saved address management
--   coupons
--   seller communication
--   notifications where enabled
+```text
+useSocket() → connectSocket()
+  1. Socket.IO's `auth` callback POSTs /api/v1/socket/ticket
+     (cookie-authenticated, via the same-origin proxy)
+  2. Server mints a single-use, 30-second Redis-backed ticket
+  3. Socket.IO connects to socket-relay with { auth: { ticket } }
+  4. socket-relay validates + deletes the ticket, joins the
+     socket to a room keyed by the user/seller/admin identity
+```
 
-## Seller Experience
+`hooks/use-socket.ts` lazily connects on first use per component;
+`disconnectSocket()` is called on logout so a stale identity's socket
+never lingers. See
+[`socket-relay/README.md`](../socket-relay/README.md) for the other
+side of this flow.
 
-Seller-facing UI includes:
+## Buyer / Seller / Admin Experience
 
--   seller dashboard
--   shop profile
--   payout configuration
--   product management
--   event management
--   inventory management
--   order management
--   coupon management
--   withdrawal requests
--   withdrawal history/status
--   buyer conversations
--   seller operational information
-
-Seller actions should always use backend authorization and ownership
-checks.
-
-## Admin Experience
-
-The admin client exposes protected platform operations where
-implemented.
-
-Typical administrative areas include:
-
--   users
--   sellers
--   products
--   events
--   orders
--   withdrawals
--   moderation/corrective operations
-
-Admin UI visibility is only a convenience. Backend admin authorization
-remains authoritative.
-
-## Domain Coverage
-
-### Products
-
--   listing
--   search
--   filtering
--   pagination
--   product details
--   seller management
--   media
--   reviews and ratings
-
-### Cart
-
--   user-scoped persistence
--   quantity changes
--   stock validation
--   checkout preparation
-
-### Orders
-
--   buyer order history
--   order details
--   multi-shop checkout results
--   fulfillment status
--   refunds
-
-### Payments
-
--   COD
--   Stripe PaymentIntent integration
--   payment state feedback
-
-### Shops and Events
-
--   seller storefronts
--   seller information
--   event listing/details
--   seller management
-
-### Coupons
-
--   checkout coupon validation
--   seller coupon management
-
-### Conversations and Messaging
-
--   conversation lists
--   message history
--   sending messages
--   real-time updates
--   presence/read state where enabled
-
-### Seller Dashboard
-
--   profile
--   products
--   events
--   orders
--   coupons
--   payouts
--   messaging
-
-### Administration
-
--   protected platform-level management
+See the [root README](../README.md#key-features) for the full feature
+list — routing, protected layouts, and API integration for each role
+live under `app/(main)`, `app/(auth)`, `app/(dashboard)`, and
+`app/admin` respectively, with shared domain logic in `features/`.
 
 ## API Integration
 
-RTK Query should be treated as the source of truth for remote API state.
+RTK Query is the source of truth for remote API state.
 
 Good patterns:
 
--   query data stays in RTK Query cache
+-   query data stays in the RTK Query cache
 -   mutations invalidate affected tags
 -   duplicate requests are avoided
 -   loading and error states are explicit
 -   pagination state is represented in the query arguments
--   stale UI data is refreshed through targeted invalidation rather than
-    broad unnecessary refetches
+-   stale UI data is refreshed through targeted tag invalidation rather
+    than broad unnecessary refetches
+-   where a socket event describes exactly what changed, the client
+    patches the RTK Query cache directly via `updateQueryData` instead
+    of invalidating and refetching (see `features/auth/components/AuthProvider.tsx`)
 
 Avoid copying API responses into separate Redux state unless there is a
-concrete client-state requirement.
+concrete client-state requirement (the cart, which must persist
+per-identity in `localStorage`, is the deliberate exception — see
+`features/cart/cartSlice.ts`).
 
 ## UI State Standards
 
 Every asynchronous screen should explicitly handle:
 
-``` text
+```text
 Loading
    │
    ├── Success
@@ -345,73 +252,44 @@ Loading
    └── Error
 ```
 
-Mutations should additionally handle:
-
--   disabled/submitting state
--   success feedback
--   validation feedback
--   API error feedback
--   cache invalidation
+Mutations should additionally handle disabled/submitting state, success
+feedback, validation feedback, API error feedback, and cache
+invalidation.
 
 ## Forms
 
-Forms should:
-
--   validate user input before avoidable API requests
--   show field-level errors where practical
--   prevent duplicate submission
--   preserve useful entered values after recoverable failures
--   handle server validation failures
--   provide clear success/failure feedback
+Forms should validate input client-side before avoidable API requests,
+show field-level errors, prevent duplicate submission, preserve entered
+values after recoverable failures, surface server validation errors,
+and give clear success/failure feedback.
 
 ## Routing and Deep Linking
 
-Every implemented page should support direct URL navigation and browser
-refresh where appropriate.
+Every implemented page supports direct URL navigation and browser
+refresh where appropriate — do not rely on arriving through a specific
+UI path.
 
-Do not rely on arriving through a specific UI path to make a page work.
-
-For protected routes:
-
-``` text
-Unauthenticated request
+```text
+Unauthenticated request to a protected route
        ↓
-Login / redirect flow
+proxy.ts redirects to /login?redirect=<original path>
        ↓
 Authenticated session
        ↓
 Original destination
 ```
 
-Route protection should remain consistent with backend authorization.
-
-## Real-Time Messaging
-
-Messaging combines REST data with Socket.IO.
-
-The client should account for:
-
--   connection state
--   reconnect behavior
--   message loading
--   message send failures
--   empty conversations
--   new incoming messages
--   presence where enabled
--   read/message-seen state where enabled
-
-Real-time UI should not assume that a socket event is the only source of
-truth; persisted messages come from the backend API.
+Route protection (`proxy.ts` at the edge, plus
+`features/*/components/*ProtectedRoute.tsx` client-side) should remain
+consistent with backend authorization — it is a UX convenience, not the
+security boundary.
 
 ## Media
 
 Cloudinary-backed media is represented by URLs/references returned by
-the backend.
-
-The frontend should not contain Cloudinary API secrets.
-
-Image handling should include meaningful alt text and sensible loading
-behavior.
+the backend. The frontend never holds Cloudinary API secrets — uploads
+are base64-encoded client-side and sent to the backend, which performs
+the actual Cloudinary upload.
 
 ## Security Rules
 
@@ -425,50 +303,25 @@ behavior.
 
 ## Troubleshooting
 
+See the [root README's troubleshooting section](../README.md#troubleshooting)
+for cross-service issues (CORS, cookies through the proxy, Redis,
+real-time). Client-specific checks:
+
 ### API requests fail
 
-Verify:
-
-``` env
-NEXT_PUBLIC_SERVER_URI=http://localhost:3001/api/v1
-```
-
-and confirm the backend is running.
-
-### 403 / CORS errors
-
-Verify the backend's allowed frontend origin exactly matches the browser
-origin.
-
-### Authentication does not persist
-
-Check:
-
--   browser cookies
--   `credentials` handling
--   backend CORS credentials
--   frontend/backend origins
--   HTTPS/cookie settings in production
+Confirm `NEXT_PUBLIC_API_URL` (and, if using the proxy pattern,
+`BACKEND_API_URL`) and that the backend is reachable at that address.
 
 ### Product images do not load
 
-Verify the Cloudinary URLs returned by the backend and the framework's
-image configuration if applicable.
+Verify the Cloudinary URLs returned by the backend and the
+`images.remotePatterns` configuration in `next.config.ts`.
 
 ### Messaging does not update
 
-Check:
-
--   Socket.IO connection
--   backend URL
--   authenticated session
--   browser network/WebSocket panel
--   backend socket handlers
-
-### Admin pages are inaccessible
-
-Verify the current account has `role: "admin"` and re-authenticate after
-changing the role.
+Check `NEXT_PUBLIC_SOCKET_URL`, that `socket-relay` is running, that
+`POST /api/v1/socket/ticket` succeeds, and the browser's WebSocket
+panel for a successful upgrade.
 
 ## Frontend Engineering Standards
 
@@ -487,7 +340,9 @@ changing the role.
 
 ## Related Documentation
 
--   [`../README.md`](../README.md) --- complete project overview and
-    local setup
--   [`../server/README.md`](../server/README.md) --- backend
-    architecture, configuration, API and operations
+-   [`../README.md`](../README.md) — full system architecture,
+    Docker/AWS deployment, CI/CD
+-   [`../server/README.md`](../server/README.md) — backend API,
+    environment variables, operational scripts
+-   [`../socket-relay/README.md`](../socket-relay/README.md) — real-time
+    service, ticket auth, Redis adapter
