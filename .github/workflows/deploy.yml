@@ -64,10 +64,11 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
         run: |
-          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s <<EOF
+          ssh -v -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s << 'EOF'
+          set -x  # Print every command being executed
           set -e
           cd "$EC2_APP_DIR"
-          echo "== Fetching latest feature/ssl-domains-deployment branch =="
+          echo "== Fetching latest branch =="
           git fetch origin feature/ssl-domains-deployment
           git checkout -f feature/ssl-domains-deployment
           git reset --hard origin/feature/ssl-domains-deployment
@@ -78,9 +79,9 @@ jobs:
           sleep 10
           echo "== Container status =="
           docker compose ps
-          RUNNING=\$(docker compose ps --status running --services | wc -l)
-          if [ "\$RUNNING" -lt 5 ]; then
-            echo "ERROR: expected 5 running services (mongodb, redis, server, socket-relay, client), found \$RUNNING"
+          RUNNING=$(docker compose ps --status running --services | wc -l)
+          if [ "$RUNNING" -lt 5 ]; then
+            echo "ERROR: expected 5 running services, found $RUNNING"
             docker compose logs --tail=50
             exit 1
           fi
