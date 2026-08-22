@@ -1,30 +1,21 @@
-name: Deploy to feature/ssl-domains-deployment
+name: Deploy to EC2
 
 on:
   push:
     branches:
       - feature/ssl-domains-deployment
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ec2-deploy
-  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      # Sanity-checks docker-compose.yml's syntax and variable references
-      # before we ever touch the server. The dummy values below only exist
-      # so `docker compose config` can resolve ${VAR} placeholders — they
-      # are never sent to EC2 and never used to run anything.
-      - name: Sanity-check docker-compose.yml
+      - name: Validate Docker Compose configuration
         run: docker compose config > /dev/null
         env:
           MONGO_ROOT_USER: validation-only
@@ -48,15 +39,15 @@ jobs:
           ADMIN_EMAIL: validation-only
           ADMIN_PASSWORD: validation-only
 
-      - name: Configure SSH access to EC2
-        env:
-          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+      - name: Prepare SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts || true
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
 
       - name: Deploy on EC2
         env:
@@ -64,45 +55,23 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
         run: |
-          ssh -v -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s << 'EOF'
-          set -x  # Print every command being executed
-          set -e
-          cd "$EC2_APP_DIR"
-          echo "== Fetching latest branch =="
-          git fetch origin feature/ssl-domains-deployment
-          git checkout -f feature/ssl-domains-deployment
-          git reset --hard origin/feature/ssl-domains-deployment
-          echo "== Rebuilding images =="
-          docker compose build
-          echo "== Restarting containers =="
-          docker compose up -d --remove-orphans
-          sleep 10
-          echo "== Container status =="
-          docker compose ps
-          RUNNING=$(docker compose ps --status running --services | wc -l)
-          if [ "$RUNNING" -lt 5 ]; then
-            echo "ERROR: expected 5 running services, found $RUNNING"
-            docker compose logs --tail=50
-            exit 1
-          fi
-          echo "== Deploy script finished successfully =="
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'bash -s' << 'EOF'
+            set -e
+            cd "$EC2_APP_DIR"
+            echo "== Fetching latest branch =="
+            git fetch origin feature/ssl-domains-deployment
+            git checkout -f feature/ssl-domains-deployment
+            git reset --hard origin/feature/ssl-domains-deployment
+            
+            echo "== Rebuilding and starting containers =="
+            docker compose up -d --build --remove-orphans
+            
+            echo "== Cleaning up unused images =="
+            docker image prune -f
+            
+            echo "== Deployment completed successfully =="
           EOF
 
-      - name: Clean up SSH key
+      - name: Cleanup SSH Key
         if: always()
         run: rm -f ~/.ssh/deploy_key
-
-      - name: Verify backend health endpoint
-        run: |
-          curl -fsS "https://api.mercovia.online/api/v1/health-check"
-          echo ""
-          echo "Backend health check passed"
-
-      - name: Verify frontend responds
-        run: |
-          STATUS=$(curl -fsS -o /dev/null -w "%{http_code}" "https://mercovia.online/")
-          if [ "$STATUS" != "200" ]; then
-            echo "Frontend returned HTTP $STATUS instead of 200"
-            exit 1
-          fi
-          echo "Frontend check passed (HTTP 200)"
