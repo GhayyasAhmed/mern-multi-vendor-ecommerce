@@ -3,7 +3,7 @@ name: Deploy to feature/ssl-domains-deployment
 on:
   push:
     branches:
-      - aws-deploy
+      - feature/ssl-domains-deployment
   workflow_dispatch: {}
 
 permissions:
@@ -67,10 +67,10 @@ jobs:
           ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s <<EOF
           set -e
           cd "$EC2_APP_DIR"
-          echo "== Fetching latest aws-deploy branch =="
-          git fetch origin aws-deploy
-          git checkout -f aws-deploy
-          git reset --hard origin/aws-deploy
+          echo "== Fetching latest feature/ssl-domains-deployment branch =="
+          git fetch origin feature/ssl-domains-deployment
+          git checkout -f feature/ssl-domains-deployment
+          git reset --hard origin/feature/ssl-domains-deployment
           echo "== Rebuilding images =="
           docker compose build
           echo "== Restarting containers =="
