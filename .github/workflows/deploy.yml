@@ -62,9 +62,10 @@ jobs:
             exit 1
           fi
           
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" REMOTE_APP_DIR="$EC2_APP_DIR" 'bash -s' << 'EOF'
+          # Note: Removed single quotes around EOF to allow runner-side interpolation of $EC2_APP_DIR
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'bash -s' << EOF
             set -e
-            cd "$REMOTE_APP_DIR"
+            cd "$EC2_APP_DIR"
             echo "== Fetching latest branch =="
             git fetch origin feature/ssl-domains-deployment
             git checkout -f feature/ssl-domains-deployment
