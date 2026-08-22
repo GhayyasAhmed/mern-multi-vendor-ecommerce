@@ -15,7 +15,7 @@ const FeaturedProduct = () => {
   return (
     <div>
       <div className={`${styles.section}`}>
-        <div className={`${styles.heading}`}>
+        <div className={`${styles.heading} mt-6`}>
           <h2>Featured Products</h2>
         </div>
         {isLoading ? (

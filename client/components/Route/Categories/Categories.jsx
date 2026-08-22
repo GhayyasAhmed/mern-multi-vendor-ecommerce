@@ -22,7 +22,7 @@ const Categories = () => {
       </div>
 
       <div
-        className={`${styles.section} bg-surface border border-border p-6 rounded-lg mb-12`}
+        className={`${styles.section} mt-6 bg-surface border border-border p-6 rounded-lg mb-12`}
         id="categories"
       >
         <h2 className={styles.heading}>Shop by Category</h2>
